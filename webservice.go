@@ -8,15 +8,18 @@ import (
 
 func WebService(w http.ResponseWriter, r *http.Request) {
 	expenseId := strings.TrimPrefix(r.URL.Path, "/expenses/")
+	expense := GetExpense(expenseId)
+	fmt.Fprint(w, expense)
+}
 
-	if expenseId == "9281" {
-		fmt.Fprint(w, "Expense 9281")
-		return
+func GetExpense(id string) string {
+	expense := ""
+	if id == "9281" {
+		expense = "Expense 9281"
 	}
 
-	if expenseId == "1" {
-		fmt.Fprint(w, "Expense 1")
-		return
+	if id == "1" {
+		expense = "Expense 1"
 	}
-
+	return expense
 }

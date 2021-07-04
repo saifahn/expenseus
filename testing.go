@@ -20,6 +20,11 @@ func NewCreateExpenseRequest(user, name string) *http.Request {
 	return req
 }
 
+func NewGetExpenseByUserRequest(user string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/user/%s", user), nil)
+	return req
+}
+
 func AssertResponseBody(t *testing.T, got, want string) {
 	t.Helper()
 

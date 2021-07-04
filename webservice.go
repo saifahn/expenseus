@@ -10,6 +10,10 @@ type ExpenseStore interface {
 	GetExpense(id string) string
 }
 
+func NewWebService(store ExpenseStore) *WebService {
+	return &WebService{store}
+}
+
 type WebService struct {
 	store ExpenseStore
 }

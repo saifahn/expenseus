@@ -22,6 +22,13 @@ func TestGetExpenses(t *testing.T) {
 
 		webservice.ServeHTTP(response, request)
 
+		got := response.Code
+		want := http.StatusOK
+
+		if got != want {
+			t.Errorf("got status %d, want %d", got, want)
+		}
+
 		assertResponseBody(t, response.Body.String(), "Expense 1")
 	})
 
@@ -30,6 +37,13 @@ func TestGetExpenses(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
+
+		got := response.Code
+		want := http.StatusOK
+
+		if got != want {
+			t.Errorf("got status %d, want %d", got, want)
+		}
 
 		assertResponseBody(t, response.Body.String(), "Expense 9281")
 	})

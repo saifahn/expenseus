@@ -6,10 +6,17 @@ import (
 	"strings"
 )
 
-func WebService(w http.ResponseWriter, r *http.Request) {
+type ExpenseStore interface {
+	GetExpense(id string) string
+}
+
+type WebService struct {
+	store ExpenseStore
+}
+
+func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	expenseId := strings.TrimPrefix(r.URL.Path, "/expenses/")
-	expense := GetExpense(expenseId)
-	fmt.Fprint(w, expense)
+	fmt.Fprint(w, GetExpense(expenseId))
 }
 
 func GetExpense(id string) string {

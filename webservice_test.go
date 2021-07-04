@@ -9,19 +9,21 @@ import (
 
 func TestGetExpenses(t *testing.T) {
 	t.Run("get an expense by id", func(t *testing.T) {
+		webservice := WebService{}
 		request := newGetExpenseRequest("1")
 		response := httptest.NewRecorder()
 
-		WebService(response, request)
+		webservice.ServeHTTP(response, request)
 
 		assertResponseBody(t, response.Body.String(), "Expense 1")
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
+		webservice := WebService{}
 		request := newGetExpenseRequest("9281")
 		response := httptest.NewRecorder()
 
-		WebService(response, request)
+		webservice.ServeHTTP(response, request)
 
 		assertResponseBody(t, response.Body.String(), "Expense 9281")
 	})

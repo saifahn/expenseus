@@ -74,6 +74,16 @@ func TestGetExpenseByUser(t *testing.T) {
 		assertResponseStatus(t, response.Code, http.StatusOK)
 		assertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testTomomiExpense.name))
 	})
+
+	t.Run("gets Sean's expenses", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/expenses/user/sean", nil)
+		response := httptest.NewRecorder()
+
+		webservice.ServeHTTP(response, request)
+
+		assertResponseStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testSeanExpense.name))
+	})
 }
 
 func newGetExpenseByIdRequest(id string) *http.Request {

@@ -1,8 +1,6 @@
 package expenseus
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -29,32 +27,32 @@ func TestGetExpenseById(t *testing.T) {
 	webservice := &WebService{&store}
 
 	t.Run("get an expense by id", func(t *testing.T) {
-		request := newGetExpenseByIdRequest("1")
+		request := NewGetExpenseByIdRequest("1")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
 
-		assertResponseStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), testSeanExpense.Name)
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		AssertResponseBody(t, response.Body.String(), testSeanExpense.Name)
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
-		request := newGetExpenseByIdRequest("9281")
+		request := NewGetExpenseByIdRequest("9281")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
 
-		assertResponseStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), testTomomiExpense.Name)
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		AssertResponseBody(t, response.Body.String(), testTomomiExpense.Name)
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
-		request := newGetExpenseByIdRequest("13371337")
+		request := NewGetExpenseByIdRequest("13371337")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
 
-		assertResponseStatus(t, response.Code, http.StatusNotFound)
+		AssertResponseStatus(t, response.Code, http.StatusNotFound)
 	})
 }
 
@@ -73,8 +71,8 @@ func TestGetExpenseByUser(t *testing.T) {
 
 		webservice.ServeHTTP(response, request)
 
-		assertResponseStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testTomomiExpense.Name))
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		AssertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testTomomiExpense.Name))
 	})
 
 	t.Run("gets Sean's expenses", func(t *testing.T) {
@@ -83,8 +81,8 @@ func TestGetExpenseByUser(t *testing.T) {
 
 		webservice.ServeHTTP(response, request)
 
-		assertResponseStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testSeanExpense.Name))
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		AssertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testSeanExpense.Name))
 	})
 }
 
@@ -95,43 +93,17 @@ func TestCreateExpense(t *testing.T) {
 	webservice := NewWebService(&store)
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
-		request := newCreateExpenseRequest("tomomi", "Test Expense")
+		request := NewCreateExpenseRequest("tomomi", "Test Expense")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
 
-		assertResponseStatus(t, response.Code, http.StatusAccepted)
+		AssertResponseStatus(t, response.Code, http.StatusAccepted)
 
 		if len(store.expenses) != 1 {
 			t.Errorf("got %d expenses, want %d", len(store.expenses), 1)
 		}
 	})
-}
-
-func newGetExpenseByIdRequest(id string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
-	return req
-}
-
-func newCreateExpenseRequest(user, name string) *http.Request {
-	values := map[string]string{"user": user, "name": name}
-	jsonValue, _ := json.Marshal(values)
-	req, _ := http.NewRequest(http.MethodPost, "/expenses", bytes.NewBuffer(jsonValue))
-	return req
-}
-
-func assertResponseBody(t *testing.T, got, want string) {
-	t.Helper()
-
-	if got != want {
-		t.Errorf("got response body of %q, want %q", got, want)
-	}
-}
-
-func assertResponseStatus(t *testing.T, got, want int) {
-	if got != want {
-		t.Errorf("got status %d, want %d", got, want)
-	}
 }
 
 type StubExpenseStore struct {

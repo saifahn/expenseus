@@ -16,7 +16,7 @@ type WebService struct {
 
 func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	expenseId := strings.TrimPrefix(r.URL.Path, "/expenses/")
-	fmt.Fprint(w, GetExpense(expenseId))
+	fmt.Fprint(w, wb.store.GetExpense(expenseId))
 }
 
 func GetExpense(id string) string {

@@ -8,7 +8,14 @@ import (
 )
 
 func TestGetExpenses(t *testing.T) {
-	webservice := &WebService{}
+	store := StubExpenseStore{
+		map[string]string{
+			"1":    "Expense 1",
+			"9281": "Expense 9281",
+		},
+	}
+	webservice := &WebService{&store}
+
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := newGetExpenseRequest("1")
 		response := httptest.NewRecorder()
@@ -35,8 +42,16 @@ func newGetExpenseRequest(id string) *http.Request {
 
 func assertResponseBody(t *testing.T, got, want string) {
 	t.Helper()
+
 	if got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
+}
 
+type StubExpenseStore struct {
+	expenses map[string]string
+}
+
+func (s *StubExpenseStore) GetExpense(id string) (expense string) {
+	return s.expenses[id]
 }

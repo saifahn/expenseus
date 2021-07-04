@@ -33,6 +33,20 @@ func TestGetExpenses(t *testing.T) {
 
 		assertResponseBody(t, response.Body.String(), "Expense 9281")
 	})
+
+	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
+		request := newGetExpenseRequest("13371337")
+		response := httptest.NewRecorder()
+
+		webservice.ServeHTTP(response, request)
+
+		got := response.Code
+		want := http.StatusNotFound
+
+		if got != want {
+			t.Errorf("got status %d, want %d", got, want)
+		}
+	})
 }
 
 func newGetExpenseRequest(id string) *http.Request {

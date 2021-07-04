@@ -8,6 +8,6 @@ import (
 )
 
 func main() {
-	handler := http.HandlerFunc(expenseus.WebService)
-	log.Fatal(http.ListenAndServe(":5000", handler))
+	webservice := &expenseus.WebService{}
+	log.Fatal(http.ListenAndServe(":5000", webservice))
 }

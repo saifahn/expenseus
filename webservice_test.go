@@ -56,6 +56,26 @@ func TestGetExpenseById(t *testing.T) {
 	})
 }
 
+func TestGetExpenseByUser(t *testing.T) {
+	store := StubExpenseStore{
+		map[string]Expense{
+			"1":    testSeanExpense,
+			"9281": testTomomiExpense,
+		},
+	}
+	webservice := NewWebService(&store)
+
+	t.Run("gets Tomomi's expenses", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/expenses/user/tomomi", nil)
+		response := httptest.NewRecorder()
+
+		webservice.ServeHTTP(response, request)
+
+		assertResponseStatus(t, response.Code, http.StatusOK)
+		assertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testTomomiExpense.name))
+	})
+}
+
 func newGetExpenseByIdRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
 	return req
@@ -82,4 +102,14 @@ type StubExpenseStore struct {
 func (s *StubExpenseStore) GetExpenseNameById(id string) string {
 	expense := s.expenses[id]
 	return expense.name
+}
+
+func (s *StubExpenseStore) GetExpenseNamesByUser(user string) []string {
+	var expenseNames []string
+	for _, e := range s.expenses {
+		if e.user == user {
+			expenseNames = append(expenseNames, e.name)
+		}
+	}
+	return expenseNames
 }

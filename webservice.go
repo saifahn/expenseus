@@ -29,15 +29,3 @@ func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, expense)
 }
-
-func GetExpense(id string) string {
-	expense := ""
-	if id == "9281" {
-		expense = "Expense 9281"
-	}
-
-	if id == "1" {
-		expense = "Expense 1"
-	}
-	return expense
-}

@@ -22,13 +22,7 @@ func TestGetExpenses(t *testing.T) {
 
 		webservice.ServeHTTP(response, request)
 
-		got := response.Code
-		want := http.StatusOK
-
-		if got != want {
-			t.Errorf("got status %d, want %d", got, want)
-		}
-
+		assertResponseStatus(t, response.Code, http.StatusOK)
 		assertResponseBody(t, response.Body.String(), "Expense 1")
 	})
 
@@ -38,13 +32,7 @@ func TestGetExpenses(t *testing.T) {
 
 		webservice.ServeHTTP(response, request)
 
-		got := response.Code
-		want := http.StatusOK
-
-		if got != want {
-			t.Errorf("got status %d, want %d", got, want)
-		}
-
+		assertResponseStatus(t, response.Code, http.StatusOK)
 		assertResponseBody(t, response.Body.String(), "Expense 9281")
 	})
 
@@ -54,12 +42,7 @@ func TestGetExpenses(t *testing.T) {
 
 		webservice.ServeHTTP(response, request)
 
-		got := response.Code
-		want := http.StatusNotFound
-
-		if got != want {
-			t.Errorf("got status %d, want %d", got, want)
-		}
+		assertResponseStatus(t, response.Code, http.StatusNotFound)
 	})
 }
 
@@ -72,7 +55,13 @@ func assertResponseBody(t *testing.T, got, want string) {
 	t.Helper()
 
 	if got != want {
-		t.Errorf("got %q, want %q", got, want)
+		t.Errorf("got response body of %q, want %q", got, want)
+	}
+}
+
+func assertResponseStatus(t *testing.T, got, want int) {
+	if got != want {
+		t.Errorf("got status %d, want %d", got, want)
 	}
 }
 

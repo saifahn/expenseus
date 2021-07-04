@@ -7,37 +7,47 @@ import (
 	"testing"
 )
 
-func TestGetExpenses(t *testing.T) {
+var testSeanExpense = Expense{
+	name: "Expense 1",
+	user: "sean",
+}
+
+var testTomomiExpense = Expense{
+	name: "Expense 9281",
+	user: "tomomi",
+}
+
+func TestGetExpenseById(t *testing.T) {
 	store := StubExpenseStore{
-		map[string]string{
-			"1":    "Expense 1",
-			"9281": "Expense 9281",
+		map[string]Expense{
+			"1":    testSeanExpense,
+			"9281": testTomomiExpense,
 		},
 	}
 	webservice := &WebService{&store}
 
 	t.Run("get an expense by id", func(t *testing.T) {
-		request := newGetExpenseRequest("1")
+		request := newGetExpenseByIdRequest("1")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
 
 		assertResponseStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "Expense 1")
+		assertResponseBody(t, response.Body.String(), testSeanExpense.name)
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
-		request := newGetExpenseRequest("9281")
+		request := newGetExpenseByIdRequest("9281")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
 
 		assertResponseStatus(t, response.Code, http.StatusOK)
-		assertResponseBody(t, response.Body.String(), "Expense 9281")
+		assertResponseBody(t, response.Body.String(), testTomomiExpense.name)
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
-		request := newGetExpenseRequest("13371337")
+		request := newGetExpenseByIdRequest("13371337")
 		response := httptest.NewRecorder()
 
 		webservice.ServeHTTP(response, request)
@@ -46,7 +56,7 @@ func TestGetExpenses(t *testing.T) {
 	})
 }
 
-func newGetExpenseRequest(id string) *http.Request {
+func newGetExpenseByIdRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
 	return req
 }
@@ -66,9 +76,10 @@ func assertResponseStatus(t *testing.T, got, want int) {
 }
 
 type StubExpenseStore struct {
-	expenses map[string]string
+	expenses map[string]Expense
 }
 
-func (s *StubExpenseStore) GetExpense(id string) (expense string) {
-	return s.expenses[id]
+func (s *StubExpenseStore) GetExpenseNameById(id string) string {
+	expense := s.expenses[id]
+	return expense.name
 }

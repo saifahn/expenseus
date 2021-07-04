@@ -7,7 +7,12 @@ import (
 )
 
 type ExpenseStore interface {
-	GetExpense(id string) string
+	GetExpenseNameById(id string) string
+}
+
+type Expense struct {
+	name string
+	user string
 }
 
 func NewWebService(store ExpenseStore) *WebService {
@@ -21,11 +26,11 @@ type WebService struct {
 func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	expenseId := strings.TrimPrefix(r.URL.Path, "/expenses/")
 
-	expense := wb.store.GetExpense(expenseId)
+	expenseName := wb.store.GetExpenseNameById(expenseId)
 
-	if expense == "" {
+	if expenseName == "" {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	fmt.Fprint(w, expense)
+	fmt.Fprint(w, expenseName)
 }

@@ -44,7 +44,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	webservice.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("tomomi", "test expense 03"))
 
 	response := httptest.NewRecorder()
-	request := expenseus.NewGetExpenseByUserRequest("tomomi")
+	request := expenseus.NewGetExpensesByUserRequest("tomomi")
 	webservice.ServeHTTP(response, request)
 	expenseus.AssertResponseStatus(t, response.Code, http.StatusOK)
 

@@ -69,7 +69,7 @@ func TestGetExpenseByUser(t *testing.T) {
 	webservice := NewWebService(&store)
 
 	t.Run("gets Tomomi's expenses", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/expenses/user/tomomi", nil)
+		request := NewGetExpensesByUserRequest("tomomi")
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.expenseByUserHandler)
@@ -80,7 +80,7 @@ func TestGetExpenseByUser(t *testing.T) {
 	})
 
 	t.Run("gets Sean's expenses", func(t *testing.T) {
-		request, _ := http.NewRequest(http.MethodGet, "/expenses/user/sean", nil)
+		request := NewGetExpensesByUserRequest("sean")
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.expenseByUserHandler)

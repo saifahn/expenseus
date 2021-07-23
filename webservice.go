@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 type ExpenseStore interface {
@@ -52,7 +51,7 @@ func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (wb *WebService) expenseByUserHandler(rw http.ResponseWriter, r *http.Request) {
-	user := strings.TrimPrefix(r.URL.Path, "/expenses/user/")
+	user := r.Context().Value("user").(string)
 
 	expenses := wb.store.GetExpenseNamesByUser(user)
 

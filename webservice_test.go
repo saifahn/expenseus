@@ -30,7 +30,8 @@ func TestGetExpenseById(t *testing.T) {
 		request := NewGetExpenseByIdRequest("1")
 		response := httptest.NewRecorder()
 
-		webservice.ServeHTTP(response, request)
+		handler := http.HandlerFunc(webservice.expenseByIdHandler)
+		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
 		AssertResponseBody(t, response.Body.String(), testSeanExpense.Name)
@@ -40,7 +41,8 @@ func TestGetExpenseById(t *testing.T) {
 		request := NewGetExpenseByIdRequest("9281")
 		response := httptest.NewRecorder()
 
-		webservice.ServeHTTP(response, request)
+		handler := http.HandlerFunc(webservice.expenseByIdHandler)
+		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
 		AssertResponseBody(t, response.Body.String(), testTomomiExpense.Name)
@@ -50,7 +52,8 @@ func TestGetExpenseById(t *testing.T) {
 		request := NewGetExpenseByIdRequest("13371337")
 		response := httptest.NewRecorder()
 
-		webservice.ServeHTTP(response, request)
+		handler := http.HandlerFunc(webservice.expenseByIdHandler)
+		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusNotFound)
 	})
@@ -69,7 +72,8 @@ func TestGetExpenseByUser(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/expenses/user/tomomi", nil)
 		response := httptest.NewRecorder()
 
-		webservice.ServeHTTP(response, request)
+		handler := http.HandlerFunc(webservice.expenseByUserHandler)
+		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
 		AssertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testTomomiExpense.Name))
@@ -79,7 +83,8 @@ func TestGetExpenseByUser(t *testing.T) {
 		request, _ := http.NewRequest(http.MethodGet, "/expenses/user/sean", nil)
 		response := httptest.NewRecorder()
 
-		webservice.ServeHTTP(response, request)
+		handler := http.HandlerFunc(webservice.expenseByUserHandler)
+		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
 		AssertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testSeanExpense.Name))
@@ -96,7 +101,8 @@ func TestCreateExpense(t *testing.T) {
 		request := NewCreateExpenseRequest("tomomi", "Test Expense")
 		response := httptest.NewRecorder()
 
-		webservice.ServeHTTP(response, request)
+		handler := http.HandlerFunc(webservice.createExpenseHandler)
+		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusAccepted)
 

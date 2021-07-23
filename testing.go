@@ -9,7 +9,8 @@ import (
 	"testing"
 )
 
-// NewGetExpenseByIDRequest creates a request to get an expense by id, adding the id to the request context.
+// NewGetExpenseByIDRequest creates a request to be used in tests get an expense
+// by id, adding the id to the request context.
 func NewGetExpenseByIDRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
 	ctx := context.WithValue(req.Context(), "id", id)
@@ -23,6 +24,8 @@ func NewCreateExpenseRequest(user, name string) *http.Request {
 	return req
 }
 
+// NewGetExpensesByUserRequest creates a request to be used in tests to get all
+// expenses of a user, adding the user to the request context.
 func NewGetExpensesByUserRequest(user string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/user/%s", user), nil)
 	ctx := context.WithValue(req.Context(), "user", user)

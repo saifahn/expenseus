@@ -28,15 +28,14 @@ type WebService struct {
 func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router := http.NewServeMux()
-	router.HandleFunc("/expenses/user/", wb.expenseByUserHandler)
+	router.HandleFunc("/expenses/user/", wb.GetExpensesByUser)
 	router.HandleFunc("/expenses/", wb.GetExpenseByID)
 	router.HandleFunc("/expenses", wb.createExpenseHandler)
 
 	router.ServeHTTP(w, r)
 }
 
-// GetExpenseByID handles a HTTP request to get an expense by its ID, returning
-// the expense name.
+// GetExpenseByID handles a HTTP request to get an expense by ID, returning the expense name.
 // TODO: update the comment when you return the expense completely
 func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
 	expenseId := r.Context().Value("id").(string)
@@ -50,7 +49,10 @@ func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(rw, expenseName)
 }
 
-func (wb *WebService) expenseByUserHandler(rw http.ResponseWriter, r *http.Request) {
+// GetExpensesByUser handles a HTTP request to get all expenses of a user,
+// returning a list of expense names.
+// TODO: update this comment
+func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(string)
 
 	expenses := wb.store.GetExpenseNamesByUser(user)

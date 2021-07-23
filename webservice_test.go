@@ -72,7 +72,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		request := NewGetExpensesByUserRequest("tomomi")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.expenseByUserHandler)
+		handler := http.HandlerFunc(webservice.GetExpensesByUser)
 		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
@@ -83,7 +83,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		request := NewGetExpensesByUserRequest("sean")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.expenseByUserHandler)
+		handler := http.HandlerFunc(webservice.GetExpensesByUser)
 		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)

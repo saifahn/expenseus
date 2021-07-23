@@ -2,15 +2,18 @@ package expenseus
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 )
 
-func NewGetExpenseByIdRequest(id string) *http.Request {
+// NewGetExpenseByIDRequest creates a request to get an expense by id, adding the id to the request context.
+func NewGetExpenseByIDRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
-	return req
+	ctx := context.WithValue(req.Context(), "id", id)
+	return req.WithContext(ctx)
 }
 
 func NewCreateExpenseRequest(user, name string) *http.Request {

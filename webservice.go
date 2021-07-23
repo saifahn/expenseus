@@ -30,14 +30,17 @@ func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router := http.NewServeMux()
 	router.HandleFunc("/expenses/user/", wb.expenseByUserHandler)
-	router.HandleFunc("/expenses/", wb.expenseByIdHandler)
+	router.HandleFunc("/expenses/", wb.GetExpenseByID)
 	router.HandleFunc("/expenses", wb.createExpenseHandler)
 
 	router.ServeHTTP(w, r)
 }
 
-func (wb *WebService) expenseByIdHandler(rw http.ResponseWriter, r *http.Request) {
-	expenseId := strings.TrimPrefix(r.URL.Path, "/expenses/")
+// GetExpenseByID handles a HTTP request to get an expense by its ID, returning
+// the expense name.
+// TODO: update the comment when you return the expense completely
+func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
+	expenseId := r.Context().Value("id").(string)
 
 	expenseName := wb.store.GetExpenseNameById(expenseId)
 

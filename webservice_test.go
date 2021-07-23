@@ -27,10 +27,10 @@ func TestGetExpenseById(t *testing.T) {
 	webservice := &WebService{&store}
 
 	t.Run("get an expense by id", func(t *testing.T) {
-		request := NewGetExpenseByIdRequest("1")
+		request := NewGetExpenseByIDRequest("1")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.expenseByIdHandler)
+		handler := http.HandlerFunc(webservice.GetExpenseByID)
 		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
@@ -38,10 +38,10 @@ func TestGetExpenseById(t *testing.T) {
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
-		request := NewGetExpenseByIdRequest("9281")
+		request := NewGetExpenseByIDRequest("9281")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.expenseByIdHandler)
+		handler := http.HandlerFunc(webservice.GetExpenseByID)
 		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
@@ -49,10 +49,10 @@ func TestGetExpenseById(t *testing.T) {
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
-		request := NewGetExpenseByIdRequest("13371337")
+		request := NewGetExpenseByIDRequest("13371337")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.expenseByIdHandler)
+		handler := http.HandlerFunc(webservice.GetExpenseByID)
 		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusNotFound)

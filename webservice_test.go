@@ -101,7 +101,7 @@ func TestCreateExpense(t *testing.T) {
 		request := NewCreateExpenseRequest("tomomi", "Test Expense")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.createExpenseHandler)
+		handler := http.HandlerFunc(webservice.CreateExpense)
 		handler.ServeHTTP(response, request)
 
 		AssertResponseStatus(t, response.Code, http.StatusAccepted)

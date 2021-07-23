@@ -17,6 +17,8 @@ func NewGetExpenseByIDRequest(id string) *http.Request {
 	return req.WithContext(ctx)
 }
 
+// NewCreateExpenseRequest creates a request to be used in tests to create an
+// expense that is associated with a user.
 func NewCreateExpenseRequest(user, name string) *http.Request {
 	values := map[string]string{"user": user, "name": name}
 	jsonValue, _ := json.Marshal(values)

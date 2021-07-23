@@ -30,7 +30,7 @@ func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	router := http.NewServeMux()
 	router.HandleFunc("/expenses/user/", wb.GetExpensesByUser)
 	router.HandleFunc("/expenses/", wb.GetExpenseByID)
-	router.HandleFunc("/expenses", wb.createExpenseHandler)
+	router.HandleFunc("/expenses", wb.CreateExpense)
 
 	router.ServeHTTP(w, r)
 }
@@ -60,7 +60,8 @@ func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, expenses)
 }
 
-func (wb *WebService) createExpenseHandler(rw http.ResponseWriter, r *http.Request) {
+// CreateExpense handles a HTTP request to create a new expense.
+func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	var e Expense
 	err := json.NewDecoder(r.Body).Decode(&e)
 

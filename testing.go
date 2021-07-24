@@ -13,7 +13,7 @@ import (
 // by id, adding the id to the request context.
 func NewGetExpenseByIDRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
-	ctx := context.WithValue(req.Context(), "id", id)
+	ctx := context.WithValue(req.Context(), "expenseID", id)
 	return req.WithContext(ctx)
 }
 

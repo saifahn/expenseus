@@ -7,7 +7,7 @@ import (
 )
 
 type ExpenseStore interface {
-	GetExpenseNameById(id string) string
+	GetExpenseNameByID(id string) string
 	GetExpenseNamesByUser(user string) []string
 	RecordExpense(expense Expense)
 }
@@ -38,9 +38,9 @@ func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // GetExpenseByID handles a HTTP request to get an expense by ID, returning the expense name.
 // TODO: update the comment when you return the expense completely
 func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
-	expenseId := r.Context().Value("id").(string)
+	expenseId := r.Context().Value("expenseID").(string)
 
-	expenseName := wb.store.GetExpenseNameById(expenseId)
+	expenseName := wb.store.GetExpenseNameByID(expenseId)
 
 	if expenseName == "" {
 		rw.WriteHeader(http.StatusNotFound)

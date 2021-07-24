@@ -13,7 +13,7 @@ type InMemoryExpenseStore struct {
 	expenses map[string]expenseus.Expense
 }
 
-func (s *InMemoryExpenseStore) GetExpenseNameById(id string) string {
+func (s *InMemoryExpenseStore) GetExpenseNameByID(id string) string {
 	expense := s.expenses[id]
 	return expense.Name
 }

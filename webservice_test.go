@@ -17,7 +17,7 @@ var testTomomiExpense = Expense{
 	User: "tomomi",
 }
 
-func TestGetExpenseById(t *testing.T) {
+func TestGetExpenseByID(t *testing.T) {
 	store := StubExpenseStore{
 		map[string]Expense{
 			"1":    testSeanExpense,
@@ -116,7 +116,7 @@ type StubExpenseStore struct {
 	expenses map[string]Expense
 }
 
-func (s *StubExpenseStore) GetExpenseNameById(id string) string {
+func (s *StubExpenseStore) GetExpenseNameByID(id string) string {
 	expense := s.expenses[id]
 	return expense.Name
 }

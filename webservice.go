@@ -73,3 +73,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	wb.store.RecordExpense(e)
 	rw.WriteHeader(http.StatusAccepted)
 }
+
+func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(rw, []string{"test expense 01"})
+}

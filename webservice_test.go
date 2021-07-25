@@ -112,6 +112,33 @@ func TestCreateExpense(t *testing.T) {
 	})
 }
 
+func TestGetAllExpenses(t *testing.T) {
+	store := StubExpenseStore{
+		map[string]Expense{
+			"01": {
+				User: "tomomi",
+				Name: "test expense 01",
+			},
+		},
+	}
+	webservice := NewWebService(&store)
+
+	t.Run("gets all expenses with one expense", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses"), nil)
+		if err != nil {
+			t.Errorf("there was an error in creating the request")
+		}
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.GetAllExpenses)
+		handler.ServeHTTP(response, req)
+
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		AssertResponseBody(t, response.Body.String(), "[test expense 01]")
+	})
+
+}
+
 type StubExpenseStore struct {
 	expenses map[string]Expense
 }

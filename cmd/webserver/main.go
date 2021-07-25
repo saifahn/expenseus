@@ -58,8 +58,8 @@ func main() {
 	r.Route("/expenses", func(r chi.Router) {
 		r.Post("/", wb.CreateExpense)
 
-		r.Route("/users/{user}", func(r chi.Router) {
-			r.Use(UserCtx)
+		r.Route("/users/{username}", func(r chi.Router) {
+			r.Use(UsernameCtx)
 			r.Get("/", wb.GetExpensesByUser)
 		})
 
@@ -81,10 +81,11 @@ func ExpenseIDCtx(next http.Handler) http.Handler {
 	})
 }
 
-func UserCtx(next http.Handler) http.Handler {
+// Gets the username from the URL and adds it to the user context for the request.
+func UsernameCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		user := chi.URLParam(r, "user")
-		ctx := context.WithValue(r.Context(), "user", user)
+		username := chi.URLParam(r, "username")
+		ctx := context.WithValue(r.Context(), "username", username)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

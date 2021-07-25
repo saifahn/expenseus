@@ -53,9 +53,9 @@ func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
 // returning a list of expense names.
 // TODO: update this comment
 func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value("user").(string)
+	username := r.Context().Value("username").(string)
 
-	expenses := wb.store.GetExpenseNamesByUser(user)
+	expenses := wb.store.GetExpenseNamesByUser(username)
 
 	fmt.Fprint(rw, expenses)
 }

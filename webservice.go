@@ -9,6 +9,7 @@ import (
 type ExpenseStore interface {
 	GetExpenseNameByID(id string) string
 	GetExpenseNamesByUser(user string) []string
+	GetAllExpenseNames() []string
 	RecordExpense(expense Expense)
 }
 
@@ -60,6 +61,14 @@ func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request)
 	fmt.Fprint(rw, expenses)
 }
 
+// GetAllExpenses handles a HTTP request to get all expenses, return a list of
+// expense names.
+func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
+	expenses := wb.store.GetAllExpenseNames()
+
+	fmt.Fprint(rw, expenses)
+}
+
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	var e Expense
@@ -72,8 +81,4 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 
 	wb.store.RecordExpense(e)
 	rw.WriteHeader(http.StatusAccepted)
-}
-
-func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(rw, []string{"test expense 01"})
 }

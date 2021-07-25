@@ -113,18 +113,18 @@ func TestCreateExpense(t *testing.T) {
 }
 
 func TestGetAllExpenses(t *testing.T) {
-	store := StubExpenseStore{
-		map[string]Expense{
-			"01": {
-				User: "tomomi",
-				Name: "test expense 01",
-			},
-		},
-	}
-	webservice := NewWebService(&store)
-
 	t.Run("gets all expenses with one expense", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses"), nil)
+		store := StubExpenseStore{
+			map[string]Expense{
+				"01": {
+					User: "tomomi",
+					Name: "test expense 01",
+				},
+			},
+		}
+		webservice := NewWebService(&store)
+
+		req, err := http.NewRequest(http.MethodGet, "/expenses", nil)
 		if err != nil {
 			t.Errorf("there was an error in creating the request")
 		}
@@ -135,6 +135,37 @@ func TestGetAllExpenses(t *testing.T) {
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
 		AssertResponseBody(t, response.Body.String(), "[test expense 01]")
+	})
+
+	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
+		store := StubExpenseStore{
+			map[string]Expense{
+				"01": {
+					User: "tomomi",
+					Name: "test expense 01",
+				},
+				"02": {
+					User: "sean",
+					Name: "test expense 02",
+				},
+				"03": {
+					User: "tomomi",
+					Name: "test expense 03",
+				},
+			},
+		}
+		webservice := NewWebService(&store)
+		req, err := http.NewRequest(http.MethodGet, "/expenses", nil)
+		if err != nil {
+			t.Errorf("there was an error in creating the request")
+		}
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.GetAllExpenses)
+		handler.ServeHTTP(response, req)
+
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		AssertResponseBody(t, response.Body.String(), "[test expense 01 test expense 02 test expense 03]")
 	})
 
 }
@@ -161,4 +192,12 @@ func (s *StubExpenseStore) GetExpenseNamesByUser(user string) []string {
 func (s *StubExpenseStore) RecordExpense(e Expense) {
 	testId := fmt.Sprintf("tid-%v", e.Name)
 	s.expenses[testId] = e
+}
+
+func (s *StubExpenseStore) GetAllExpenseNames() []string {
+	var expenseNames []string
+	for _, e := range s.expenses {
+		expenseNames = append(expenseNames, e.Name)
+	}
+	return expenseNames
 }

@@ -6,6 +6,13 @@ import (
 	"net/http"
 )
 
+type contextKey int
+
+const (
+	CtxKeyExpenseID contextKey = iota
+	CtxKeyUsername  contextKey = iota
+)
+
 type ExpenseStore interface {
 	GetExpenseNameByID(id string) string
 	GetExpenseNamesByUser(user string) []string
@@ -39,7 +46,7 @@ func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // GetExpenseByID handles a HTTP request to get an expense by ID, returning the expense name.
 // TODO: update the comment when you return the expense completely
 func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
-	expenseId := r.Context().Value("expenseID").(string)
+	expenseId := r.Context().Value(CtxKeyExpenseID).(string)
 
 	expenseName := wb.store.GetExpenseNameByID(expenseId)
 
@@ -54,7 +61,7 @@ func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
 // returning a list of expense names.
 // TODO: update this comment
 func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value("username").(string)
+	username := r.Context().Value(CtxKeyUsername).(string)
 
 	expenses := wb.store.GetExpenseNamesByUser(username)
 

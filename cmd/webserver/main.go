@@ -85,7 +85,7 @@ func main() {
 func ExpenseIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		expenseID := chi.URLParam(r, "expenseID")
-		ctx := context.WithValue(r.Context(), "expenseID", expenseID)
+		ctx := context.WithValue(r.Context(), expenseus.CtxKeyExpenseID, expenseID)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }
@@ -94,7 +94,7 @@ func ExpenseIDCtx(next http.Handler) http.Handler {
 func UsernameCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		username := chi.URLParam(r, "username")
-		ctx := context.WithValue(r.Context(), "username", username)
+		ctx := context.WithValue(r.Context(), expenseus.CtxKeyUsername, username)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

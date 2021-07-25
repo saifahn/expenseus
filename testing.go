@@ -13,7 +13,7 @@ import (
 // by id, adding the id to the request context.
 func NewGetExpenseByIDRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
-	ctx := context.WithValue(req.Context(), "expenseID", id)
+	ctx := context.WithValue(req.Context(), CtxKeyExpenseID, id)
 	return req.WithContext(ctx)
 }
 
@@ -30,7 +30,7 @@ func NewCreateExpenseRequest(user, name string) *http.Request {
 // expenses of a user, adding the user to the request context.
 func NewGetExpensesByUserRequest(username string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/user/%s", username), nil)
-	ctx := context.WithValue(req.Context(), "username", username)
+	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)
 }
 

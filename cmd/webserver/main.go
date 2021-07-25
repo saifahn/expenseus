@@ -27,6 +27,14 @@ func (s *InMemoryExpenseStore) GetExpenseNamesByUser(user string) []string {
 	return expenseNames
 }
 
+func (s *InMemoryExpenseStore) GetAllExpenseNames() []string {
+	var expenseNames []string
+	for _, e := range s.Expenses {
+		expenseNames = append(expenseNames, e.Name)
+	}
+	return expenseNames
+}
+
 func (s *InMemoryExpenseStore) RecordExpense(expense expenseus.Expense) {
 	s.Expenses = append(s.Expenses, expense)
 }
@@ -56,6 +64,7 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Route("/expenses", func(r chi.Router) {
+		r.Get("/", wb.GetAllExpenses)
 		r.Post("/", wb.CreateExpense)
 
 		r.Route("/users/{username}", func(r chi.Router) {

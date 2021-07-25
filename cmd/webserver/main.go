@@ -18,7 +18,13 @@ func (s *InMemoryExpenseStore) GetExpenseNameByID(id string) string {
 }
 
 func (s *InMemoryExpenseStore) GetExpenseNamesByUser(user string) []string {
-	return []string{"test", "something"}
+	var expenseNames []string
+	for _, e := range s.Expenses {
+		if e.User == user {
+			expenseNames = append(expenseNames, e.Name)
+		}
+	}
+	return expenseNames
 }
 
 func (s *InMemoryExpenseStore) RecordExpense(expense expenseus.Expense) {
@@ -26,14 +32,39 @@ func (s *InMemoryExpenseStore) RecordExpense(expense expenseus.Expense) {
 }
 
 func main() {
-	wb := expenseus.NewWebService(&InMemoryExpenseStore{})
+	wb := expenseus.NewWebService(&InMemoryExpenseStore{
+		Expenses: []expenseus.Expense{
+			{
+				Name: "tomomi-01",
+				User: "tomomi",
+			},
+			{
+				Name: "tomomi-02",
+				User: "tomomi",
+			},
+			{
+				Name: "tomomi-03",
+				User: "tomomi",
+			},
+			{
+				Name: "sean-01",
+				User: "sean",
+			},
+		},
+	})
 
 	r := chi.NewRouter()
 
 	r.Route("/expenses", func(r chi.Router) {
+		r.Post("/", wb.CreateExpense)
+
+		r.Route("/users/{user}", func(r chi.Router) {
+			r.Use(UserCtx)
+			r.Get("/", wb.GetExpensesByUser)
+		})
 
 		r.Route("/{expenseID}", func(r chi.Router) {
-			r.Use(IDCtx)
+			r.Use(ExpenseIDCtx)
 			r.Get("/", wb.GetExpenseByID)
 		})
 	})
@@ -42,10 +73,18 @@ func main() {
 }
 
 // Gets the ID from the URL and adds it to the id context for the request.
-func IDCtx(next http.Handler) http.Handler {
+func ExpenseIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		expenseID := chi.URLParam(r, "expenseID")
 		ctx := context.WithValue(r.Context(), "expenseID", expenseID)
+		next.ServeHTTP(rw, r.WithContext(ctx))
+	})
+}
+
+func UserCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		user := chi.URLParam(r, "user")
+		ctx := context.WithValue(r.Context(), "user", user)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

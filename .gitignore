@@ -1,1 +1,10 @@
-webserver
+# ignore all
+*
+
+# unignore all with extensions
+!*.*
+
+# unignore all dirs
+!*/
+
+### Above combination will ignore all files without extension ###

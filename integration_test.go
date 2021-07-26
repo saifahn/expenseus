@@ -33,12 +33,12 @@ func (s *InMemoryExpenseStore) RecordExpense(e expenseus.Expense) {
 	s.expenses[testId] = e
 }
 
-func (s *InMemoryExpenseStore) GetAllExpenseNames() []string {
-	var expenseNames []string
+func (s *InMemoryExpenseStore) GetAllExpenses() []expenseus.Expense {
+	var expenses []expenseus.Expense
 	for _, e := range s.expenses {
-		expenseNames = append(expenseNames, e.Name)
+		expenses = append(expenses, e)
 	}
-	return expenseNames
+	return expenses
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {

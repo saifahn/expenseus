@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
@@ -115,6 +116,9 @@ func TestCreateExpense(t *testing.T) {
 
 func TestGetAllExpenses(t *testing.T) {
 	t.Run("gets all expenses with one expense", func(t *testing.T) {
+		wantedExpenses := []Expense{
+			{User: "tomomi", Name: "test expense 01"},
+		}
 		store := StubExpenseStore{
 			map[string]Expense{
 				"01": {
@@ -135,46 +139,61 @@ func TestGetAllExpenses(t *testing.T) {
 		handler.ServeHTTP(response, req)
 
 		var got []Expense
-		fmt.Println(got)
 		err = json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
-		// AssertResponseBody(t, response.Body.String(), "[test expense 01]")
+		if !reflect.DeepEqual(got, wantedExpenses) {
+			t.Errorf("got expenses %v, wanted %v", got, wantedExpenses)
+		}
 	})
 
-	// t.Run("gets all expenses with more than one expense", func(t *testing.T) {
-	// 	store := StubExpenseStore{
-	// 		map[string]Expense{
-	// 			"01": {
-	// 				User: "tomomi",
-	// 				Name: "test expense 01",
-	// 			},
-	// 			"02": {
-	// 				User: "sean",
-	// 				Name: "test expense 02",
-	// 			},
-	// 			"03": {
-	// 				User: "tomomi",
-	// 				Name: "test expense 03",
-	// 			},
-	// 		},
-	// 	}
-	// 	webservice := NewWebService(&store)
-	// 	req, err := http.NewRequest(http.MethodGet, "/expenses", nil)
-	// 	if err != nil {
-	// 		t.Errorf("there was an error in creating the request")
-	// 	}
-	// 	response := httptest.NewRecorder()
+	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
+		wantedExpenses := []Expense{
+			{User: "tomomi", Name: "test expense 01"},
+			{User: "sean", Name: "test expense 02"},
+			{User: "tomomi", Name: "test expense 03"},
+		}
+		store := StubExpenseStore{
+			map[string]Expense{
+				"01": {
+					User: "tomomi",
+					Name: "test expense 01",
+				},
+				"02": {
+					User: "sean",
+					Name: "test expense 02",
+				},
+				"03": {
+					User: "tomomi",
+					Name: "test expense 03",
+				},
+			},
+		}
+		webservice := NewWebService(&store)
+		req, err := http.NewRequest(http.MethodGet, "/expenses", nil)
+		if err != nil {
+			t.Errorf("there was an error in creating the request")
+		}
+		response := httptest.NewRecorder()
 
-	// 	handler := http.HandlerFunc(webservice.GetAllExpenses)
-	// 	handler.ServeHTTP(response, req)
+		handler := http.HandlerFunc(webservice.GetAllExpenses)
+		handler.ServeHTTP(response, req)
 
-	// 	AssertResponseStatus(t, response.Code, http.StatusOK)
-	// 	AssertResponseBody(t, response.Body.String(), "[test expense 01 test expense 02 test expense 03]")
-	// })
+		var got []Expense
+		err = json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		}
+
+		AssertResponseStatus(t, response.Code, http.StatusOK)
+		// TODO: add assertion for length and that each expense exists rather than exact slice
+		if !reflect.DeepEqual(got, wantedExpenses) {
+			t.Errorf("got expenses %v, wanted %v", got, wantedExpenses)
+		}
+	})
 
 }
 

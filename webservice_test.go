@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var testSeanExpense = Expense{
@@ -35,8 +37,13 @@ func TestGetExpenseByID(t *testing.T) {
 		handler := http.HandlerFunc(webservice.GetExpenseByID)
 		handler.ServeHTTP(response, request)
 
+		// var got Expense
+		// err := json.NewDecoder(response.Body).Decode(&got)
+		// if err != nil {
+		// 	t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+		// }
+
 		AssertResponseStatus(t, response.Code, http.StatusOK)
-		AssertResponseBody(t, response.Body.String(), testSeanExpense.Name)
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
@@ -189,10 +196,8 @@ func TestGetAllExpenses(t *testing.T) {
 		}
 
 		AssertResponseStatus(t, response.Code, http.StatusOK)
-		// TODO: add assertion for length and that each expense exists rather than exact slice
-		if !reflect.DeepEqual(got, wantedExpenses) {
-			t.Errorf("got expenses %v, wanted %v", got, wantedExpenses)
-		}
+		assert.Equal(t, len(got), len(wantedExpenses))
+		assert.ElementsMatch(t, got, wantedExpenses)
 	})
 
 }

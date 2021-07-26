@@ -2,6 +2,7 @@ package expenseus
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -31,40 +32,55 @@ func TestGetExpenseByID(t *testing.T) {
 	webservice := &WebService{&store}
 
 	t.Run("get an expense by id", func(t *testing.T) {
-		request := NewGetExpenseByIDRequest("1")
+		request := NewGetExpenseRequest("1")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.GetExpenseByID)
+		handler := http.HandlerFunc(webservice.GetExpense)
 		handler.ServeHTTP(response, request)
 
-		// var got Expense
-		// err := json.NewDecoder(response.Body).Decode(&got)
-		// if err != nil {
-		// 	t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
-		// }
+		var got Expense
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+		}
 
-		AssertResponseStatus(t, response.Code, http.StatusOK)
+		assert.Equal(t, response.Result().Header.Get("content-type"), "application/json")
+		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, got, testSeanExpense)
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
-		request := NewGetExpenseByIDRequest("9281")
+		request := NewGetExpenseRequest("9281")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.GetExpenseByID)
+		handler := http.HandlerFunc(webservice.GetExpense)
 		handler.ServeHTTP(response, request)
 
-		AssertResponseStatus(t, response.Code, http.StatusOK)
-		AssertResponseBody(t, response.Body.String(), testTomomiExpense.Name)
+		var got Expense
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+		}
+
+		assert.Equal(t, response.Result().Header.Get("content-type"), "application/json")
+		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, got, testTomomiExpense)
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
-		request := NewGetExpenseByIDRequest("13371337")
+		request := NewGetExpenseRequest("13371337")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.GetExpenseByID)
+		handler := http.HandlerFunc(webservice.GetExpense)
 		handler.ServeHTTP(response, request)
 
-		AssertResponseStatus(t, response.Code, http.StatusNotFound)
+		var got Expense
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+		}
+
+		assert.Equal(t, response.Code, http.StatusNotFound)
 	})
 }
 
@@ -206,9 +222,13 @@ type StubExpenseStore struct {
 	expenses map[string]Expense
 }
 
-func (s *StubExpenseStore) GetExpenseNameByID(id string) string {
+func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
 	expense := s.expenses[id]
-	return expense.Name
+	// check for empty Expense
+	if expense == (Expense{}) {
+		return Expense{}, errors.New("expense not found")
+	}
+	return expense, nil
 }
 
 func (s *StubExpenseStore) GetExpenseNamesByUser(user string) []string {

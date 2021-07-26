@@ -14,7 +14,7 @@ const (
 )
 
 type ExpenseStore interface {
-	GetExpenseNameByID(id string) string
+	GetExpense(id string) (Expense, error)
 	GetExpenseNamesByUser(user string) []string
 	GetAllExpenses() []Expense
 	RecordExpense(expense Expense)
@@ -37,24 +37,25 @@ func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	router := http.NewServeMux()
 	router.HandleFunc("/expenses/user/", wb.GetExpensesByUser)
-	router.HandleFunc("/expenses/", wb.GetExpenseByID)
+	router.HandleFunc("/expenses/", wb.GetExpense)
 	router.HandleFunc("/expenses", wb.CreateExpense)
 
 	router.ServeHTTP(w, r)
 }
 
-// GetExpenseByID handles a HTTP request to get an expense by ID, returning the expense name.
-// TODO: update the comment when you return the expense completely
-func (wb *WebService) GetExpenseByID(rw http.ResponseWriter, r *http.Request) {
+// GetExpense handles a HTTP request to get an expense by ID, returning the expense.
+func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	expenseId := r.Context().Value(CtxKeyExpenseID).(string)
 
-	expenseName := wb.store.GetExpenseNameByID(expenseId)
+	expense, err := wb.store.GetExpense(expenseId)
 
-	if expenseName == "" {
+	// TODO: should account for different kinds of errors
+	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
 	}
 
-	fmt.Fprint(rw, expenseName)
+	rw.Header().Set("content-type", "application/json")
+	json.NewEncoder(rw).Encode(expense)
 }
 
 // GetExpensesByUser handles a HTTP request to get all expenses of a user,

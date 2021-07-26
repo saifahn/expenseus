@@ -13,8 +13,9 @@ type InMemoryExpenseStore struct {
 	Expenses []expenseus.Expense
 }
 
-func (s *InMemoryExpenseStore) GetExpenseNameByID(id string) string {
-	return "not implemented yet"
+func (s *InMemoryExpenseStore) GetExpense(id string) (expenseus.Expense, error) {
+	expense := &expenseus.Expense{}
+	return *expense, nil
 }
 
 func (s *InMemoryExpenseStore) GetExpenseNamesByUser(user string) []string {
@@ -37,6 +38,10 @@ func (s *InMemoryExpenseStore) GetAllExpenseNames() []string {
 
 func (s *InMemoryExpenseStore) RecordExpense(expense expenseus.Expense) {
 	s.Expenses = append(s.Expenses, expense)
+}
+
+func (s *InMemoryExpenseStore) GetAllExpenses() []expenseus.Expense {
+	return s.Expenses
 }
 
 func main() {
@@ -74,7 +79,7 @@ func main() {
 
 		r.Route("/{expenseID}", func(r chi.Router) {
 			r.Use(ExpenseIDCtx)
-			r.Get("/", wb.GetExpenseByID)
+			r.Get("/", wb.GetExpense)
 		})
 	})
 

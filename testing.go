@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-// NewGetExpenseByIDRequest creates a request to be used in tests get an expense
+// NewGetExpenseRequest creates a request to be used in tests get an expense
 // by id, adding the id to the request context.
-func NewGetExpenseByIDRequest(id string) *http.Request {
+func NewGetExpenseRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyExpenseID, id)
 	return req.WithContext(ctx)

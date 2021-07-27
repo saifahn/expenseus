@@ -33,16 +33,6 @@ type WebService struct {
 	store ExpenseStore
 }
 
-func (wb *WebService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	router := http.NewServeMux()
-	router.HandleFunc("/expenses/user/", wb.GetExpensesByUser)
-	router.HandleFunc("/expenses/", wb.GetExpense)
-	router.HandleFunc("/expenses", wb.CreateExpense)
-
-	router.ServeHTTP(w, r)
-}
-
 // GetExpense handles a HTTP request to get an expense by ID, returning the expense.
 func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	expenseId := r.Context().Value(CtxKeyExpenseID).(string)

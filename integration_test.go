@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/saifahn/expenseus"
+	"github.com/stretchr/testify/assert"
 )
 
 type InMemoryExpenseStore struct {
@@ -47,14 +48,16 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	}
 	webservice := expenseus.NewWebService(&store)
 
-	webservice.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("tomomi", "test expense 01"))
-	webservice.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("sean", "test expense 02"))
-	webservice.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("tomomi", "test expense 03"))
+	router := expenseus.InitRouter(webservice)
+
+	router.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("tomomi", "test expense 01"))
+	router.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("sean", "test expense 02"))
+	router.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest("tomomi", "test expense 03"))
 
 	response := httptest.NewRecorder()
 	request := expenseus.NewGetExpensesByUserRequest("tomomi")
-	webservice.ServeHTTP(response, request)
-	expenseus.AssertResponseStatus(t, response.Code, http.StatusOK)
+	router.ServeHTTP(response, request)
 
-	expenseus.AssertResponseBody(t, response.Body.String(), `[test expense 01 test expense 03]`)
+	assert.Equal(t, response.Code, http.StatusOK)
+	assert.Equal(t, response.Body.String(), `[test expense 01 test expense 03]`)
 }

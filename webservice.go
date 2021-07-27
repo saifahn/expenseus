@@ -2,7 +2,6 @@ package expenseus
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -15,7 +14,7 @@ const (
 
 type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
-	GetExpenseNamesByUser(user string) []string
+	GetExpensesByUser(user string) ([]Expense, error)
 	GetAllExpenses() []Expense
 	RecordExpense(expense Expense)
 }
@@ -49,14 +48,21 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 }
 
 // GetExpensesByUser handles a HTTP request to get all expenses of a user,
-// returning a list of expense names.
-// TODO: update this comment
+// returning a list of expenses.
 func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CtxKeyUsername).(string)
 
-	expenses := wb.store.GetExpenseNamesByUser(username)
+	expenses, err := wb.store.GetExpensesByUser(username)
 
-	fmt.Fprint(rw, expenses)
+	// TODO: account for different errors
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(rw).Encode(expenses)
+
+	rw.WriteHeader(http.StatusOK)
 }
 
 // GetAllExpenses handles a HTTP request to get all expenses, return a list of
@@ -64,6 +70,7 @@ func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request)
 func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 	expenses := wb.store.GetAllExpenses()
 
+	// TODO: handle errors
 	json.NewEncoder(rw).Encode(expenses)
 
 	rw.WriteHeader(http.StatusOK)
@@ -79,6 +86,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: handle errors
 	wb.store.RecordExpense(e)
 	rw.WriteHeader(http.StatusAccepted)
 }

@@ -100,8 +100,15 @@ func TestGetExpenseByUser(t *testing.T) {
 		handler := http.HandlerFunc(webservice.GetExpensesByUser)
 		handler.ServeHTTP(response, request)
 
-		AssertResponseStatus(t, response.Code, http.StatusOK)
-		AssertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testTomomiExpense.Name))
+		var got []Expense
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		}
+
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Len(t, got, 1)
+		assert.Contains(t, got, testTomomiExpense)
 	})
 
 	t.Run("gets Sean's expenses", func(t *testing.T) {
@@ -111,8 +118,15 @@ func TestGetExpenseByUser(t *testing.T) {
 		handler := http.HandlerFunc(webservice.GetExpensesByUser)
 		handler.ServeHTTP(response, request)
 
-		AssertResponseStatus(t, response.Code, http.StatusOK)
-		AssertResponseBody(t, response.Body.String(), fmt.Sprintf("[%v]", testSeanExpense.Name))
+		var got []Expense
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		}
+
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Len(t, got, 1)
+		assert.Contains(t, got, testSeanExpense)
 	})
 }
 
@@ -231,14 +245,14 @@ func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
 	return expense, nil
 }
 
-func (s *StubExpenseStore) GetExpenseNamesByUser(user string) []string {
-	var expenseNames []string
+func (s *StubExpenseStore) GetExpensesByUser(user string) ([]Expense, error) {
+	var expenses []Expense
 	for _, e := range s.expenses {
 		if e.User == user {
-			expenseNames = append(expenseNames, e.Name)
+			expenses = append(expenses, e)
 		}
 	}
-	return expenseNames
+	return expenses, nil
 }
 
 func (s *StubExpenseStore) RecordExpense(e Expense) {

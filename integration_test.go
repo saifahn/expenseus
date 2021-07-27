@@ -1,6 +1,7 @@
 package expenseus_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -19,14 +20,14 @@ func (s *InMemoryExpenseStore) GetExpense(id string) (expenseus.Expense, error) 
 	return expense, nil
 }
 
-func (s *InMemoryExpenseStore) GetExpenseNamesByUser(user string) []string {
-	var expenseNames []string
+func (s *InMemoryExpenseStore) GetExpensesByUser(user string) ([]expenseus.Expense, error) {
+	var expenses []expenseus.Expense
 	for _, e := range s.expenses {
 		if e.User == user {
-			expenseNames = append(expenseNames, e.Name)
+			expenses = append(expenses, e)
 		}
 	}
-	return expenseNames
+	return expenses, nil
 }
 
 func (s *InMemoryExpenseStore) RecordExpense(e expenseus.Expense) {
@@ -58,6 +59,14 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	request := expenseus.NewGetExpensesByUserRequest("tomomi")
 	router.ServeHTTP(response, request)
 
+	var got []expenseus.Expense
+	err := json.NewDecoder(response.Body).Decode(&got)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+	}
+
 	assert.Equal(t, response.Code, http.StatusOK)
-	assert.Equal(t, response.Body.String(), `[test expense 01 test expense 03]`)
+	assert.Equal(t, 2, len(got))
+	assert.Contains(t, got, expenseus.Expense{User: "tomomi", Name: "test expense 01"})
+	assert.Contains(t, got, expenseus.Expense{User: "tomomi", Name: "test expense 03"})
 }

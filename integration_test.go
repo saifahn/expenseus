@@ -36,12 +36,12 @@ func (s *InMemoryExpenseStore) RecordExpense(e expenseus.Expense) error {
 	return nil
 }
 
-func (s *InMemoryExpenseStore) GetAllExpenses() []expenseus.Expense {
+func (s *InMemoryExpenseStore) GetAllExpenses() ([]expenseus.Expense, error) {
 	var expenses []expenseus.Expense
 	for _, e := range s.expenses {
 		expenses = append(expenses, e)
 	}
-	return expenses
+	return expenses, nil
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {

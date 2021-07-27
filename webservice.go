@@ -15,7 +15,7 @@ const (
 type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
 	GetExpensesByUser(user string) ([]Expense, error)
-	GetAllExpenses() []Expense
+	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expense Expense) error
 }
 
@@ -60,17 +60,23 @@ func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// TODO: handle error
 	json.NewEncoder(rw).Encode(expenses)
 
 	rw.WriteHeader(http.StatusOK)
 }
 
-// GetAllExpenses handles a HTTP request to get all expenses, return a list of
-// expense names.
+// GetAllExpenses handles a HTTP request to get all expenses, returning a list
+// of expenses.
 func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
-	expenses := wb.store.GetAllExpenses()
+	expenses, err := wb.store.GetAllExpenses()
 
-	// TODO: handle errors
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: handle error
 	json.NewEncoder(rw).Encode(expenses)
 
 	rw.WriteHeader(http.StatusOK)

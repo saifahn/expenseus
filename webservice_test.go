@@ -256,10 +256,10 @@ func (s *StubExpenseStore) RecordExpense(e Expense) error {
 	return nil
 }
 
-func (s *StubExpenseStore) GetAllExpenses() []Expense {
+func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
 	var expenses []Expense
 	for _, e := range s.expenses {
 		expenses = append(expenses, e)
 	}
-	return expenses
+	return expenses, nil
 }

@@ -30,9 +30,10 @@ func (s *InMemoryExpenseStore) GetExpensesByUser(user string) ([]expenseus.Expen
 	return expenses, nil
 }
 
-func (s *InMemoryExpenseStore) RecordExpense(e expenseus.Expense) {
+func (s *InMemoryExpenseStore) RecordExpense(e expenseus.Expense) error {
 	testId := fmt.Sprintf("tid-%v", e.Name)
 	s.expenses[testId] = e
+	return nil
 }
 
 func (s *InMemoryExpenseStore) GetAllExpenses() []expenseus.Expense {

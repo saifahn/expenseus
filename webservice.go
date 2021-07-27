@@ -16,7 +16,7 @@ type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
 	GetExpensesByUser(user string) ([]Expense, error)
 	GetAllExpenses() []Expense
-	RecordExpense(expense Expense)
+	RecordExpense(expense Expense) error
 }
 
 type Expense struct {
@@ -86,7 +86,11 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: handle errors
-	wb.store.RecordExpense(e)
+	err = wb.store.RecordExpense(e)
+
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
 	rw.WriteHeader(http.StatusAccepted)
 }

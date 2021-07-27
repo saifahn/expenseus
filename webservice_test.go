@@ -143,11 +143,8 @@ func TestCreateExpense(t *testing.T) {
 		handler := http.HandlerFunc(webservice.CreateExpense)
 		handler.ServeHTTP(response, request)
 
-		AssertResponseStatus(t, response.Code, http.StatusAccepted)
-
-		if len(store.expenses) != 1 {
-			t.Errorf("got %d expenses, want %d", len(store.expenses), 1)
-		}
+		assert.Equal(t, http.StatusAccepted, response.Code)
+		assert.Len(t, store.expenses, 1)
 	})
 }
 
@@ -255,9 +252,10 @@ func (s *StubExpenseStore) GetExpensesByUser(user string) ([]Expense, error) {
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) RecordExpense(e Expense) {
+func (s *StubExpenseStore) RecordExpense(e Expense) error {
 	testId := fmt.Sprintf("tid-%v", e.Name)
 	s.expenses[testId] = e
+	return nil
 }
 
 func (s *StubExpenseStore) GetAllExpenses() []Expense {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,8 +43,8 @@ func TestGetExpenseByID(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
 		}
 
-		assert.Equal(t, response.Result().Header.Get("content-type"), "application/json")
-		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, "application/json", response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, got, testSeanExpense)
 	})
 
@@ -62,8 +61,8 @@ func TestGetExpenseByID(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
 		}
 
-		assert.Equal(t, response.Result().Header.Get("content-type"), "application/json")
-		assert.Equal(t, response.Code, http.StatusOK)
+		assert.Equal(t, "application/json", response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, got, testTomomiExpense)
 	})
 
@@ -80,7 +79,7 @@ func TestGetExpenseByID(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
 		}
 
-		assert.Equal(t, response.Code, http.StatusNotFound)
+		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 }
 
@@ -178,10 +177,9 @@ func TestGetAllExpenses(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
-		AssertResponseStatus(t, response.Code, http.StatusOK)
-		if !reflect.DeepEqual(got, wantedExpenses) {
-			t.Errorf("got expenses %v, wanted %v", got, wantedExpenses)
-		}
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Equal(t, len(wantedExpenses), len(got))
+		assert.ElementsMatch(t, got, wantedExpenses)
 	})
 
 	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
@@ -222,8 +220,8 @@ func TestGetAllExpenses(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
-		AssertResponseStatus(t, response.Code, http.StatusOK)
-		assert.Equal(t, len(got), len(wantedExpenses))
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Equal(t, len(wantedExpenses), len(got))
 		assert.ElementsMatch(t, got, wantedExpenses)
 	})
 

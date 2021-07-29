@@ -10,6 +10,7 @@ type contextKey int
 const (
 	CtxKeyExpenseID contextKey = iota
 	CtxKeyUsername  contextKey = iota
+	jsonContentType            = "application/json"
 )
 
 type ExpenseStore interface {
@@ -43,8 +44,12 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 	}
 
-	rw.Header().Set("content-type", "application/json")
-	json.NewEncoder(rw).Encode(expense)
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(expense)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // GetExpensesByUser handles a HTTP request to get all expenses of a user,
@@ -60,10 +65,12 @@ func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// TODO: handle error
-	json.NewEncoder(rw).Encode(expenses)
-
-	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(expenses)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // GetAllExpenses handles a HTTP request to get all expenses, returning a list
@@ -76,10 +83,12 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: handle error
-	json.NewEncoder(rw).Encode(expenses)
-
-	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(expenses)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // CreateExpense handles a HTTP request to create a new expense.

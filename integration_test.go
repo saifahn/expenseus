@@ -14,9 +14,9 @@ import (
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	wantedExpenses := []expenseus.Expense{
-		{"tomomi", "test expense 01"},
-		{"sean", "test expense 02"},
-		{"tomomi", "test expense 03"},
+		{User: "tomomi", Name: "test expense 01"},
+		{User: "sean", Name: "test expense 02"},
+		{User: "tomomi", Name: "test expense 03"},
 	}
 
 	mr, err := miniredis.Run()
@@ -29,15 +29,16 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 
 	router := expenseus.InitRouter(webservice)
 
+	// create expenses in the db
 	for _, e := range wantedExpenses {
 		router.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest(
 			e.User, e.Name,
 		))
 	}
 
+	// get all expenses
 	response := httptest.NewRecorder()
 	request := expenseus.NewGetAllExpensesRequest()
-
 	router.ServeHTTP(response, request)
 
 	var got []expenseus.Expense
@@ -45,10 +46,24 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 	}
+
 	assert.Equal(t, response.Code, http.StatusOK)
 	assert.Equal(t, len(wantedExpenses), len(got))
 	assert.ElementsMatch(t, wantedExpenses, got)
 
-	// assert.Contains(t, got, expenseus.Expense{User: "tomomi", Name: "test expense 01"})
-	// assert.Contains(t, got, expenseus.Expense{User: "tomomi", Name: "test expense 03"})
+	// get one user's expenses
+	response = httptest.NewRecorder()
+	request = expenseus.NewGetExpensesByUserRequest("tomomi")
+	router.ServeHTTP(response, request)
+
+	// reset got to an empty slice
+	got = []expenseus.Expense{}
+	err = json.NewDecoder(response.Body).Decode(&got)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+	}
+
+	assert.Len(t, got, 2)
+	assert.Contains(t, got, expenseus.Expense{User: "tomomi", Name: "test expense 01"})
+	assert.Contains(t, got, expenseus.Expense{User: "tomomi", Name: "test expense 03"})
 }

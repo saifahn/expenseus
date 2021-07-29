@@ -78,7 +78,22 @@ func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
 }
 
 func (r *Redis) GetExpensesByUser(username string) ([]expenseus.Expense, error) {
-	return []expenseus.Expense{}, nil
+	// get expenseids from the user expenses set
+	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(username), 0, -1).Val()
+	// for each id, get the expense
+	var expenses []expenseus.Expense
+	for _, id := range expenseIDs {
+		// TODO: handle this error
+		val, err := r.db.Get(ctx, ExpenseKey(id)).Result()
+
+		var expense expenseus.Expense
+		err = json.Unmarshal([]byte(val), &expense)
+		if err != nil {
+			panic(err)
+		}
+		expenses = append(expenses, expense)
+	}
+	return expenses, nil
 }
 
 func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {

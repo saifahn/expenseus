@@ -47,11 +47,11 @@ func (r *Redis) RecordExpense(e expenseus.Expense) error {
 
 	pipe := r.db.TxPipeline()
 	// record the expenseID in the expense sorted set
-	pipe.ZAdd(ctx, "expenses", &redis.Z{Score: float64(createdAt), Member: expenseID})
+	pipe.ZAdd(ctx, AllExpensesKey(), &redis.Z{Score: float64(createdAt), Member: expenseID})
 	// record the expenseID in the user-expense sorted set
-	pipe.ZAdd(ctx, fmt.Sprintf("user:%v:expenses", user), &redis.Z{Score: float64(createdAt), Member: expenseID})
-	// set the expense at the expense hash
-	pipe.Set(ctx, fmt.Sprintf("expense:%v", expenseID), expense, 0)
+	pipe.ZAdd(ctx, UserExpensesKey(user), &redis.Z{Score: float64(createdAt), Member: expenseID})
+	// set the expense at the expense key
+	pipe.Set(ctx, ExpenseKey(expenseID), expense, 0)
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return err
@@ -60,11 +60,12 @@ func (r *Redis) RecordExpense(e expenseus.Expense) error {
 }
 
 func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
-	expenseIDs := r.db.ZRange(ctx, "expenses", 0, -1).Val()
+	expenseIDs := r.db.ZRange(ctx, AllExpensesKey(), 0, -1).Val()
 
 	var expenses []expenseus.Expense
 	for _, id := range expenseIDs {
-		val, err := r.db.Get(ctx, fmt.Sprintf("expense:%v", id)).Result()
+		// TODO: handle this error
+		val, err := r.db.Get(ctx, ExpenseKey(id)).Result()
 
 		var expense expenseus.Expense
 		err = json.Unmarshal([]byte(val), &expense)
@@ -82,4 +83,16 @@ func (r *Redis) GetExpensesByUser(username string) ([]expenseus.Expense, error) 
 
 func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {
 	return expenseus.Expense{}, nil
+}
+
+func AllExpensesKey() string {
+	return "expenses"
+}
+
+func UserExpensesKey(user string) string {
+	return fmt.Sprintf("user:%v:expenses", user)
+}
+
+func ExpenseKey(id string) string {
+	return fmt.Sprintf("expense:%v", id)
 }

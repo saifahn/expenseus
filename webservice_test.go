@@ -43,7 +43,7 @@ func TestGetExpenseByID(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
 		}
 
-		assert.Equal(t, "application/json", response.Result().Header.Get("content-type"))
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, got, testSeanExpense)
 	})
@@ -61,7 +61,7 @@ func TestGetExpenseByID(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
 		}
 
-		assert.Equal(t, "application/json", response.Result().Header.Get("content-type"))
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, got, testTomomiExpense)
 	})
@@ -105,6 +105,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Len(t, got, 1)
 		assert.Contains(t, got, testTomomiExpense)
@@ -123,6 +124,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Len(t, got, 1)
 		assert.Contains(t, got, testSeanExpense)
@@ -174,6 +176,7 @@ func TestGetAllExpenses(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, len(wantedExpenses), len(got))
 		assert.ElementsMatch(t, got, wantedExpenses)
@@ -215,6 +218,7 @@ func TestGetAllExpenses(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, len(wantedExpenses), len(got))
 		assert.ElementsMatch(t, got, wantedExpenses)

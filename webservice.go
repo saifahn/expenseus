@@ -20,8 +20,8 @@ type ExpenseStore interface {
 }
 
 type Expense struct {
-	Name string
-	User string
+	Name string `json:"name"`
+	User string `json:"user"`
 }
 
 func NewWebService(store ExpenseStore) *WebService {
@@ -34,9 +34,9 @@ type WebService struct {
 
 // GetExpense handles a HTTP request to get an expense by ID, returning the expense.
 func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
-	expenseId := r.Context().Value(CtxKeyExpenseID).(string)
+	expenseID := r.Context().Value(CtxKeyExpenseID).(string)
 
-	expense, err := wb.store.GetExpense(expenseId)
+	expense, err := wb.store.GetExpense(expenseID)
 
 	// TODO: should account for different kinds of errors
 	if err != nil {

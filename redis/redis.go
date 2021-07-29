@@ -1,0 +1,85 @@
+package redis
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
+	"github.com/saifahn/expenseus"
+)
+
+var ctx = context.Background()
+
+func InitClient() *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	return client
+}
+
+func New() *Redis {
+	client := InitClient()
+	return &Redis{db: *client}
+}
+
+type Redis struct {
+	db redis.Client
+}
+
+func (r *Redis) RecordExpense(e expenseus.Expense) error {
+	// generate id for expense
+	expenseID := uuid.New().String()
+	// get the time now for the score on the sets
+	createdAt := time.Now().Unix()
+	// get the user for the user-expense set
+	user := e.User
+
+	expense, err := json.Marshal(&e)
+	if err != nil {
+		panic(err)
+	}
+
+	pipe := r.db.TxPipeline()
+	// record the expenseID in the expense sorted set
+	pipe.ZAdd(ctx, "expenses", &redis.Z{Score: float64(createdAt), Member: expenseID})
+	// record the expenseID in the user-expense sorted set
+	pipe.ZAdd(ctx, fmt.Sprintf("user:%v:expenses", user), &redis.Z{Score: float64(createdAt), Member: expenseID})
+	// set the expense at the expense hash
+	pipe.Set(ctx, fmt.Sprintf("expense:%v", expenseID), expense, 0)
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
+	expenseIDs := r.db.ZRange(ctx, "expenses", 0, -1).Val()
+
+	var expenses []expenseus.Expense
+	for _, id := range expenseIDs {
+		val, err := r.db.Get(ctx, fmt.Sprintf("expense:%v", id)).Result()
+
+		var expense expenseus.Expense
+		err = json.Unmarshal([]byte(val), &expense)
+		if err != nil {
+			panic(err)
+		}
+		expenses = append(expenses, expense)
+	}
+	return expenses, nil
+}
+
+func (r *Redis) GetExpensesByUser(username string) ([]expenseus.Expense, error) {
+	return []expenseus.Expense{}, nil
+}
+
+func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {
+	return expenseus.Expense{}, nil
+}

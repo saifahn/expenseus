@@ -13,9 +13,9 @@ import (
 
 var ctx = context.Background()
 
-func InitClient() *redis.Client {
+func InitClient(addr string) *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     addr,
 		Password: "",
 		DB:       0,
 	})
@@ -23,8 +23,8 @@ func InitClient() *redis.Client {
 	return client
 }
 
-func New() *Redis {
-	client := InitClient()
+func New(address string) *Redis {
+	client := InitClient(address)
 	return &Redis{db: *client}
 }
 

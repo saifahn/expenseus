@@ -8,8 +8,10 @@ import (
 	"github.com/saifahn/expenseus/redis"
 )
 
+var redisAddr = "localhost:6379"
+
 func main() {
-	rdb := redis.New()
+	rdb := redis.New(redisAddr)
 
 	wb := expenseus.NewWebService(rdb)
 

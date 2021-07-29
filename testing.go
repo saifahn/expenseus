@@ -34,6 +34,11 @@ func NewGetExpensesByUserRequest(username string) *http.Request {
 	return req.WithContext(ctx)
 }
 
+func NewGetAllExpensesRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/expenses/", nil)
+	return req
+}
+
 func AssertResponseBody(t *testing.T, got, want string) {
 	t.Helper()
 

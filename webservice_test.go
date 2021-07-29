@@ -162,17 +162,14 @@ func TestGetAllExpenses(t *testing.T) {
 		}
 		webservice := NewWebService(&store)
 
-		req, err := http.NewRequest(http.MethodGet, "/expenses", nil)
-		if err != nil {
-			t.Errorf("there was an error in creating the request")
-		}
+		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.GetAllExpenses)
-		handler.ServeHTTP(response, req)
+		handler.ServeHTTP(response, request)
 
 		var got []Expense
-		err = json.NewDecoder(response.Body).Decode(&got)
+		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
@@ -205,17 +202,15 @@ func TestGetAllExpenses(t *testing.T) {
 			},
 		}
 		webservice := NewWebService(&store)
-		req, err := http.NewRequest(http.MethodGet, "/expenses", nil)
-		if err != nil {
-			t.Errorf("there was an error in creating the request")
-		}
+
+		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.GetAllExpenses)
-		handler.ServeHTTP(response, req)
+		handler.ServeHTTP(response, request)
 
 		var got []Expense
-		err = json.NewDecoder(response.Body).Decode(&got)
+		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}

@@ -12,42 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var seanUser = User{
-	Username: "saifahn",
-	Name:     "Sean Li",
-	ID:       "sean_id",
-}
-
-var tomomiUser = User{
-	Username: "tomochi",
-	Name:     "Tomomi Kinoshita",
-	ID:       "tomomi_id",
-}
-
-var testSeanExpense = Expense{
-	ID:     "1",
-	Name:   "Expense 1",
-	UserID: seanUser.ID,
-}
-
-var testTomomiExpense = Expense{
-	ID:     "9281",
-	Name:   "Expense 9281",
-	UserID: tomomiUser.ID,
-}
-
-var testTomomiExpense2 = Expense{
-	ID:     "14928",
-	Name:   "Expense 14928",
-	UserID: tomomiUser.ID,
-}
-
 func TestGetExpenseByID(t *testing.T) {
 	store := StubExpenseStore{
 		users: []User{},
 		expenses: map[string]Expense{
-			"1":    testSeanExpense,
-			"9281": testTomomiExpense,
+			"1":    TestSeanExpense,
+			"9281": TestTomomiExpense,
 		},
 	}
 	webservice := &WebService{&store}
@@ -67,7 +37,7 @@ func TestGetExpenseByID(t *testing.T) {
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, got, testSeanExpense)
+		assert.Equal(t, got, TestSeanExpense)
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
@@ -85,7 +55,7 @@ func TestGetExpenseByID(t *testing.T) {
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, got, testTomomiExpense)
+		assert.Equal(t, got, TestTomomiExpense)
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
@@ -108,18 +78,18 @@ func TestGetExpenseByID(t *testing.T) {
 func TestGetExpenseByUser(t *testing.T) {
 	store := StubExpenseStore{
 		users: []User{
-			seanUser,
-			tomomiUser,
+			TestSeanUser,
+			TestTomomiUser,
 		},
 		expenses: map[string]Expense{
-			"1":    testSeanExpense,
-			"9281": testTomomiExpense,
+			"1":    TestSeanExpense,
+			"9281": TestTomomiExpense,
 		},
 	}
 	webservice := NewWebService(&store)
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
-		request := NewGetExpensesByUsernameRequest(tomomiUser.Username)
+		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.GetExpensesByUser)
@@ -134,11 +104,11 @@ func TestGetExpenseByUser(t *testing.T) {
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Len(t, got, 1)
-		assert.Contains(t, got, testTomomiExpense)
+		assert.Contains(t, got, TestTomomiExpense)
 	})
 
 	t.Run("gets saifahn's expenses", func(t *testing.T) {
-		request := NewGetExpensesByUsernameRequest(seanUser.Username)
+		request := NewGetExpensesByUsernameRequest(TestSeanUser.Username)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.GetExpensesByUser)
@@ -153,7 +123,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Len(t, got, 1)
-		assert.Contains(t, got, testSeanExpense)
+		assert.Contains(t, got, TestSeanExpense)
 	})
 }
 
@@ -179,12 +149,12 @@ func TestCreateExpense(t *testing.T) {
 func TestGetAllExpenses(t *testing.T) {
 	t.Run("gets all expenses with one expense", func(t *testing.T) {
 		wantedExpenses := []Expense{
-			testTomomiExpense,
+			TestTomomiExpense,
 		}
 		store := StubExpenseStore{
 			users: []User{},
 			expenses: map[string]Expense{
-				"9281": testTomomiExpense,
+				"9281": TestTomomiExpense,
 			},
 		}
 		webservice := NewWebService(&store)
@@ -209,14 +179,14 @@ func TestGetAllExpenses(t *testing.T) {
 
 	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
 		wantedExpenses := []Expense{
-			testSeanExpense, testTomomiExpense, testTomomiExpense2,
+			TestSeanExpense, TestTomomiExpense, TestTomomiExpense2,
 		}
 		store := StubExpenseStore{
 			users: []User{},
 			expenses: map[string]Expense{
-				"1":     testSeanExpense,
-				"9281":  testTomomiExpense,
-				"14928": testTomomiExpense2,
+				"1":     TestSeanExpense,
+				"9281":  TestTomomiExpense,
+				"14928": TestTomomiExpense2,
 			},
 		}
 		webservice := NewWebService(&store)

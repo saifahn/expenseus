@@ -9,6 +9,36 @@ import (
 	"testing"
 )
 
+var TestSeanUser = User{
+	Username: "saifahn",
+	Name:     "Sean Li",
+	ID:       "sean_id",
+}
+
+var TestTomomiUser = User{
+	Username: "tomochi",
+	Name:     "Tomomi Kinoshita",
+	ID:       "tomomi_id",
+}
+
+var TestSeanExpense = Expense{
+	ID:     "1",
+	Name:   "Expense 1",
+	UserID: TestSeanUser.ID,
+}
+
+var TestTomomiExpense = Expense{
+	ID:     "9281",
+	Name:   "Expense 9281",
+	UserID: TestTomomiUser.ID,
+}
+
+var TestTomomiExpense2 = Expense{
+	ID:     "14928",
+	Name:   "Expense 14928",
+	UserID: TestTomomiUser.ID,
+}
+
 // NewGetExpenseRequest creates a request to be used in tests get an expense
 // by id, adding the id to the request context.
 func NewGetExpenseRequest(id string) *http.Request {

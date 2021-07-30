@@ -13,12 +13,20 @@ import (
 )
 
 var testSeanExpense = Expense{
+	ID:   "1",
 	Name: "Expense 1",
 	User: "sean",
 }
 
 var testTomomiExpense = Expense{
+	ID:   "9281",
 	Name: "Expense 9281",
+	User: "tomomi",
+}
+
+var testTomomiExpense2 = Expense{
+	ID:   "14928",
+	Name: "Expense 14928",
 	User: "tomomi",
 }
 
@@ -156,15 +164,12 @@ func TestCreateExpense(t *testing.T) {
 func TestGetAllExpenses(t *testing.T) {
 	t.Run("gets all expenses with one expense", func(t *testing.T) {
 		wantedExpenses := []Expense{
-			{User: "tomomi", Name: "test expense 01"},
+			testTomomiExpense,
 		}
 		store := StubExpenseStore{
 			users: []User{},
 			expenses: map[string]Expense{
-				"01": {
-					User: "tomomi",
-					Name: "test expense 01",
-				},
+				"9281": testTomomiExpense,
 			},
 		}
 		webservice := NewWebService(&store)
@@ -189,25 +194,14 @@ func TestGetAllExpenses(t *testing.T) {
 
 	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
 		wantedExpenses := []Expense{
-			{User: "tomomi", Name: "test expense 01"},
-			{User: "sean", Name: "test expense 02"},
-			{User: "tomomi", Name: "test expense 03"},
+			testSeanExpense, testTomomiExpense, testTomomiExpense2,
 		}
 		store := StubExpenseStore{
 			users: []User{},
 			expenses: map[string]Expense{
-				"01": {
-					User: "tomomi",
-					Name: "test expense 01",
-				},
-				"02": {
-					User: "sean",
-					Name: "test expense 02",
-				},
-				"03": {
-					User: "tomomi",
-					Name: "test expense 03",
-				},
+				"1":     testSeanExpense,
+				"9281":  testTomomiExpense,
+				"14928": testTomomiExpense2,
 			},
 		}
 		webservice := NewWebService(&store)

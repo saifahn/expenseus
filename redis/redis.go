@@ -107,6 +107,10 @@ func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {
 	return expense, nil
 }
 
+func (r *Redis) CreateUser(u expenseus.User) error {
+	return nil
+}
+
 func AllExpensesKey() string {
 	return "expenses"
 }

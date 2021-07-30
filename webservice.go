@@ -18,6 +18,12 @@ type ExpenseStore interface {
 	GetExpensesByUser(user string) ([]Expense, error)
 	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expense Expense) error
+	CreateUser(user User) error
+}
+
+type User struct {
+	Name string
+	ID   string
 }
 
 type Expense struct {
@@ -102,6 +108,24 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	err = wb.store.RecordExpense(e)
+
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	rw.WriteHeader(http.StatusAccepted)
+}
+
+func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
+	var u User
+	err := json.NewDecoder(r.Body).Decode(&u)
+
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = wb.store.CreateUser(u)
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

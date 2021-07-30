@@ -1,6 +1,7 @@
 package expenseus
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,7 +24,8 @@ var testTomomiExpense = Expense{
 
 func TestGetExpenseByID(t *testing.T) {
 	store := StubExpenseStore{
-		map[string]Expense{
+		users: []User{},
+		expenses: map[string]Expense{
 			"1":    testSeanExpense,
 			"9281": testTomomiExpense,
 		},
@@ -85,7 +87,8 @@ func TestGetExpenseByID(t *testing.T) {
 
 func TestGetExpenseByUser(t *testing.T) {
 	store := StubExpenseStore{
-		map[string]Expense{
+		users: []User{},
+		expenses: map[string]Expense{
 			"1":    testSeanExpense,
 			"9281": testTomomiExpense,
 		},
@@ -133,7 +136,8 @@ func TestGetExpenseByUser(t *testing.T) {
 
 func TestCreateExpense(t *testing.T) {
 	store := StubExpenseStore{
-		map[string]Expense{},
+		users:    []User{},
+		expenses: map[string]Expense{},
 	}
 	webservice := NewWebService(&store)
 
@@ -155,7 +159,8 @@ func TestGetAllExpenses(t *testing.T) {
 			{User: "tomomi", Name: "test expense 01"},
 		}
 		store := StubExpenseStore{
-			map[string]Expense{
+			users: []User{},
+			expenses: map[string]Expense{
 				"01": {
 					User: "tomomi",
 					Name: "test expense 01",
@@ -189,7 +194,8 @@ func TestGetAllExpenses(t *testing.T) {
 			{User: "tomomi", Name: "test expense 03"},
 		}
 		store := StubExpenseStore{
-			map[string]Expense{
+			users: []User{},
+			expenses: map[string]Expense{
 				"01": {
 					User: "tomomi",
 					Name: "test expense 01",
@@ -226,8 +232,34 @@ func TestGetAllExpenses(t *testing.T) {
 
 }
 
+func TestCreateUser(t *testing.T) {
+	store := StubExpenseStore{}
+	webservice := NewWebService(&store)
+
+	user := User{ID: "id-01", Name: "sean"}
+	userJSON, err := json.Marshal(user)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	request, err := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(userJSON))
+	if err != nil {
+		t.Fatalf("request could not be created, %v", err)
+	}
+	response := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(webservice.CreateUser)
+	handler.ServeHTTP(response, request)
+
+	assert.Equal(t, http.StatusAccepted, response.Code)
+	assert.Len(t, store.users, 1)
+	assert.Contains(t, store.users, user)
+}
+
+// stub store implementation
 type StubExpenseStore struct {
 	expenses map[string]Expense
+	users    []User
 }
 
 func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
@@ -261,4 +293,9 @@ func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
 		expenses = append(expenses, e)
 	}
 	return expenses, nil
+}
+
+func (s *StubExpenseStore) CreateUser(u User) error {
+	s.users = append(s.users, u)
+	return nil
 }

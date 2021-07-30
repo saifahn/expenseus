@@ -15,21 +15,22 @@ const (
 
 type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
-	GetExpensesByUser(user string) ([]Expense, error)
+	GetExpensesByUser(username string) ([]Expense, error)
 	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expense Expense) error
 	CreateUser(user User) error
 }
 
 type User struct {
-	Name string
-	ID   string
+	Username string
+	Name     string
+	ID       string
 }
 
 type Expense struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	User string `json:"user"`
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	UserID string `json:"userid"`
 }
 
 func NewWebService(store ExpenseStore) *WebService {

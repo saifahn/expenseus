@@ -26,9 +26,9 @@ func NewCreateExpenseRequest(user, name string) *http.Request {
 	return req
 }
 
-// NewGetExpensesByUserRequest creates a request to be used in tests to get all
+// NewGetExpensesByUsernameRequest creates a request to be used in tests to get all
 // expenses of a user, adding the user to the request context.
-func NewGetExpensesByUserRequest(username string) *http.Request {
+func NewGetExpensesByUsernameRequest(username string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/user/%s", username), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)

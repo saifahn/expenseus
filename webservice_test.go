@@ -12,22 +12,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var seanUser = User{
+	Username: "saifahn",
+	Name:     "Sean Li",
+	ID:       "sean_id",
+}
+
+var tomomiUser = User{
+	Username: "tomochi",
+	Name:     "Tomomi Kinoshita",
+	ID:       "tomomi_id",
+}
+
 var testSeanExpense = Expense{
-	ID:   "1",
-	Name: "Expense 1",
-	User: "sean",
+	ID:     "1",
+	Name:   "Expense 1",
+	UserID: seanUser.ID,
 }
 
 var testTomomiExpense = Expense{
-	ID:   "9281",
-	Name: "Expense 9281",
-	User: "tomomi",
+	ID:     "9281",
+	Name:   "Expense 9281",
+	UserID: tomomiUser.ID,
 }
 
 var testTomomiExpense2 = Expense{
-	ID:   "14928",
-	Name: "Expense 14928",
-	User: "tomomi",
+	ID:     "14928",
+	Name:   "Expense 14928",
+	UserID: tomomiUser.ID,
 }
 
 func TestGetExpenseByID(t *testing.T) {
@@ -95,7 +107,10 @@ func TestGetExpenseByID(t *testing.T) {
 
 func TestGetExpenseByUser(t *testing.T) {
 	store := StubExpenseStore{
-		users: []User{},
+		users: []User{
+			seanUser,
+			tomomiUser,
+		},
 		expenses: map[string]Expense{
 			"1":    testSeanExpense,
 			"9281": testTomomiExpense,
@@ -103,8 +118,8 @@ func TestGetExpenseByUser(t *testing.T) {
 	}
 	webservice := NewWebService(&store)
 
-	t.Run("gets Tomomi's expenses", func(t *testing.T) {
-		request := NewGetExpensesByUserRequest("tomomi")
+	t.Run("gets tomochi's expenses", func(t *testing.T) {
+		request := NewGetExpensesByUsernameRequest(tomomiUser.Username)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.GetExpensesByUser)
@@ -122,8 +137,8 @@ func TestGetExpenseByUser(t *testing.T) {
 		assert.Contains(t, got, testTomomiExpense)
 	})
 
-	t.Run("gets Sean's expenses", func(t *testing.T) {
-		request := NewGetExpensesByUserRequest("sean")
+	t.Run("gets saifahn's expenses", func(t *testing.T) {
+		request := NewGetExpensesByUsernameRequest(seanUser.Username)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.GetExpensesByUser)
@@ -230,7 +245,7 @@ func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
 	webservice := NewWebService(&store)
 
-	user := User{ID: "id-01", Name: "sean"}
+	user := User{ID: "saifahn", Name: "Sean Li"}
 	userJSON, err := json.Marshal(user)
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -265,10 +280,19 @@ func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
 	return expense, nil
 }
 
-func (s *StubExpenseStore) GetExpensesByUser(user string) ([]Expense, error) {
+func (s *StubExpenseStore) GetExpensesByUser(username string) ([]Expense, error) {
+	var targetUser User
+	for _, u := range s.users {
+		if u.Username == username {
+			targetUser = u
+			break
+		}
+	}
+
 	var expenses []Expense
 	for _, e := range s.expenses {
-		if e.User == user {
+		// if the user id is the same as userid, then append
+		if e.UserID == targetUser.ID {
 			expenses = append(expenses, e)
 		}
 	}

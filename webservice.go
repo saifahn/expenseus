@@ -19,6 +19,7 @@ type ExpenseStore interface {
 	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
+	GetAllUsers() ([]User, error)
 }
 
 type User struct {
@@ -105,15 +106,15 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
-	var e ExpenseDetails
-	err := json.NewDecoder(r.Body).Decode(&e)
+	var ed ExpenseDetails
+	err := json.NewDecoder(r.Body).Decode(&ed)
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = wb.store.RecordExpense(e)
+	err = wb.store.RecordExpense(ed)
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -138,4 +139,19 @@ func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusAccepted)
+}
+
+func (wb *WebService) ListUsers(rw http.ResponseWriter, r *http.Request) {
+	users, err := wb.store.GetAllUsers()
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(users)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

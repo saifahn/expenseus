@@ -217,7 +217,7 @@ func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
 	webservice := NewWebService(&store)
 
-	user := User{ID: "saifahn", Name: "Sean Li"}
+	user := TestSeanUser
 	userJSON, err := json.Marshal(user)
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -235,6 +235,30 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, response.Code)
 	assert.Len(t, store.users, 1)
 	assert.Contains(t, store.users, user)
+}
+
+func TestListUsers(t *testing.T) {
+	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
+	webservice := NewWebService(&store)
+
+	request, err := http.NewRequest(http.MethodGet, "/users", nil)
+	if err != nil {
+		t.Fatalf("request could not be created, %v", err)
+	}
+	response := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(webservice.ListUsers)
+	handler.ServeHTTP(response, request)
+
+	var got []User
+	err = json.NewDecoder(response.Body).Decode(&got)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+	}
+
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.Len(t, got, len(store.users))
+	assert.ElementsMatch(t, got, store.users)
 }
 
 // stub store implementation
@@ -292,4 +316,8 @@ func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
 func (s *StubExpenseStore) CreateUser(u User) error {
 	s.users = append(s.users, u)
 	return nil
+}
+
+func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
+	return s.users, nil
 }

@@ -114,6 +114,10 @@ func (r *Redis) CreateUser(u expenseus.User) error {
 	return nil
 }
 
+func (r *Redis) GetAllUsers() ([]expenseus.User, error) {
+	return []expenseus.User{}, nil
+}
+
 func AllExpensesKey() string {
 	return "expenses"
 }

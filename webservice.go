@@ -17,7 +17,7 @@ type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
 	GetExpensesByUser(username string) ([]Expense, error)
 	GetAllExpenses() ([]Expense, error)
-	RecordExpense(expense Expense) error
+	RecordExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
 }
 
@@ -27,10 +27,14 @@ type User struct {
 	ID       string
 }
 
-type Expense struct {
-	ID     string `json:"id"`
+type ExpenseDetails struct {
 	Name   string `json:"name"`
 	UserID string `json:"userid"`
+}
+
+type Expense struct {
+	ExpenseDetails
+	ID string `json:"id"`
 }
 
 func NewWebService(store ExpenseStore) *WebService {
@@ -101,7 +105,7 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
-	var e Expense
+	var e ExpenseDetails
 	err := json.NewDecoder(r.Body).Decode(&e)
 
 	if err != nil {

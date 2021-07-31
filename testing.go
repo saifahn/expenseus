@@ -9,35 +9,45 @@ import (
 	"testing"
 )
 
-var TestSeanUser = User{
-	Username: "saifahn",
-	Name:     "Sean Li",
-	ID:       "sean_id",
-}
+var (
+	TestSeanUser = User{
+		Username: "saifahn",
+		Name:     "Sean Li",
+		ID:       "sean_id",
+	}
+	TestTomomiUser = User{
+		Username: "tomochi",
+		Name:     "Tomomi Kinoshita",
+		ID:       "tomomi_id",
+	}
 
-var TestTomomiUser = User{
-	Username: "tomochi",
-	Name:     "Tomomi Kinoshita",
-	ID:       "tomomi_id",
-}
+	TestSeanExpenseDetails = ExpenseDetails{
+		Name:   "Expense 1",
+		UserID: TestSeanUser.ID,
+	}
+	TestSeanExpense = Expense{
+		ID:             "1",
+		ExpenseDetails: TestSeanExpenseDetails,
+	}
 
-var TestSeanExpense = Expense{
-	ID:     "1",
-	Name:   "Expense 1",
-	UserID: TestSeanUser.ID,
-}
+	TestTomomiExpenseDetails = ExpenseDetails{
+		Name:   "Expense 2",
+		UserID: TestTomomiUser.ID,
+	}
+	TestTomomiExpense = Expense{
+		ID:             "2",
+		ExpenseDetails: TestTomomiExpenseDetails,
+	}
 
-var TestTomomiExpense = Expense{
-	ID:     "9281",
-	Name:   "Expense 9281",
-	UserID: TestTomomiUser.ID,
-}
-
-var TestTomomiExpense2 = Expense{
-	ID:     "14928",
-	Name:   "Expense 14928",
-	UserID: TestTomomiUser.ID,
-}
+	TestTomomiExpense2Details = ExpenseDetails{
+		Name:   "Expense 3",
+		UserID: TestTomomiUser.ID,
+	}
+	TestTomomiExpense2 = Expense{
+		ID:             "3",
+		ExpenseDetails: TestTomomiExpense2Details,
+	}
+)
 
 // NewGetExpenseRequest creates a request to be used in tests get an expense
 // by id, adding the id to the request context.
@@ -50,7 +60,7 @@ func NewGetExpenseRequest(id string) *http.Request {
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
 func NewCreateExpenseRequest(user, name string) *http.Request {
-	values := map[string]string{"user": user, "name": name}
+	values := ExpenseDetails{UserID: user, Name: name}
 	jsonValue, _ := json.Marshal(values)
 	req, _ := http.NewRequest(http.MethodPost, "/expenses", bytes.NewBuffer(jsonValue))
 	return req
@@ -65,7 +75,7 @@ func NewGetExpensesByUsernameRequest(username string) *http.Request {
 }
 
 func NewGetAllExpensesRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/expenses/", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/expenses", nil)
 	return req
 }
 

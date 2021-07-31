@@ -32,15 +32,18 @@ type Redis struct {
 	db redis.Client
 }
 
-func (r *Redis) RecordExpense(e expenseus.Expense) error {
+func (r *Redis) RecordExpense(ed expenseus.ExpenseDetails) error {
 	// generate id for expense
 	expenseID := uuid.New().String()
 	// get the time now for the score on the sets
 	createdAt := time.Now().Unix()
-	// get the user for the user-expense set
-	user := e.User
 
-	expense, err := json.Marshal(&e)
+	e := expenseus.Expense{
+		ExpenseDetails: ed,
+		ID:             expenseID,
+	}
+
+	expenseJSON, err := json.Marshal(e)
 	if err != nil {
 		panic(err)
 	}
@@ -49,9 +52,9 @@ func (r *Redis) RecordExpense(e expenseus.Expense) error {
 	// record the expenseID in the expense sorted set
 	pipe.ZAdd(ctx, AllExpensesKey(), &redis.Z{Score: float64(createdAt), Member: expenseID})
 	// record the expenseID in the user-expense sorted set
-	pipe.ZAdd(ctx, UserExpensesKey(user), &redis.Z{Score: float64(createdAt), Member: expenseID})
+	pipe.ZAdd(ctx, UserExpensesKey(ed.UserID), &redis.Z{Score: float64(createdAt), Member: expenseID})
 	// set the expense at the expense key
-	pipe.Set(ctx, ExpenseKey(expenseID), expense, 0)
+	pipe.Set(ctx, ExpenseKey(expenseID), expenseJSON, 0)
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return err

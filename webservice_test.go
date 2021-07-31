@@ -142,6 +142,8 @@ func TestCreateExpense(t *testing.T) {
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusAccepted, response.Code)
+		// this is technically actually testing implementation
+		// I should just test that RecordExpense has been called correctly with the right thing, not the outcome
 		assert.Len(t, store.expenses, 1)
 	})
 }
@@ -269,9 +271,13 @@ func (s *StubExpenseStore) GetExpensesByUser(username string) ([]Expense, error)
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) RecordExpense(e Expense) error {
-	testId := fmt.Sprintf("tid-%v", e.Name)
-	s.expenses[testId] = e
+func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
+	testId := fmt.Sprintf("tid-%v", ed.Name)
+	expense := Expense{
+		ExpenseDetails: ed,
+		ID:             testId,
+	}
+	s.expenses[testId] = expense
 	return nil
 }
 

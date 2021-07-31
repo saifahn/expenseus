@@ -75,32 +75,37 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	request = expenseus.NewGetAllExpensesRequest()
 	router.ServeHTTP(response, request)
 
-	var got []expenseus.Expense
-	err = json.NewDecoder(response.Body).Decode(&got)
+	var expensesGot []expenseus.Expense
+	err = json.NewDecoder(response.Body).Decode(&expensesGot)
 	if err != nil {
 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 	}
 
 	assert.Equal(t, response.Code, http.StatusOK)
-	assert.Equal(t, len(wantedExpenseDetails), len(got))
+	assert.Equal(t, len(wantedExpenseDetails), len(expensesGot))
 	// ASSERT there is an expense with the right details
-	for _, expense := range got {
+	for _, expense := range expensesGot {
 		assert.Contains(t, wantedExpenseDetails, expense.ExpenseDetails)
 	}
 
-	// get one user's expenses
-	// response = httptest.NewRecorder()
-	// request = expenseus.NewGetExpensesByUsernameRequest(expenseus.TestTomomiUser.Username)
-	// router.ServeHTTP(response, request)
+	// GET one user's expenses
+	response = httptest.NewRecorder()
+	request = expenseus.NewGetExpensesByUsernameRequest(expenseus.TestTomomiUser.Username)
+	router.ServeHTTP(response, request)
 
-	// // reset got to an empty slice
-	// got = []expenseus.Expense{}
-	// err = json.NewDecoder(response.Body).Decode(&got)
-	// if err != nil {
-	// 	t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
-	// }
+	// reset expensesGot to an empty slice
+	expensesGot = []expenseus.Expense{}
+	err = json.NewDecoder(response.Body).Decode(&expensesGot)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+	}
 
-	// assert.Len(t, got, 2)
-	// assert.Contains(t, got, expenseus.TestTomomiExpense)
-	// assert.Contains(t, got, expenseus.TestTomomiExpense2)
+	assert.Len(t, expensesGot, 2)
+	// ASSERT the expense details are the same. The ID is assigned separately, and we're currently not going to test that implementation
+	var edsGot []expenseus.ExpenseDetails
+	for _, e := range expensesGot {
+		edsGot = append(edsGot, e.ExpenseDetails)
+	}
+	assert.Contains(t, edsGot, expenseus.TestTomomiExpense.ExpenseDetails)
+	assert.Contains(t, edsGot, expenseus.TestTomomiExpense2.ExpenseDetails)
 }

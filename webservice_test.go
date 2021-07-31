@@ -92,7 +92,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.GetExpensesByUser)
+		handler := http.HandlerFunc(webservice.GetExpensesByUsername)
 		handler.ServeHTTP(response, request)
 
 		var got []Expense
@@ -111,7 +111,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestSeanUser.Username)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(webservice.GetExpensesByUser)
+		handler := http.HandlerFunc(webservice.GetExpensesByUsername)
 		handler.ServeHTTP(response, request)
 
 		var got []Expense
@@ -276,7 +276,7 @@ func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
 	return expense, nil
 }
 
-func (s *StubExpenseStore) GetExpensesByUser(username string) ([]Expense, error) {
+func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, error) {
 	var targetUser User
 	for _, u := range s.users {
 		if u.Username == username {

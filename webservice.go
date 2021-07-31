@@ -15,7 +15,7 @@ const (
 
 type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
-	GetExpensesByUser(username string) ([]Expense, error)
+	GetExpensesByUsername(username string) ([]Expense, error)
 	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
@@ -65,12 +65,12 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetExpensesByUser handles a HTTP request to get all expenses of a user,
+// GetExpensesByUsername handles a HTTP request to get all expenses of a user,
 // returning a list of expenses.
-func (wb *WebService) GetExpensesByUser(rw http.ResponseWriter, r *http.Request) {
+func (wb *WebService) GetExpensesByUsername(rw http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(CtxKeyUsername).(string)
 
-	expenses, err := wb.store.GetExpensesByUser(username)
+	expenses, err := wb.store.GetExpensesByUsername(username)
 
 	// TODO: account for different errors
 	if err != nil {

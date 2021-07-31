@@ -16,7 +16,7 @@ func InitRouter(wb *WebService) *chi.Mux {
 
 		r.Route("/user/{username}", func(r chi.Router) {
 			r.Use(UsernameCtx)
-			r.Get("/", wb.GetExpensesByUser)
+			r.Get("/", wb.GetExpensesByUsername)
 		})
 
 		r.Route("/{expenseID}", func(r chi.Router) {

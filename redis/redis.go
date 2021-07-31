@@ -78,9 +78,11 @@ func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
 	return expenses, nil
 }
 
-func (r *Redis) GetExpensesByUser(username string) ([]expenseus.Expense, error) {
+func (r *Redis) GetExpensesByUsername(username string) ([]expenseus.Expense, error) {
+	// get userid from username/userid map
+	userid := r.db.HGet(ctx, "usernames:userids", username).Val()
 	// get expenseIDs from the user expenses set
-	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(username), 0, -1).Val()
+	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(userid), 0, -1).Val()
 
 	var expenses []expenseus.Expense
 	for _, id := range expenseIDs {
@@ -160,8 +162,8 @@ func AllExpensesKey() string {
 	return "expenses"
 }
 
-func UserExpensesKey(user string) string {
-	return fmt.Sprintf("user:%v:expenses", user)
+func UserExpensesKey(userid string) string {
+	return fmt.Sprintf("user:%v:expenses", userid)
 }
 
 func ExpenseKey(id string) string {

@@ -23,9 +23,9 @@ type ExpenseStore interface {
 }
 
 type User struct {
-	Username string
-	Name     string
-	ID       string
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	ID       string `json:"id"`
 }
 
 type ExpenseDetails struct {

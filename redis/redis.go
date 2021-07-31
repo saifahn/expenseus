@@ -111,11 +111,49 @@ func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {
 }
 
 func (r *Redis) CreateUser(u expenseus.User) error {
+	// get time now
+	createdAt := time.Now().Unix()
+	userJSON, err := json.Marshal(u)
+	if err != nil {
+		panic(err)
+	}
+
+	pipe := r.db.TxPipeline()
+	// add id to users sorted set
+	pipe.ZAdd(ctx, AllUsersKey(), &redis.Z{Score: float64(createdAt), Member: u.ID})
+	// add user JSON data to user:id key
+	pipe.Set(ctx, UserKey(u.ID), userJSON, 0)
+	// add to username:userid map
+	pipe.HSet(ctx, "usernames:userids", u.Username, u.ID)
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 func (r *Redis) GetAllUsers() ([]expenseus.User, error) {
-	return []expenseus.User{}, nil
+	// get the ids from users sorted set
+	userIDs := r.db.ZRange(ctx, AllUsersKey(), 0, -1).Val()
+
+	var users []expenseus.User
+	for _, id := range userIDs {
+		// get the user data at the user:id key
+		val, err := r.db.Get(ctx, UserKey(id)).Result()
+		if err != nil {
+			return []expenseus.User{}, err
+		}
+
+		// convert the user into the User struct
+		var user expenseus.User
+		err = json.Unmarshal([]byte(val), &user)
+		if err != nil {
+			panic(err)
+		}
+
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 func AllExpensesKey() string {
@@ -128,4 +166,12 @@ func UserExpensesKey(user string) string {
 
 func ExpenseKey(id string) string {
 	return fmt.Sprintf("expense:%v", id)
+}
+
+func AllUsersKey() string {
+	return "users"
+}
+
+func UserKey(id string) string {
+	return fmt.Sprintf("user:%v", id)
 }

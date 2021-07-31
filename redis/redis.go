@@ -80,7 +80,7 @@ func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
 
 func (r *Redis) GetExpensesByUsername(username string) ([]expenseus.Expense, error) {
 	// get userid from username/userid map
-	userid := r.db.HGet(ctx, "usernames:userids", username).Val()
+	userid := r.db.HGet(ctx, UsernameIDMapKey(), username).Val()
 	// get expenseIDs from the user expenses set
 	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(userid), 0, -1).Val()
 
@@ -126,7 +126,7 @@ func (r *Redis) CreateUser(u expenseus.User) error {
 	// add user JSON data to user:id key
 	pipe.Set(ctx, UserKey(u.ID), userJSON, 0)
 	// add to username:userid map
-	pipe.HSet(ctx, "usernames:userids", u.Username, u.ID)
+	pipe.HSet(ctx, UsernameIDMapKey(), u.Username, u.ID)
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return err
@@ -176,4 +176,8 @@ func AllUsersKey() string {
 
 func UserKey(id string) string {
 	return fmt.Sprintf("user:%v", id)
+}
+
+func UsernameIDMapKey() string {
+	return "usernames:userids"
 }

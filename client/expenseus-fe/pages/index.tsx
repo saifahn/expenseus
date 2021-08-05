@@ -1,6 +1,19 @@
 import Head from "next/head";
-import styles from "../styles/Home.module.css";
 import "tailwindcss/tailwind.css";
+
+async function createUser() {
+  // make a post request to the URL
+}
+
+async function listUsers() {
+  // make a request to the URL
+  // return users
+}
+
+async function handleSubmit() {
+  await createUser();
+  await listUsers();
+}
 
 export default function Home() {
   return (
@@ -13,6 +26,10 @@ export default function Home() {
 
       <main className="py-4">
         <h1 className="text-4xl">Welcome to Expenseus</h1>
+        <section>
+          <h2>Users</h2>
+          <form onSubmit={handleSubmit}></form>
+        </section>
       </main>
     </div>
   );

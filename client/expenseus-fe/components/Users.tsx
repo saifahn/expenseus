@@ -1,25 +1,51 @@
-async function createUser() {
-  // make a post request to the URL
-}
+import { useEffect, useState } from "react";
 
-async function listUsers() {
-  // make a request to the URL
-  // return users
-}
-
-async function handleSubmit() {
-  await createUser();
-  await listUsers();
+export interface User {
+  username: string;
+  name: string;
+  id: string;
 }
 
 /**
  * Component rendering a list of users
  */
 export default function Users() {
+  const [users, setUsers] = useState<User[]>();
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchUsers() {
+      let url = `${process.env.API_BASE_URL}/users`;
+      try {
+        const response = await fetch(url);
+        const parsed = await response.json();
+        if (!cancelled) {
+          setUsers(parsed.users);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchUsers();
+    return () => {
+      cancelled = true;
+    };
+  });
   return (
     <section>
       <h2>Users</h2>
-      <form onSubmit={handleSubmit}></form>
+      {users &&
+        users.map(user => {
+          return (
+            <article key={user.id}>
+              <h3>{user.username}</h3>
+              <p>{user.name}</p>
+              <p>{user.id}</p>
+            </article>
+          );
+        })}
+      {/* <form onSubmit={handleSubmit}></form> */}
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface User {
   username: string;
@@ -11,27 +11,28 @@ export interface User {
  */
 export default function Users() {
   const [users, setUsers] = useState<User[]>();
-  useEffect(() => {
-    let cancelled = false;
+  const cancelled = useRef(false);
 
-    async function fetchUsers() {
-      let url = `${process.env.API_BASE_URL}/users`;
-      try {
-        const response = await fetch(url);
-        const parsed = await response.json();
-        if (!cancelled) {
-          setUsers(parsed.users);
-        }
-      } catch (err) {
-        console.error(err);
+  async function fetchUsers() {
+    let url = `${process.env.API_BASE_URL}/users`;
+    try {
+      const response = await fetch(url);
+      const parsed = await response.json();
+      if (!cancelled.current) {
+        setUsers(parsed.users);
       }
+    } catch (err) {
+      console.error(err);
     }
+  }
 
+  useEffect(() => {
     fetchUsers();
     return () => {
-      cancelled = true;
+      cancelled.current = true;
     };
-  });
+  }, []);
+
   return (
     <section>
       <h2>Users</h2>

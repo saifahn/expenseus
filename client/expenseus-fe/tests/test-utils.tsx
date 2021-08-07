@@ -11,5 +11,6 @@ const customRender = (
   options?: Omit<RenderOptions, "wrapper">
 ) => render(ui, { wrapper: AllProviders, ...options });
 
+export { default as userEvent } from "@testing-library/user-event";
 export * from "@testing-library/react";
 export { customRender as render };

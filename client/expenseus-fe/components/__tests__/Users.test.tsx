@@ -1,10 +1,4 @@
-import {
-  render,
-  screen,
-  userEvent,
-  waitFor,
-  waitForElementToBeRemoved,
-} from "tests/test-utils";
+import { render, screen, userEvent, waitFor } from "tests/test-utils";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import Users, { User } from "components/Users";
@@ -77,9 +71,20 @@ describe("Users component", () => {
       );
     });
 
-    it("should add a different testuser", async () => {
+    // NOTE: I think this isn't such a good pattern as I'm mocking the behaviour of the backend too?
+    it("should add a different testuser and render it", async () => {
       server.use(
         rest.post(`${process.env.API_BASE_URL}/users`, (req, res, ctx) => {
+          const { username, name } = req.body as {
+            username: string;
+            name: string;
+          };
+          const newUser = {
+            username,
+            name,
+            id: "test_id",
+          };
+          testUsers.push(newUser);
           return res(ctx.status(202));
         })
       );
@@ -99,6 +104,8 @@ describe("Users component", () => {
           `User testuser2 successfully created`
         )
       );
+
+      expect(await screen.findByText("Test Usertwo")).toBeInTheDocument();
     });
   });
 });

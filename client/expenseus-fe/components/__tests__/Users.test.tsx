@@ -1,4 +1,4 @@
-import { render, screen } from "tests/test-utils";
+import { render, screen, userEvent } from "tests/test-utils";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import Users, { User } from "components/Users";
@@ -15,9 +15,11 @@ const testTomomiUser: User = {
   id: "tomomi_id",
 };
 
+const testUsers = [testSeanUser, testTomomiUser];
+
 const server = setupServer(
   rest.get(`${process.env.API_BASE_URL}/users`, (req, res, ctx) => {
-    return res(ctx.json({ users: [testSeanUser, testTomomiUser] }));
+    return res(ctx.json({ users: testUsers }));
   })
 );
 
@@ -42,5 +44,36 @@ describe("Users component", () => {
 
     expect(await screen.findByText(testTomomiUser.name)).toBeInTheDocument();
     expect(await screen.findByText(testSeanUser.name)).toBeInTheDocument();
+  });
+
+  it("should add a new user", async () => {
+    server.use(
+      rest.post(`${process.env.API_BASE_URL}/users`, (req, res, ctx) => {
+        // parse the body
+        // req.body
+        return res(ctx.status(202));
+        // add to testUsers
+      })
+    );
+
+    render(<Users />);
+
+    // do some typing
+    const nameInput = screen.getByRole("textbox", { name: /Name/ });
+    userEvent.type(nameInput, "Test User");
+
+    const usernameInput = screen.getByRole("textbox", { name: /Username/ });
+    userEvent.type(usernameInput, "testuser");
+
+    const submitButton = screen.getByRole("button", { name: /Create user/ });
+    userEvent.click(submitButton);
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      `User testuser successfully created`
+    );
+
+    // make sure the request is made
+    // see if it will return the new stuff in the server
+    // if not, then let's just make sure the right request was made to the endpoint
   });
 });

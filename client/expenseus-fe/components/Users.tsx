@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 export interface User {
   username: string;
@@ -11,10 +11,30 @@ export interface User {
  */
 export default function Users() {
   const [users, setUsers] = useState<User[]>();
+  const [status, setStatus] = useState<string>();
   const cancelled = useRef(false);
 
+  async function createUser() {
+    const url = `${process.env.API_BASE_URL}/users`;
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ testContent: true }),
+      });
+      if (response.ok) {
+        setStatus("User testuser successfully created");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function fetchUsers() {
-    let url = `${process.env.API_BASE_URL}/users`;
+    const url = `${process.env.API_BASE_URL}/users`;
     try {
       const response = await fetch(url);
       const parsed = await response.json();
@@ -24,6 +44,12 @@ export default function Users() {
     } catch (err) {
       console.error(err);
     }
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    await createUser();
+    await fetchUsers();
   }
 
   useEffect(() => {
@@ -46,7 +72,20 @@ export default function Users() {
             </article>
           );
         })}
-      {/* <form onSubmit={handleSubmit}></form> */}
+      <form onSubmit={handleSubmit}>
+        <span>
+          <label htmlFor="name">Name</label>
+          <input id="name" name="name" type="text" />
+        </span>
+        <span>
+          <label htmlFor="username">Username</label>
+          <input id="username" name="username" type="text" />
+        </span>
+        <span>
+          <button type="submit">Create user</button>
+        </span>
+      </form>
+      {status && <p role="status">{status}</p>}
     </section>
   );
 }

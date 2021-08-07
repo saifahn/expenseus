@@ -21,7 +21,7 @@ export default function Users() {
   const cancelled = useRef(false);
 
   async function createUser(username: string, name: string) {
-    const url = `${process.env.API_BASE_URL}/users`;
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -40,7 +40,7 @@ export default function Users() {
   }
 
   async function fetchUsers() {
-    const url = `${process.env.API_BASE_URL}/users`;
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
     try {
       const response = await fetch(url);
       const parsed = await response.json();

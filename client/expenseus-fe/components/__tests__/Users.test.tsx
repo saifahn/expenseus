@@ -18,7 +18,7 @@ const testTomomiUser: User = {
 const testUsers = [testSeanUser, testTomomiUser];
 
 const server = setupServer(
-  rest.get(`${process.env.API_BASE_URL}/users`, (req, res, ctx) => {
+  rest.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, (req, res, ctx) => {
     return res(ctx.json({ users: testUsers }));
   })
 );
@@ -49,9 +49,12 @@ describe("Users component", () => {
   describe("adding new users", () => {
     it("should add a new testuser", async () => {
       server.use(
-        rest.post(`${process.env.API_BASE_URL}/users`, (req, res, ctx) => {
-          return res(ctx.status(202));
-        })
+        rest.post(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`,
+          (req, res, ctx) => {
+            return res(ctx.status(202));
+          }
+        )
       );
       render(<Users />);
 
@@ -74,19 +77,22 @@ describe("Users component", () => {
     // NOTE: I think this isn't such a good pattern as I'm mocking the behaviour of the backend too?
     it("should add a different testuser and render it", async () => {
       server.use(
-        rest.post(`${process.env.API_BASE_URL}/users`, (req, res, ctx) => {
-          const { username, name } = req.body as {
-            username: string;
-            name: string;
-          };
-          const newUser = {
-            username,
-            name,
-            id: "test_id",
-          };
-          testUsers.push(newUser);
-          return res(ctx.status(202));
-        })
+        rest.post(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`,
+          (req, res, ctx) => {
+            const { username, name } = req.body as {
+              username: string;
+              name: string;
+            };
+            const newUser = {
+              username,
+              name,
+              id: "test_id",
+            };
+            testUsers.push(newUser);
+            return res(ctx.status(202));
+          }
+        )
       );
       render(<Users />);
 

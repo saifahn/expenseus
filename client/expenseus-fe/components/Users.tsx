@@ -11,10 +11,14 @@ export interface User {
  */
 export default function Users() {
   const [users, setUsers] = useState<User[]>();
-  const [status, setStatus] = useState<string>();
+  const [{ status, error }, setStatus] = useState({
+    status: "idle",
+    error: null,
+  });
+  const [statusMessage, setStatusMessage] = useState<string>();
   const cancelled = useRef(false);
 
-  async function createUser() {
+  async function createUser(username: string, name: string) {
     const url = `${process.env.API_BASE_URL}/users`;
     try {
       const response = await fetch(url, {
@@ -23,10 +27,10 @@ export default function Users() {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ testContent: true }),
+        body: JSON.stringify({ username, name }),
       });
       if (response.ok) {
-        setStatus("User testuser successfully created");
+        setStatusMessage(`User ${username} successfully created`);
       }
     } catch (err) {
       console.error(err);
@@ -46,10 +50,18 @@ export default function Users() {
     }
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    await createUser();
-    await fetchUsers();
+    setStatus({ status: "loading", error: null });
+    const username = e.target.elements.username.value;
+    const name = e.target.elements.name.value;
+    try {
+      await createUser(username, name);
+      setStatus({ status: "fulfilled", error: null });
+      await fetchUsers();
+    } catch (err) {
+      setStatus({ status: "rejected", error: err });
+    }
   }
 
   useEffect(() => {
@@ -85,7 +97,9 @@ export default function Users() {
           <button type="submit">Create user</button>
         </span>
       </form>
-      {status && <p role="status">{status}</p>}
+      {status === "loading" && <p role="status">{status}</p>}
+      {status === "fulfilled" && <p role="status">{statusMessage}</p>}
+      {status === "rejected" && <p role="status">{error.message}</p>}
     </section>
   );
 }

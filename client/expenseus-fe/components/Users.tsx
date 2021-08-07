@@ -16,6 +16,8 @@ export default function Users() {
     error: null,
   });
   const [statusMessage, setStatusMessage] = useState<string>();
+  const [newUsername, setNewUsername] = useState("");
+  const [newName, setNewName] = useState("");
   const cancelled = useRef(false);
 
   async function createUser(username: string, name: string) {
@@ -50,13 +52,11 @@ export default function Users() {
     }
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setStatus({ status: "loading", error: null });
-    const username = e.target.elements.username.value;
-    const name = e.target.elements.name.value;
     try {
-      await createUser(username, name);
+      await createUser(newUsername, newName);
       setStatus({ status: "fulfilled", error: null });
       await fetchUsers();
     } catch (err) {
@@ -87,11 +87,23 @@ export default function Users() {
       <form onSubmit={handleSubmit}>
         <span>
           <label htmlFor="name">Name</label>
-          <input id="name" name="name" type="text" />
+          <input
+            id="name"
+            name="name"
+            type="text"
+            value={newName}
+            onChange={e => setNewName(e.target.value)}
+          />
         </span>
         <span>
           <label htmlFor="username">Username</label>
-          <input id="username" name="username" type="text" />
+          <input
+            id="username"
+            name="username"
+            type="text"
+            value={newUsername}
+            onChange={e => setNewUsername(e.target.value)}
+          />
         </span>
         <span>
           <button type="submit">Create user</button>

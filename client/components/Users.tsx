@@ -48,7 +48,7 @@ export default function Users() {
       const response = await fetch(url);
       const parsed = await response.json();
       if (!cancelled.current) {
-        setUsers(parsed.users);
+        setUsers(parsed);
       }
     } catch (err) {
       console.error(err);

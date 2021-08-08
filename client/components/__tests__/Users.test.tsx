@@ -19,7 +19,7 @@ const testUsers = [testSeanUser, testTomomiUser];
 
 const server = setupServer(
   rest.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, (req, res, ctx) => {
-    return res(ctx.json({ users: testUsers }));
+    return res(ctx.json(testUsers));
   })
 );
 

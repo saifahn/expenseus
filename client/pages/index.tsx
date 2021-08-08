@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Users from "components/Users";
-import "tailwindcss/tailwind.css";
 
 export default function Home() {
   return (

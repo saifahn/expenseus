@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Users from "components/Users";
-import "tailwindcss/tailwind.css";
 
 export default function Home() {
   return (
@@ -15,9 +14,7 @@ export default function Home() {
         <h1 className="text-4xl">Welcome to Expenseus</h1>
       </main>
 
-      <section>
-        <Users />
-      </section>
+      <Users />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export interface User {
   username: string;
@@ -22,6 +23,8 @@ export default function Users() {
 
   async function createUser(username: string, name: string) {
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
+    // TODO: remove this once the back end handles id creation
+    const id = uuidv4();
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -29,7 +32,7 @@ export default function Users() {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, name }),
+        body: JSON.stringify({ username, name, id }),
       });
       if (response.ok) {
         setStatusMessage(`User ${username} successfully created`);

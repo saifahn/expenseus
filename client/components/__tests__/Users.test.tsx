@@ -80,14 +80,15 @@ describe("Users component", () => {
         rest.post(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`,
           (req, res, ctx) => {
-            const { username, name } = req.body as {
+            const { username, name, id } = req.body as {
               username: string;
               name: string;
+              id: string;
             };
             const newUser = {
               username,
               name,
-              id: "test_id",
+              id,
             };
             testUsers.push(newUser);
             return res(ctx.status(202));
@@ -111,7 +112,9 @@ describe("Users component", () => {
         )
       );
 
-      expect(await screen.findByText("Test Usertwo")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(screen.getByText("Test Usertwo")).toBeInTheDocument()
+      );
     });
   });
 });

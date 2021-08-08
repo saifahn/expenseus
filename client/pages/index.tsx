@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Users from "components/Users";
+import Expenses from "components/Expenses";
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
       </main>
 
       <Users />
+      <Expenses />
     </div>
   );
 }

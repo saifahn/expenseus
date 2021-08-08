@@ -118,6 +118,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	rw.WriteHeader(http.StatusAccepted)
@@ -136,6 +137,7 @@ func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	rw.WriteHeader(http.StatusAccepted)

@@ -14,9 +14,7 @@ export default function Home() {
         <h1 className="text-4xl">Welcome to Expenseus</h1>
       </main>
 
-      <section>
-        <Users />
-      </section>
+      <Users />
     </div>
   );
 }

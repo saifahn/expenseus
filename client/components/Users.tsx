@@ -21,6 +21,19 @@ export default function Users() {
   const [newName, setNewName] = useState("");
   const cancelled = useRef(false);
 
+  async function fetchUsers() {
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
+    try {
+      const response = await fetch(url);
+      const parsed = await response.json();
+      if (!cancelled.current) {
+        setUsers(parsed);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   async function createUser(username: string, name: string) {
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
     // TODO: remove this once the back end handles id creation
@@ -36,19 +49,6 @@ export default function Users() {
       });
       if (response.ok) {
         setStatusMessage(`User ${username} successfully created`);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function fetchUsers() {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
-    try {
-      const response = await fetch(url);
-      const parsed = await response.json();
-      if (!cancelled.current) {
-        setUsers(parsed);
       }
     } catch (err) {
       console.error(err);
@@ -91,7 +91,7 @@ export default function Users() {
           );
         })}
       <div className="mt-6">
-        <h2 className="text-2xl">Create users</h2>
+        <h2 className="text-2xl">Create a new user</h2>
         <div className="mx-auto w-full max-w-xs">
           <form
             className="bg-white p-6 rounded-lg shadow-md"

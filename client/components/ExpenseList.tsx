@@ -1,43 +1,37 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { useState, useRef, useEffect, FormEvent } from "react";
 
-export interface User {
-  username: string;
+interface Expense {
+  userID: string;
   name: string;
   id: string;
 }
 
-/**
- * Component rendering a list of users
- */
-export default function Users() {
-  const [users, setUsers] = useState<User[]>();
+export default function ExpenseList() {
+  const [expenses, setExpenses] = useState<Expense[]>();
+  const [expenseName, setExpenseName] = useState("");
+  const [expenseUserID, setExpenseUserID] = useState("");
   const [{ status, error }, setStatus] = useState({
     status: "idle",
     error: null,
   });
   const [statusMessage, setStatusMessage] = useState<string>();
-  const [newUsername, setNewUsername] = useState("");
-  const [newName, setNewName] = useState("");
   const cancelled = useRef(false);
 
-  async function fetchUsers() {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
+  async function fetchExpenses() {
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
     try {
       const response = await fetch(url);
       const parsed = await response.json();
       if (!cancelled.current) {
-        setUsers(parsed);
+        setExpenses(parsed);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
-  async function createUser(username: string, name: string) {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
-    // TODO: remove this once the back end handles id creation
-    const id = uuidv4();
+  async function createExpense(name: string, userID: string) {
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -45,10 +39,10 @@ export default function Users() {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, name, id }),
+        body: JSON.stringify({ name, userid: userID }),
       });
       if (response.ok) {
-        setStatusMessage(`User ${username} successfully created`);
+        setStatusMessage(`Expense ${name} successfully created`);
       }
     } catch (err) {
       console.error(err);
@@ -59,39 +53,39 @@ export default function Users() {
     e.preventDefault();
     setStatus({ status: "loading", error: null });
     try {
-      await createUser(newUsername, newName);
+      await createExpense(expenseName, expenseUserID);
       setStatus({ status: "fulfilled", error: null });
-      await fetchUsers();
+      await fetchExpenses();
     } catch (err) {
       setStatus({ status: "rejected", error: err });
     }
   }
 
   useEffect(() => {
-    fetchUsers();
+    fetchExpenses();
     return () => {
       cancelled.current = true;
     };
   }, []);
 
   return (
-    <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
-      <h2 className="text-2xl">Users</h2>
-      {users &&
-        users.map(user => {
+    <section className="p-6 mt-8 shadow-lg bg-indigo-50 rounded-xl">
+      <h2 className="text-2xl">Expenses</h2>
+      {expenses &&
+        expenses.map(expense => {
           return (
             <article
               className="p-4 mt-4 rounded-md shadow-md bg-white"
-              key={user.id}
+              key={expense.id}
             >
-              <h3 className="text-xl">{user.username}</h3>
-              <p>{user.name}</p>
-              <p>{user.id}</p>
+              <h3 className="text-xl">{expense.name}</h3>
+              <p>{expense.userID}</p>
+              <p>{expense.id}</p>
             </article>
           );
         })}
       <div className="mt-6">
-        <h2 className="text-2xl">Create a new user</h2>
+        <h2 className="text-2xl">Create a new expense</h2>
         <div className="mx-auto w-full max-w-xs">
           <form
             className="bg-white p-6 rounded-lg shadow-md"
@@ -106,21 +100,21 @@ export default function Users() {
                 id="name"
                 name="name"
                 type="text"
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
+                value={expenseName}
+                onChange={e => setExpenseName(e.target.value)}
               />
             </div>
             <div className="mt-6">
-              <label className="block font-semibold" htmlFor="username">
-                Username
+              <label className="block font-semibold" htmlFor="userID">
+                User ID
               </label>
               <input
                 className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
-                id="username"
-                name="username"
+                id="userID"
+                name="user_id"
                 type="text"
-                value={newUsername}
-                onChange={e => setNewUsername(e.target.value)}
+                value={expenseUserID}
+                onChange={e => setExpenseUserID(e.target.value)}
               />
             </div>
             <div className="mt-6 flex justify-end">
@@ -128,7 +122,7 @@ export default function Users() {
                 className="bg-indigo-500 hover:bg-indigo-700 text-white py-2 px-4 rounded focus:outline-none focus:ring"
                 type="submit"
               >
-                Create user
+                Create expense
               </button>
             </div>
           </form>

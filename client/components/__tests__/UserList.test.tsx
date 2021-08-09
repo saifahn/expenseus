@@ -1,7 +1,7 @@
 import { render, screen, userEvent, waitFor } from "tests/test-utils";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import Users, { User } from "components/Users";
+import UserList, { User } from "components/UserList";
 
 const testSeanUser: User = {
   username: "saifahn",
@@ -34,13 +34,13 @@ afterAll(() => server.close());
 
 describe("Users component", () => {
   it("should render a Users heading", () => {
-    render(<Users />);
+    render(<UserList />);
 
     expect(screen.getByText("Users")).toBeInTheDocument();
   });
 
   it("should render a list of users after loading", async () => {
-    render(<Users />);
+    render(<UserList />);
 
     expect(await screen.findByText(testTomomiUser.name)).toBeInTheDocument();
     expect(await screen.findByText(testSeanUser.name)).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("Users component", () => {
           }
         )
       );
-      render(<Users />);
+      render(<UserList />);
 
       const nameInput = screen.getByRole("textbox", { name: /Name/ });
       userEvent.type(nameInput, "Test User");
@@ -95,7 +95,7 @@ describe("Users component", () => {
           }
         )
       );
-      render(<Users />);
+      render(<UserList />);
 
       const nameInput = screen.getByRole("textbox", { name: /Name/ });
       userEvent.type(nameInput, "Test Usertwo");

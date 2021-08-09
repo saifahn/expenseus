@@ -1,6 +1,6 @@
 import Head from "next/head";
-import Users from "components/Users";
-import Expenses from "components/Expenses";
+import UserList from "components/UserList";
+import ExpenseList from "components/ExpenseList";
 
 export default function Home() {
   return (
@@ -15,8 +15,8 @@ export default function Home() {
         <h1 className="text-4xl">Welcome to Expenseus</h1>
       </main>
 
-      <Users />
-      <Expenses />
+      <UserList />
+      <ExpenseList />
     </div>
   );
 }

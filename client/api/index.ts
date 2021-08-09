@@ -1,3 +1,4 @@
+import { Expense } from "components/ExpenseList";
 import { User } from "components/UserList";
 import { v4 as uuidv4 } from "uuid";
 
@@ -29,5 +30,15 @@ export class UserAPI {
       // TODO: make this depend on the server response?
       return `User ${username} was successfully created`;
     }
+  }
+}
+
+export class ExpenseAPI {
+  baseURL = `${apiURL}/expenses`;
+
+  async listExpenses() {
+    const res = await fetch(this.baseURL);
+    const parsed: Expense[] = await res.json();
+    return parsed;
   }
 }

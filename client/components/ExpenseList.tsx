@@ -1,6 +1,7 @@
+import { ExpenseAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
 
-interface Expense {
+export interface Expense {
   userID: string;
   name: string;
   id: string;
@@ -20,10 +21,10 @@ export default function ExpenseList() {
   async function fetchExpenses() {
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
     try {
-      const response = await fetch(url);
-      const parsed = await response.json();
+      const api = new ExpenseAPI();
+      const expenses = await api.listExpenses();
       if (!cancelled.current) {
-        setExpenses(parsed);
+        setExpenses(expenses);
       }
     } catch (err) {
       console.error(err);

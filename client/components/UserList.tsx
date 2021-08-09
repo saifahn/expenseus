@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { listUsers } from "api";
 
 export interface User {
   username: string;
@@ -22,12 +23,10 @@ export default function UserList() {
   const cancelled = useRef(false);
 
   async function fetchUsers() {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
     try {
-      const response = await fetch(url);
-      const parsed = await response.json();
+      const users = await listUsers();
       if (!cancelled.current) {
-        setUsers(parsed);
+        setUsers(users);
       }
     } catch (err) {
       console.error(err);

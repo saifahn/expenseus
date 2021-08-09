@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import { UserAPI } from "api";
 
 export interface User {
   username: string;
@@ -22,12 +22,11 @@ export default function UserList() {
   const cancelled = useRef(false);
 
   async function fetchUsers() {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
     try {
-      const response = await fetch(url);
-      const parsed = await response.json();
+      const api = new UserAPI();
+      const users = await api.listUsers();
       if (!cancelled.current) {
-        setUsers(parsed);
+        setUsers(users);
       }
     } catch (err) {
       console.error(err);
@@ -35,21 +34,10 @@ export default function UserList() {
   }
 
   async function createUser(username: string, name: string) {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`;
-    // TODO: remove this once the back end handles id creation
-    const id = uuidv4();
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, name, id }),
-      });
-      if (response.ok) {
-        setStatusMessage(`User ${username} successfully created`);
-      }
+      const api = new UserAPI();
+      const response = await api.createUser(username, name);
+      setStatusMessage(response);
     } catch (err) {
       console.error(err);
     }

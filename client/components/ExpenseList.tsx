@@ -1,6 +1,7 @@
+import { ExpenseAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
 
-interface Expense {
+export interface Expense {
   userID: string;
   name: string;
   id: string;
@@ -20,30 +21,21 @@ export default function ExpenseList() {
   async function fetchExpenses() {
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
     try {
-      const response = await fetch(url);
-      const parsed = await response.json();
+      const api = new ExpenseAPI();
+      const expenses = await api.listExpenses();
       if (!cancelled.current) {
-        setExpenses(parsed);
+        setExpenses(expenses);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
-  async function createExpense(name: string, userID: string) {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
+  async function createExpense(expenseName: string, userID: string) {
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, userid: userID }),
-      });
-      if (response.ok) {
-        setStatusMessage(`Expense ${name} successfully created`);
-      }
+      const api = new ExpenseAPI();
+      const response = await api.createExpense(expenseName, userID);
+      setStatusMessage(response);
     } catch (err) {
       console.error(err);
     }

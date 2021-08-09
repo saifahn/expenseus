@@ -8,3 +8,6 @@
 !*/
 
 ### Above combination will ignore all files without extension ###
+
+# environment variables file
+.envrc

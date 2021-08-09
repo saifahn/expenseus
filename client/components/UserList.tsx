@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { listUsers, postUser } from "api";
+import { UserAPI } from "api";
 
 export interface User {
   username: string;
@@ -23,7 +23,8 @@ export default function UserList() {
 
   async function fetchUsers() {
     try {
-      const users = await listUsers();
+      const api = new UserAPI();
+      const users = await api.listUsers();
       if (!cancelled.current) {
         setUsers(users);
       }
@@ -34,7 +35,8 @@ export default function UserList() {
 
   async function createUser(username: string, name: string) {
     try {
-      const response = await postUser(username, name);
+      const api = new UserAPI();
+      const response = await api.createUser(username, name);
       setStatusMessage(response);
     } catch (err) {
       console.error(err);

@@ -30,6 +30,8 @@ export class UserAPI {
       // TODO: make this depend on the server response?
       return `User ${username} was successfully created`;
     }
+    // TODO: handle this better?
+    throw new Error(res.statusText);
   }
 }
 
@@ -51,13 +53,11 @@ export class ExpenseAPI {
       },
       body: JSON.stringify({ name: expenseName, userid: userID }),
     });
-    if (!res.ok) {
-      // TODO: handle this better?
-      throw new Error(res.statusText);
-    }
     if (res.ok) {
       // TODO: return the message from the server
       return `Expense ${expenseName} was successfully created`;
     }
+    // TODO: handle this better?
+    throw new Error(res.statusText);
   }
 }

@@ -31,20 +31,11 @@ export default function ExpenseList() {
     }
   }
 
-  async function createExpense(name: string, userID: string) {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
+  async function createExpense(expenseName: string, userID: string) {
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, userid: userID }),
-      });
-      if (response.ok) {
-        setStatusMessage(`Expense ${name} successfully created`);
-      }
+      const api = new ExpenseAPI();
+      const response = await api.createExpense(expenseName, userID);
+      setStatusMessage(response);
     } catch (err) {
       console.error(err);
     }

@@ -41,4 +41,23 @@ export class ExpenseAPI {
     const parsed: Expense[] = await res.json();
     return parsed;
   }
+
+  async createExpense(expenseName: string, userID: string) {
+    const res = await fetch(this.baseURL, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: expenseName, userid: userID }),
+    });
+    if (!res.ok) {
+      // TODO: handle this better?
+      throw new Error(res.statusText);
+    }
+    if (res.ok) {
+      // TODO: return the message from the server
+      return `Expense ${expenseName} was successfully created`;
+    }
+  }
 }

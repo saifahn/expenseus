@@ -278,11 +278,31 @@ func TestGoogleOauthCallback(t *testing.T) {
 		handler := http.HandlerFunc(webservice.OauthCallback)
 		handler.ServeHTTP(response, request)
 
-		expected := TestSeanUser
+		expected := []User{TestSeanUser}
 		// expect a new user to be added to the store
 		assert.Len(t, store.users, 1)
-		assert.Equal(t, expected, store.users[0])
+		assert.ElementsMatch(t, expected, store.users)
 		// TODO: expect to be routed to update username page
+	})
+
+	t.Run("doesn't create a new user when the user already exists", func(t *testing.T) {
+		store := StubExpenseStore{users: []User{TestSeanUser}}
+		oauth := StubGoogleOauthConfig{}
+		webservice := NewWebService(&store, &oauth)
+
+		request, err := http.NewRequest(http.MethodGet, "/callback_google", nil)
+		if err != nil {
+			t.Fatalf("request could not be created, %v", err)
+		}
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.OauthCallback)
+		handler.ServeHTTP(response, request)
+
+		expected := []User{TestSeanUser}
+		assert.Len(t, store.users, 1)
+		assert.ElementsMatch(t, expected, store.users)
+		// TODO: expect to be routed to the welcome page
 	})
 }
 

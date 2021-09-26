@@ -63,7 +63,23 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: check by UserID instead?
+	existingUsers, err := wb.store.GetAllUsers()
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	// check if the user exists already
+	for _, u := range existingUsers {
+		if u.ID == user.ID {
+			// TODO: log the user in
+			return
+		}
+	}
+
+	// otherwise, create the user
 	wb.store.CreateUser(user)
+	// TODO: redirect to change username page
 }
 
 // GetExpense handles a HTTP request to get an expense by ID, returning the expense.

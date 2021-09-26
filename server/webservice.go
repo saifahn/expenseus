@@ -56,6 +56,12 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth) *WebService {
 	return &WebService{store: store, oauthConfig: oauth}
 }
 
+func (wb *WebService) OauthLogin(rw http.ResponseWriter, r *http.Request) {
+	// TODO: add proper state string
+	url := wb.oauthConfig.AuthCodeURL("")
+	http.Redirect(rw, r, url, http.StatusTemporaryRedirect)
+}
+
 func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	user, err := wb.oauthConfig.getInfoAndGenerateUser(r.FormValue("state"), r.FormValue("code"))
 	if err != nil {

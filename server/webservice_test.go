@@ -263,6 +263,26 @@ func TestListUsers(t *testing.T) {
 	assert.ElementsMatch(t, got, store.users)
 }
 
+func TestOauthLogin(t *testing.T) {
+	// set up webservice
+	store := StubExpenseStore{}
+	oauth := StubOauthConfig{}
+	webservice := NewWebService(&store, &oauth)
+
+	request, err := http.NewRequest(http.MethodGet, "/login_oauth", nil)
+	if err != nil {
+		t.Fatalf("request could not be created, %v", err)
+	}
+	response := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(webservice.OauthLogin)
+	handler.ServeHTTP(response, request)
+
+	assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
+	// TODO: assert there was a redirect to the right URL
+	// TODO: assert AuthCodeURL was called
+}
+
 func TestOauthCallback(t *testing.T) {
 	t.Run("creates a user when user doesn't exist yet", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{}}

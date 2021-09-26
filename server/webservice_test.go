@@ -278,8 +278,10 @@ func TestGoogleOauthCallback(t *testing.T) {
 		handler := http.HandlerFunc(webservice.OauthCallback)
 		handler.ServeHTTP(response, request)
 
+		expected := TestSeanUser
 		// expect a new user to be added to the store
 		assert.Len(t, store.users, 1)
+		assert.Equal(t, expected, store.users[0])
 		// TODO: expect to be routed to update username page
 	})
 }
@@ -295,7 +297,7 @@ func (o *StubGoogleOauthConfig) Exchange(ctx context.Context, code string, opts 
 }
 
 func (o *StubGoogleOauthConfig) getInfoAndGenerateUser(state string, code string) (User, error) {
-	return User{}, nil
+	return TestSeanUser, nil
 }
 
 // stub store implementation

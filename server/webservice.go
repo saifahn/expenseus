@@ -41,40 +41,26 @@ type Expense struct {
 	ID string `json:"id"`
 }
 
-type GoogleUserInfo struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Verified bool   `json:"verified_email"`
-}
-
-type GoogleOauthConfig interface {
+type ExpenseusOauth interface {
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
-	getUserInfo(state string, code string) (GoogleUserInfo, error)
+	getInfoAndGenerateUser(state string, code string) (User, error)
 }
 
 type WebService struct {
 	store       ExpenseStore
-	oauthConfig GoogleOauthConfig
+	oauthConfig ExpenseusOauth
 }
 
-func NewWebService(store ExpenseStore, oauth GoogleOauthConfig) *WebService {
+func NewWebService(store ExpenseStore, oauth ExpenseusOauth) *WebService {
 	return &WebService{store: store, oauthConfig: oauth}
 }
 
 func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
-	userinfo, err := wb.oauthConfig.getUserInfo(r.FormValue("state"), r.FormValue("code"))
+	user, err := wb.oauthConfig.getInfoAndGenerateUser(r.FormValue("state"), r.FormValue("code"))
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	// create a user with default information from the oauth user info
-	user := User{
-		Username: userinfo.Email,
-		Name:     userinfo.Name,
-		ID:       userinfo.ID,
 	}
 
 	wb.store.CreateUser(user)

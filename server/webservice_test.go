@@ -294,8 +294,8 @@ func (o *StubGoogleOauthConfig) Exchange(ctx context.Context, code string, opts 
 	return nil, nil
 }
 
-func (o *StubGoogleOauthConfig) getUserInfo(state string, code string) (GoogleUserInfo, error) {
-	return GoogleUserInfo{}, nil
+func (o *StubGoogleOauthConfig) getInfoAndGenerateUser(state string, code string) (User, error) {
+	return User{}, nil
 }
 
 // stub store implementation

@@ -279,8 +279,11 @@ func TestOauthLogin(t *testing.T) {
 	handler.ServeHTTP(response, request)
 
 	assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
-	// TODO: assert there was a redirect to the right URL
-	// TODO: assert AuthCodeURL was called
+	// are these even good assertions to have?
+	expectedURL := fmt.Sprintf("/%s", oauthProviderMockURL)
+	assert.Equal(t, expectedURL, response.Header().Get("Location"))
+	// assert AuthCodeURL was called
+	assert.Len(t, oauth.AuthCodeURLCalls, 1)
 }
 
 func TestOauthCallback(t *testing.T) {
@@ -326,10 +329,15 @@ func TestOauthCallback(t *testing.T) {
 	})
 }
 
-type StubOauthConfig struct{}
+type StubOauthConfig struct {
+	AuthCodeURLCalls []string
+}
+
+const oauthProviderMockURL = "oauth-provider-mock-url"
 
 func (o *StubOauthConfig) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	return ""
+	o.AuthCodeURLCalls = append(o.AuthCodeURLCalls, oauthProviderMockURL)
+	return oauthProviderMockURL
 }
 
 func (o *StubOauthConfig) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {

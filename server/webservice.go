@@ -44,7 +44,7 @@ type Expense struct {
 type ExpenseusOauth interface {
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
-	getInfoAndGenerateUser(state string, code string) (User, error)
+	GetInfoAndGenerateUser(state string, code string) (User, error)
 }
 
 type WebService struct {
@@ -63,7 +63,7 @@ func (wb *WebService) OauthLogin(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
-	user, err := wb.oauthConfig.getInfoAndGenerateUser(r.FormValue("state"), r.FormValue("code"))
+	user, err := wb.oauthConfig.GetInfoAndGenerateUser(r.FormValue("state"), r.FormValue("code"))
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return

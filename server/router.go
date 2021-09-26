@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
-	"github.com/saifahn/expenseus/googleoauth"
 )
 
 func InitRouter(wb *WebService) *chi.Mux {
@@ -43,8 +42,8 @@ func InitRouter(wb *WebService) *chi.Mux {
 		r.Post("/", wb.CreateUser)
 	})
 
-	r.Get("/login_google", googleoauth.HandleLogin)
-	r.Get("/callback_google", googleoauth.HandleCallback)
+	r.Get("/login_google", wb.OauthLogin)
+	r.Get("/callback_google", wb.OauthCallback)
 
 	return r
 }

@@ -344,7 +344,7 @@ func (o *StubOauthConfig) Exchange(ctx context.Context, code string, opts ...oau
 	return nil, nil
 }
 
-func (o *StubOauthConfig) getInfoAndGenerateUser(state string, code string) (User, error) {
+func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (User, error) {
 	return TestSeanUser, nil
 }
 

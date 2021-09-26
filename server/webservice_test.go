@@ -2,6 +2,7 @@ package expenseus
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 )
 
 func TestGetExpenseByID(t *testing.T) {
@@ -20,7 +22,7 @@ func TestGetExpenseByID(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := &WebService{&store}
+	webservice := &WebService{&store, &StubGoogleOauthConfig{}}
 
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := NewGetExpenseRequest("1")
@@ -86,7 +88,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := NewWebService(&store)
+	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
@@ -132,7 +134,7 @@ func TestCreateExpense(t *testing.T) {
 		users:    []User{},
 		expenses: map[string]Expense{},
 	}
-	webservice := NewWebService(&store)
+	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		request := NewCreateExpenseRequest("tomomi", "Test Expense")
@@ -159,7 +161,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"9281": TestTomomiExpense,
 			},
 		}
-		webservice := NewWebService(&store)
+		webservice := NewWebService(&store, &StubGoogleOauthConfig{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -191,7 +193,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"14928": TestTomomiExpense2,
 			},
 		}
-		webservice := NewWebService(&store)
+		webservice := NewWebService(&store, &StubGoogleOauthConfig{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -215,7 +217,7 @@ func TestGetAllExpenses(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
-	webservice := NewWebService(&store)
+	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
 
 	user := TestSeanUser
 	userJSON, err := json.Marshal(user)
@@ -239,7 +241,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
-	webservice := NewWebService(&store)
+	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
 
 	request, err := http.NewRequest(http.MethodGet, "/users", nil)
 	if err != nil {
@@ -259,6 +261,41 @@ func TestListUsers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.Code)
 	assert.Len(t, got, len(store.users))
 	assert.ElementsMatch(t, got, store.users)
+}
+
+func TestGoogleOauthCallback(t *testing.T) {
+	t.Run("creates a user when user doesn't exist yet", func(t *testing.T) {
+		store := StubExpenseStore{users: []User{}}
+		oauth := StubGoogleOauthConfig{}
+		webservice := NewWebService(&store, &oauth)
+
+		request, err := http.NewRequest(http.MethodGet, "/callback_google", nil)
+		if err != nil {
+			t.Fatalf("request could not be created, %v", err)
+		}
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.OauthCallback)
+		handler.ServeHTTP(response, request)
+
+		// expect a new user to be added to the store
+		assert.Len(t, store.users, 1)
+		// TODO: expect to be routed to update username page
+	})
+}
+
+type StubGoogleOauthConfig struct{}
+
+func (o *StubGoogleOauthConfig) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	return ""
+}
+
+func (o *StubGoogleOauthConfig) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	return nil, nil
+}
+
+func (o *StubGoogleOauthConfig) getUserInfo(state string, code string) (GoogleUserInfo, error) {
+	return GoogleUserInfo{}, nil
 }
 
 // stub store implementation

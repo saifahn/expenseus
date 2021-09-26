@@ -26,7 +26,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	}
 
 	db := redis.New(mr.Addr())
-	oauth := &expenseus.StubGoogleOauthConfig{}
+	oauth := &expenseus.StubOauthConfig{}
 	webservice := expenseus.NewWebService(db, oauth)
 	router := expenseus.InitRouter(webservice)
 

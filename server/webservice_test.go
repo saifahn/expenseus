@@ -22,7 +22,7 @@ func TestGetExpenseByID(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := &WebService{&store, &StubGoogleOauthConfig{}}
+	webservice := &WebService{&store, &StubOauthConfig{}}
 
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := NewGetExpenseRequest("1")
@@ -88,7 +88,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{})
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
@@ -134,7 +134,7 @@ func TestCreateExpense(t *testing.T) {
 		users:    []User{},
 		expenses: map[string]Expense{},
 	}
-	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{})
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		request := NewCreateExpenseRequest("tomomi", "Test Expense")
@@ -161,7 +161,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"9281": TestTomomiExpense,
 			},
 		}
-		webservice := NewWebService(&store, &StubGoogleOauthConfig{})
+		webservice := NewWebService(&store, &StubOauthConfig{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -193,7 +193,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"14928": TestTomomiExpense2,
 			},
 		}
-		webservice := NewWebService(&store, &StubGoogleOauthConfig{})
+		webservice := NewWebService(&store, &StubOauthConfig{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -217,7 +217,7 @@ func TestGetAllExpenses(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
-	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{})
 
 	user := TestSeanUser
 	userJSON, err := json.Marshal(user)
@@ -241,7 +241,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
-	webservice := NewWebService(&store, &StubGoogleOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{})
 
 	request, err := http.NewRequest(http.MethodGet, "/users", nil)
 	if err != nil {
@@ -263,13 +263,13 @@ func TestListUsers(t *testing.T) {
 	assert.ElementsMatch(t, got, store.users)
 }
 
-func TestGoogleOauthCallback(t *testing.T) {
+func TestOauthCallback(t *testing.T) {
 	t.Run("creates a user when user doesn't exist yet", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{}}
-		oauth := StubGoogleOauthConfig{}
+		oauth := StubOauthConfig{}
 		webservice := NewWebService(&store, &oauth)
 
-		request, err := http.NewRequest(http.MethodGet, "/callback_google", nil)
+		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
 		if err != nil {
 			t.Fatalf("request could not be created, %v", err)
 		}
@@ -287,10 +287,10 @@ func TestGoogleOauthCallback(t *testing.T) {
 
 	t.Run("doesn't create a new user when the user already exists", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
-		oauth := StubGoogleOauthConfig{}
+		oauth := StubOauthConfig{}
 		webservice := NewWebService(&store, &oauth)
 
-		request, err := http.NewRequest(http.MethodGet, "/callback_google", nil)
+		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
 		if err != nil {
 			t.Fatalf("request could not be created, %v", err)
 		}
@@ -306,17 +306,17 @@ func TestGoogleOauthCallback(t *testing.T) {
 	})
 }
 
-type StubGoogleOauthConfig struct{}
+type StubOauthConfig struct{}
 
-func (o *StubGoogleOauthConfig) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+func (o *StubOauthConfig) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
 	return ""
 }
 
-func (o *StubGoogleOauthConfig) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+func (o *StubOauthConfig) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
 	return nil, nil
 }
 
-func (o *StubGoogleOauthConfig) getInfoAndGenerateUser(state string, code string) (User, error) {
+func (o *StubOauthConfig) getInfoAndGenerateUser(state string, code string) (User, error) {
 	return TestSeanUser, nil
 }
 

@@ -60,7 +60,11 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth) *WebService {
 // before passing the request to the handler
 func (wb *WebService) VerifyUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		rw.WriteHeader(http.StatusUnauthorized)
+		loginCookie, _ := r.Cookie("expenseus-login")
+		if loginCookie == nil || loginCookie.Value != "true" {
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 		next.ServeHTTP(rw, r)
 	}
 }

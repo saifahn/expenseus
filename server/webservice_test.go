@@ -346,6 +346,29 @@ func TestVerifyUser(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
+
+	t.Run("returns a 200 response when the user is authorized", func(t *testing.T) {
+		store := StubExpenseStore{}
+		oauth := StubOauthConfig{}
+		wb := NewWebService(&store, &oauth)
+
+		request, err := http.NewRequest(http.MethodGet, "/expenses", nil)
+		if err != nil {
+			t.Fatalf("request could not be created, %v", err)
+		}
+		cookie := &http.Cookie{
+			Name:  "expenseus-login",
+			Value: "true",
+		}
+		request.AddCookie(cookie)
+		response := httptest.NewRecorder()
+
+		handler := wb.VerifyUser(wb.GetAllExpenses)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusOK, response.Code)
+		// assert that you get all expenses actually
+	})
 }
 
 type StubOauthConfig struct {

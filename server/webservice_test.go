@@ -329,6 +329,25 @@ func TestOauthCallback(t *testing.T) {
 	})
 }
 
+func TestVerifyUser(t *testing.T) {
+	t.Run("returns a 401 response when the user is not authorized", func(t *testing.T) {
+		store := StubExpenseStore{}
+		oauth := StubOauthConfig{}
+		wb := NewWebService(&store, &oauth)
+
+		request, err := http.NewRequest(http.MethodGet, "/expenses", nil)
+		if err != nil {
+			t.Fatalf("request could not be created, %v", err)
+		}
+		response := httptest.NewRecorder()
+
+		handler := wb.VerifyUser(wb.GetAllExpenses)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusUnauthorized, response.Code)
+	})
+}
+
 type StubOauthConfig struct {
 	AuthCodeURLCalls []string
 }

@@ -47,21 +47,26 @@ type ExpenseusOauth interface {
 	GetInfoAndGenerateUser(state string, code string) (User, error)
 }
 
+type ExpenseusAuth interface {
+	ValidateUser(r *http.Request) bool
+}
+
 type WebService struct {
 	store       ExpenseStore
 	oauthConfig ExpenseusOauth
+	auth        ExpenseusAuth
 }
 
-func NewWebService(store ExpenseStore, oauth ExpenseusOauth) *WebService {
-	return &WebService{store: store, oauthConfig: oauth}
+func NewWebService(store ExpenseStore, oauth ExpenseusOauth, auth ExpenseusAuth) *WebService {
+	return &WebService{store: store, oauthConfig: oauth, auth: auth}
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
 // before passing the request to the handler
 func (wb *WebService) VerifyUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		loginCookie, _ := r.Cookie("expenseus-login")
-		if loginCookie == nil || loginCookie.Value != "true" {
+		userIsAuthorized := wb.auth.ValidateUser(r)
+		if !userIsAuthorized {
 			rw.WriteHeader(http.StatusUnauthorized)
 			return
 		}

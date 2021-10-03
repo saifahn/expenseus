@@ -22,7 +22,7 @@ func TestGetExpenseByID(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := &WebService{&store, &StubOauthConfig{}}
+	webservice := &WebService{&store, &StubOauthConfig{}, &StubAuth{}}
 
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := NewGetExpenseRequest("1")
@@ -88,7 +88,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := NewWebService(&store, &StubOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubAuth{})
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
@@ -134,7 +134,7 @@ func TestCreateExpense(t *testing.T) {
 		users:    []User{},
 		expenses: map[string]Expense{},
 	}
-	webservice := NewWebService(&store, &StubOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubAuth{})
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		request := NewCreateExpenseRequest("tomomi", "Test Expense")
@@ -161,7 +161,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"9281": TestTomomiExpense,
 			},
 		}
-		webservice := NewWebService(&store, &StubOauthConfig{})
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubAuth{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -193,7 +193,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"14928": TestTomomiExpense2,
 			},
 		}
-		webservice := NewWebService(&store, &StubOauthConfig{})
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubAuth{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -217,7 +217,7 @@ func TestGetAllExpenses(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
-	webservice := NewWebService(&store, &StubOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubAuth{})
 
 	user := TestSeanUser
 	userJSON, err := json.Marshal(user)
@@ -241,7 +241,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
-	webservice := NewWebService(&store, &StubOauthConfig{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubAuth{})
 
 	request, err := http.NewRequest(http.MethodGet, "/users", nil)
 	if err != nil {
@@ -267,7 +267,7 @@ func TestOauthLogin(t *testing.T) {
 	// set up webservice
 	store := StubExpenseStore{}
 	oauth := StubOauthConfig{}
-	webservice := NewWebService(&store, &oauth)
+	webservice := NewWebService(&store, &oauth, &StubAuth{})
 
 	request, err := http.NewRequest(http.MethodGet, "/login_oauth", nil)
 	if err != nil {
@@ -290,7 +290,7 @@ func TestOauthCallback(t *testing.T) {
 	t.Run("creates a user when user doesn't exist yet", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{}}
 		oauth := StubOauthConfig{}
-		webservice := NewWebService(&store, &oauth)
+		webservice := NewWebService(&store, &oauth, &StubAuth{})
 
 		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
 		if err != nil {
@@ -311,7 +311,7 @@ func TestOauthCallback(t *testing.T) {
 	t.Run("doesn't create a new user when the user already exists", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		webservice := NewWebService(&store, &oauth)
+		webservice := NewWebService(&store, &oauth, &StubAuth{})
 
 		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
 		if err != nil {
@@ -333,7 +333,7 @@ func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 401 response when the user is not authorized", func(t *testing.T) {
 		store := StubExpenseStore{}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth)
+		wb := NewWebService(&store, &oauth, &StubAuth{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -347,18 +347,17 @@ func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 200 response when the user is authorized and passes the request to the appropriate route", func(t *testing.T) {
 		store := StubExpenseStore{expenses: map[string]Expense{"1": TestSeanExpense}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth)
+		wb := NewWebService(&store, &oauth, &StubAuth{})
 
 		request := NewGetAllExpensesRequest()
-		cookie := &http.Cookie{
-			Name:  "expenseus-login",
-			Value: "true",
-		}
-		request.AddCookie(cookie)
+		ctx := context.WithValue(request.Context(), "validUser", true)
+		request = request.WithContext(ctx)
 		response := httptest.NewRecorder()
 
 		handler := wb.VerifyUser(wb.GetAllExpenses)
 		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusOK, response.Code)
 
 		var got []Expense
 		err := json.NewDecoder(response.Body).Decode(&got)
@@ -366,9 +365,17 @@ func TestVerifyUser(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}
 
-		assert.Equal(t, http.StatusOK, response.Code)
 		assert.ElementsMatch(t, got, []Expense{TestSeanExpense})
 	})
+}
+
+type StubAuth struct{}
+
+func (sa *StubAuth) ValidateUser(r *http.Request) bool {
+	if isValid := r.Context().Value("validUser"); isValid == nil {
+		return false
+	}
+	return true
 }
 
 type StubOauthConfig struct {

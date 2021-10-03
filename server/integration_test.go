@@ -27,7 +27,8 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 
 	db := redis.New(mr.Addr())
 	oauth := &expenseus.StubOauthConfig{}
-	webservice := expenseus.NewWebService(db, oauth)
+	auth := &expenseus.StubAuth{}
+	webservice := expenseus.NewWebService(db, oauth, auth)
 	router := expenseus.InitRouter(webservice)
 
 	// CREAT users in the db

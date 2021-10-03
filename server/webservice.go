@@ -48,7 +48,7 @@ type ExpenseusOauth interface {
 }
 
 type ExpenseusAuth interface {
-	ValidateUser(r *http.Request) bool
+	ValidateSession(r *http.Request) bool
 }
 
 type WebService struct {
@@ -65,7 +65,7 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth, auth ExpenseusAuth)
 // before passing the request to the handler
 func (wb *WebService) VerifyUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		userIsAuthorized := wb.auth.ValidateUser(r)
+		userIsAuthorized := wb.auth.ValidateSession(r)
 		if !userIsAuthorized {
 			rw.WriteHeader(http.StatusUnauthorized)
 			return

@@ -350,7 +350,7 @@ func TestVerifyUser(t *testing.T) {
 		wb := NewWebService(&store, &oauth, &StubAuth{})
 
 		request := NewGetAllExpensesRequest()
-		ctx := context.WithValue(request.Context(), "validUser", true)
+		ctx := context.WithValue(request.Context(), "validSession", true)
 		request = request.WithContext(ctx)
 		response := httptest.NewRecorder()
 
@@ -371,8 +371,8 @@ func TestVerifyUser(t *testing.T) {
 
 type StubAuth struct{}
 
-func (sa *StubAuth) ValidateUser(r *http.Request) bool {
-	if isValid := r.Context().Value("validUser"); isValid == nil {
+func (sa *StubAuth) ValidateSession(r *http.Request) bool {
+	if isValid := r.Context().Value("validSession"); isValid == nil {
 		return false
 	}
 	return true

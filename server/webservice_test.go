@@ -335,10 +335,7 @@ func TestVerifyUser(t *testing.T) {
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth)
 
-		request, err := http.NewRequest(http.MethodGet, "/expenses", nil)
-		if err != nil {
-			t.Fatalf("request could not be created, %v", err)
-		}
+		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
 
 		handler := wb.VerifyUser(wb.GetAllExpenses)
@@ -352,10 +349,7 @@ func TestVerifyUser(t *testing.T) {
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth)
 
-		request, err := http.NewRequest(http.MethodGet, "/expenses", nil)
-		if err != nil {
-			t.Fatalf("request could not be created, %v", err)
-		}
+		request := NewGetAllExpensesRequest()
 		cookie := &http.Cookie{
 			Name:  "expenseus-login",
 			Value: "true",
@@ -367,7 +361,7 @@ func TestVerifyUser(t *testing.T) {
 		handler.ServeHTTP(response, request)
 
 		var got []Expense
-		err = json.NewDecoder(response.Body).Decode(&got)
+		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 		}

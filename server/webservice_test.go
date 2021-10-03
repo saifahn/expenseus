@@ -347,8 +347,8 @@ func TestVerifyUser(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 
-	t.Run("returns a 200 response when the user is authorized", func(t *testing.T) {
-		store := StubExpenseStore{}
+	t.Run("returns a 200 response when the user is authorized and passes the request to the appropriate route", func(t *testing.T) {
+		store := StubExpenseStore{expenses: map[string]Expense{"1": TestSeanExpense}}
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth)
 
@@ -366,8 +366,14 @@ func TestVerifyUser(t *testing.T) {
 		handler := wb.VerifyUser(wb.GetAllExpenses)
 		handler.ServeHTTP(response, request)
 
+		var got []Expense
+		err = json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		}
+
 		assert.Equal(t, http.StatusOK, response.Code)
-		// assert that you get all expenses actually
+		assert.ElementsMatch(t, got, []Expense{TestSeanExpense})
 	})
 }
 

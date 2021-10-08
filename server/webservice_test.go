@@ -344,14 +344,14 @@ func TestVerifyUser(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 
-	t.Run("returns a 200 response when the user is authorized and passes the request to the appropriate route", func(t *testing.T) {
+	t.Run("returns a 200 response when the user is authorized, and passes the request to the appropriate route", func(t *testing.T) {
 		store := StubExpenseStore{expenses: map[string]Expense{"1": TestSeanExpense}}
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth, &StubSessionManager{})
 
 		request := NewGetAllExpensesRequest()
-		ctx := context.WithValue(request.Context(), "validSession", true)
-		request = request.WithContext(ctx)
+		// simulate a cookie session storage here
+		request.AddCookie(&validCookie)
 		response := httptest.NewRecorder()
 
 		handler := wb.VerifyUser(wb.GetAllExpenses)
@@ -371,11 +371,25 @@ func TestVerifyUser(t *testing.T) {
 
 type StubSessionManager struct{}
 
+var validCookie = http.Cookie{
+	Name:  "session",
+	Value: "authorized",
+}
+
 func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
-	if isValid := r.Context().Value("validSession"); isValid == nil {
-		return false
+	cookies := r.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == validCookie.Name {
+			if cookie.Value == validCookie.Value {
+				return true
+			}
+		}
 	}
-	return true
+	return false
+}
+
+func (s *StubSessionManager) StoreSession(rw http.ResponseWriter, r *http.Request) {
+	http.SetCookie(rw, &validCookie)
 }
 
 type StubOauthConfig struct {

@@ -2,16 +2,13 @@ package expenseus
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/oauth2"
 )
 
 func TestGetExpenseByID(t *testing.T) {
@@ -264,7 +261,6 @@ func TestListUsers(t *testing.T) {
 }
 
 func TestOauthLogin(t *testing.T) {
-	// set up webservice
 	store := StubExpenseStore{}
 	oauth := StubOauthConfig{}
 	webservice := NewWebService(&store, &oauth, &StubSessionManager{})
@@ -308,10 +304,11 @@ func TestOauthCallback(t *testing.T) {
 		// TODO: expect to be routed to update username page
 	})
 
-	t.Run("doesn't create a new user when the user already exists", func(t *testing.T) {
+	t.Run("doesn't create a new user when the user already exists and calls store session with the user in the context", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		webservice := NewWebService(&store, &oauth, &StubSessionManager{})
+		sessions := StubSessionManager{}
+		webservice := NewWebService(&store, &oauth, &sessions)
 
 		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
 		if err != nil {
@@ -367,107 +364,4 @@ func TestVerifyUser(t *testing.T) {
 
 		assert.ElementsMatch(t, got, []Expense{TestSeanExpense})
 	})
-}
-
-type StubSessionManager struct{}
-
-var validCookie = http.Cookie{
-	Name:  "session",
-	Value: "authorized",
-}
-
-func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
-	cookies := r.Cookies()
-	for _, cookie := range cookies {
-		if cookie.Name == validCookie.Name {
-			if cookie.Value == validCookie.Value {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (s *StubSessionManager) StoreSession(rw http.ResponseWriter, r *http.Request) {
-	http.SetCookie(rw, &validCookie)
-}
-
-type StubOauthConfig struct {
-	AuthCodeURLCalls []string
-}
-
-const oauthProviderMockURL = "oauth-provider-mock-url"
-
-func (o *StubOauthConfig) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	o.AuthCodeURLCalls = append(o.AuthCodeURLCalls, oauthProviderMockURL)
-	return oauthProviderMockURL
-}
-
-func (o *StubOauthConfig) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
-	return nil, nil
-}
-
-func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (User, error) {
-	return TestSeanUser, nil
-}
-
-// stub store implementation
-type StubExpenseStore struct {
-	expenses map[string]Expense
-	users    []User
-}
-
-func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
-	expense := s.expenses[id]
-	// check for empty Expense
-	if expense == (Expense{}) {
-		return Expense{}, errors.New("expense not found")
-	}
-	return expense, nil
-}
-
-func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, error) {
-	var targetUser User
-	for _, u := range s.users {
-		if u.Username == username {
-			targetUser = u
-			break
-		}
-	}
-
-	var expenses []Expense
-	for _, e := range s.expenses {
-		// if the user id is the same as userid, then append
-		if e.UserID == targetUser.ID {
-			expenses = append(expenses, e)
-		}
-	}
-	return expenses, nil
-}
-
-func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
-	testId := fmt.Sprintf("tid-%v", ed.Name)
-	expense := Expense{
-		ExpenseDetails: ed,
-		ID:             testId,
-	}
-	s.expenses[testId] = expense
-	return nil
-}
-
-func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
-	var expenses []Expense
-	for _, e := range s.expenses {
-		expenses = append(expenses, e)
-	}
-	return expenses, nil
-}
-
-func (s *StubExpenseStore) CreateUser(u User) error {
-	s.users = append(s.users, u)
-	return nil
-}
-
-func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
-	return s.users, nil
 }

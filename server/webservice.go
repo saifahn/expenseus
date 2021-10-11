@@ -107,6 +107,9 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 
 	// otherwise, create the user
 	wb.store.CreateUser(user)
+	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
+	r = r.WithContext(ctx)
+	wb.sessions.SaveSession(rw, r)
 	// TODO: redirect to change username page
 }
 

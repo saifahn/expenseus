@@ -283,10 +283,11 @@ func TestOauthLogin(t *testing.T) {
 }
 
 func TestOauthCallback(t *testing.T) {
-	t.Run("creates a user when user doesn't exist yet", func(t *testing.T) {
+	t.Run("creates a user when user doesn't exist yet and creates a new session with the user", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{}}
 		oauth := StubOauthConfig{}
-		webservice := NewWebService(&store, &oauth, &StubSessionManager{})
+		sessions := StubSessionManager{}
+		webservice := NewWebService(&store, &oauth, &sessions)
 
 		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
 		if err != nil {
@@ -301,6 +302,9 @@ func TestOauthCallback(t *testing.T) {
 		expected := []User{TestSeanUser}
 		assert.Len(t, store.users, 1)
 		assert.ElementsMatch(t, expected, store.users)
+
+		assert.Len(t, sessions.saveSessionCalls, 1)
+		assert.Equal(t, sessions.saveSessionCalls[0], TestSeanUser.ID)
 		// TODO: expect to be routed to update username page
 	})
 

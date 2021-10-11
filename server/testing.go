@@ -97,7 +97,7 @@ func AssertResponseStatus(t *testing.T, got, want int) {
 }
 
 type StubSessionManager struct {
-	storeSessionCalls []string
+	saveSessionCalls []string
 }
 
 var validCookie = http.Cookie{
@@ -117,8 +117,8 @@ func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 	return false
 }
 
-func (s *StubSessionManager) StoreSession(rw http.ResponseWriter, r *http.Request) {
-	s.storeSessionCalls = append(s.storeSessionCalls, "")
+func (s *StubSessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+	s.saveSessionCalls = append(s.saveSessionCalls, "")
 	http.SetCookie(rw, &validCookie)
 }
 

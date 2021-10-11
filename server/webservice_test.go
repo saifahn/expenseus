@@ -323,7 +323,7 @@ func TestOauthCallback(t *testing.T) {
 		assert.Len(t, store.users, 1)
 		assert.ElementsMatch(t, expected, store.users)
 
-		assert.Len(t, sessions.storeSessionCalls, 1)
+		assert.Len(t, sessions.saveSessionCalls, 1)
 		// TODO: expect to be routed to the welcome page
 	})
 }

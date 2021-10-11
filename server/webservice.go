@@ -49,7 +49,7 @@ type ExpenseusOauth interface {
 
 type SessionManager interface {
 	ValidateAuthorizedSession(r *http.Request) bool
-	StoreSession(rw http.ResponseWriter, r *http.Request)
+	SaveSession(rw http.ResponseWriter, r *http.Request)
 }
 
 type WebService struct {
@@ -97,7 +97,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	// check if the user exists already
 	for _, u := range existingUsers {
 		if u.ID == user.ID {
-			wb.sessions.StoreSession(rw, r)
+			wb.sessions.SaveSession(rw, r)
 			return
 		}
 	}

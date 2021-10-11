@@ -297,14 +297,14 @@ func TestOauthCallback(t *testing.T) {
 		handler := http.HandlerFunc(webservice.OauthCallback)
 		handler.ServeHTTP(response, request)
 
+		// expect a new user to be added to the store, GetInfoAndGenerateUser has been stubbed to generate TestSeanUser
 		expected := []User{TestSeanUser}
-		// expect a new user to be added to the store
 		assert.Len(t, store.users, 1)
 		assert.ElementsMatch(t, expected, store.users)
 		// TODO: expect to be routed to update username page
 	})
 
-	t.Run("doesn't create a new user when the user already exists and calls store session with the user in the context", func(t *testing.T) {
+	t.Run("doesn't create a new user when the user already exists, and saves the session with the user in the context", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
@@ -324,6 +324,8 @@ func TestOauthCallback(t *testing.T) {
 		assert.ElementsMatch(t, expected, store.users)
 
 		assert.Len(t, sessions.saveSessionCalls, 1)
+		// the callback will add a context of the appropriate user id
+		assert.Equal(t, sessions.saveSessionCalls[0], TestSeanUser.ID)
 		// TODO: expect to be routed to the welcome page
 	})
 }

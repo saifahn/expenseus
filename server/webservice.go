@@ -13,6 +13,7 @@ type contextKey int
 const (
 	CtxKeyExpenseID contextKey = iota
 	CtxKeyUsername  contextKey = iota
+	CtxKeyUserID    contextKey = iota
 	jsonContentType            = "application/json"
 )
 
@@ -97,6 +98,8 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	// check if the user exists already
 	for _, u := range existingUsers {
 		if u.ID == user.ID {
+			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
+			r = r.WithContext(ctx)
 			wb.sessions.SaveSession(rw, r)
 			return
 		}

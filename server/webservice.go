@@ -97,7 +97,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	// check if the user exists already
 	for _, u := range existingUsers {
 		if u.ID == user.ID {
-			// TODO: log the user in
+			wb.sessions.StoreSession(rw, r)
 			return
 		}
 	}

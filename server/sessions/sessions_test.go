@@ -22,6 +22,29 @@ func TestValidateAuthorizedSession(t *testing.T) {
 		assert.Equal(t, got, want)
 	})
 
+	t.Run("returns false if the cookie value was encoded with a different secret", func(t *testing.T) {
+		altHashKey := securecookie.GenerateRandomKey(64)
+		altBlockKey := securecookie.GenerateRandomKey(32)
+		s := securecookie.New(altHashKey, altBlockKey)
+		encoded, err := s.Encode("expenseus-id", "test")
+		if err != nil {
+			t.Errorf("cookie could not be encoded: %v", err)
+			return
+		}
+
+		cookie := &http.Cookie{
+			Name:     "expenseus-id",
+			Value:    encoded,
+			Secure:   true,
+			HttpOnly: true,
+		}
+		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+		req.AddCookie(cookie)
+
+		want := false
+		got := sessions.ValidateAuthorizedSession(req)
+		assert.Equal(t, want, got)
+	})
 	// TODO: no user id separate from no cookie?
 	// TODO: error with different hash key decoding?
 

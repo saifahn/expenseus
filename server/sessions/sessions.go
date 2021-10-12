@@ -15,8 +15,14 @@ func New(hashKey, blockKey []byte) *SessionManager {
 }
 
 func (sm *SessionManager) ValidateAuthorizedSession(r *http.Request) bool {
-	// sm.cookies.Decode()
-	return false
+	cookie, err := r.Cookie("expenseus-id")
+	if err != nil {
+		return false
+	}
+
+	var userid string
+	err = sm.cookies.Decode("expenseus-id", cookie.Value, &userid)
+	return err == nil
 }
 
 func (sm *SessionManager) StoreSession(rw http.ResponseWriter, r *http.Request) {

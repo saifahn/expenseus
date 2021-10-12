@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/securecookie"
+	"github.com/saifahn/expenseus"
 )
 
 type SessionManager struct {
@@ -25,6 +26,22 @@ func (sm *SessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 	return err == nil
 }
 
-func (sm *SessionManager) StoreSession(rw http.ResponseWriter, r *http.Request) {
+func (sm *SessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(expenseus.CtxKeyUserID).(string)
 
+	encoded, err := sm.cookies.Encode("expenseus-id", userID)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	cookie := &http.Cookie{
+		Name:     "expenseus-id",
+		Value:    encoded,
+		Secure:   true,
+		HttpOnly: true,
+		// one day
+		MaxAge: 60 * 60 * 24,
+	}
+
+	http.SetCookie(rw, cookie)
 }

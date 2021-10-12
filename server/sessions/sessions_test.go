@@ -1,10 +1,13 @@
 package sessions
 
 import (
+	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gorilla/securecookie"
+	"github.com/saifahn/expenseus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,5 +83,33 @@ func TestValidateAuthorizedSession(t *testing.T) {
 		want := true
 		got := sessions.ValidateAuthorizedSession(req)
 		assert.Equal(t, want, got)
+	})
+}
+
+func TestSaveSession(t *testing.T) {
+	t.Run("given a request with a userid in context, stores the encoded id in a cookie of the appropriate name", func(t *testing.T) {
+		sessions := New(testHashKey, testBlockKey)
+
+		expectedUserID := "test"
+		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+		ctx := context.WithValue(req.Context(), expenseus.CtxKeyUserID, expectedUserID)
+		req = req.WithContext(ctx)
+
+		rw := httptest.NewRecorder()
+		sessions.SaveSession(rw, req)
+
+		cookies := rw.Result().Cookies()
+		for _, c := range cookies {
+			if c.Name == "expenseus-id" {
+				var userid string
+				err := sessions.cookies.Decode(c.Name, c.Value, &userid)
+				if err != nil {
+					t.Fatalf("cookie could not be decoded: %v", err)
+				}
+				assert.Equal(t, expectedUserID, userid)
+				return
+			}
+		}
+		t.Fatalf("cookie with the expected name %q was not found", "expenseus-id")
 	})
 }

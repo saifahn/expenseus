@@ -11,10 +11,11 @@ import (
 type contextKey int
 
 const (
-	CtxKeyExpenseID contextKey = iota
-	CtxKeyUsername  contextKey = iota
-	CtxKeyUserID    contextKey = iota
-	jsonContentType            = "application/json"
+	CtxKeyExpenseID  contextKey = iota
+	CtxKeyUsername   contextKey = iota
+	CtxKeyUserID     contextKey = iota
+	jsonContentType             = "application/json"
+	SessionCookieKey            = "expenseus-session"
 )
 
 type ExpenseStore interface {

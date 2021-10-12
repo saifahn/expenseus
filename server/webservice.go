@@ -70,7 +70,7 @@ func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		sessionIsAuthorized := wb.sessions.ValidateAuthorizedSession(r)
 		if !sessionIsAuthorized {
-			rw.WriteHeader(http.StatusUnauthorized)
+			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(rw, r)

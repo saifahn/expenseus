@@ -14,7 +14,7 @@ var testBlockKey = securecookie.GenerateRandomKey(32)
 func TestValidateAuthorizedSession(t *testing.T) {
 	sessions := New(testHashKey, testBlockKey)
 
-	t.Run("returns false with no stored user id", func(t *testing.T) {
+	t.Run("returns false with no cookie", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 
 		want := false

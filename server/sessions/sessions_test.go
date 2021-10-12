@@ -45,8 +45,21 @@ func TestValidateAuthorizedSession(t *testing.T) {
 		got := sessions.ValidateAuthorizedSession(req)
 		assert.Equal(t, want, got)
 	})
-	// TODO: no user id separate from no cookie?
-	// TODO: error with different hash key decoding?
+
+	t.Run("returns false if the cookie value is not encoded", func(t *testing.T) {
+		cookie := &http.Cookie{
+			Name:     "expenseus-id",
+			Value:    "test",
+			Secure:   true,
+			HttpOnly: true,
+		}
+		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
+		req.AddCookie(cookie)
+
+		want := false
+		got := sessions.ValidateAuthorizedSession(req)
+		assert.Equal(t, want, got)
+	})
 
 	t.Run("returns true with a stored user id", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)

@@ -66,15 +66,15 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionMan
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
 // before passing the request to the handler
-func (wb *WebService) VerifyUser(next http.HandlerFunc) http.HandlerFunc {
-	return func(rw http.ResponseWriter, r *http.Request) {
+func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		sessionIsAuthorized := wb.sessions.ValidateAuthorizedSession(r)
 		if !sessionIsAuthorized {
 			rw.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(rw, r)
-	}
+	})
 }
 
 func (wb *WebService) OauthLogin(rw http.ResponseWriter, r *http.Request) {

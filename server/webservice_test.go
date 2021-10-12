@@ -343,7 +343,7 @@ func TestVerifyUser(t *testing.T) {
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
 
-		handler := wb.VerifyUser(wb.GetAllExpenses)
+		handler := wb.VerifyUser(http.HandlerFunc(wb.GetAllExpenses))
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
@@ -359,7 +359,7 @@ func TestVerifyUser(t *testing.T) {
 		request.AddCookie(&validCookie)
 		response := httptest.NewRecorder()
 
-		handler := wb.VerifyUser(wb.GetAllExpenses)
+		handler := wb.VerifyUser(http.HandlerFunc(wb.GetAllExpenses))
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusOK, response.Code)

@@ -22,6 +22,9 @@ func InitRouter(wb *WebService) *chi.Mux {
 		MaxAge:           300,
 	}))
 
+	fs := http.FileServer(http.Dir("./web/dist"))
+	r.Handle("/*", fs)
+
 	r.Route("/expenses", func(r chi.Router) {
 		r.Use(wb.VerifyUser)
 		r.Get("/", wb.GetAllExpenses)

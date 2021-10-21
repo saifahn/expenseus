@@ -1,16 +1,21 @@
 package expenseus
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+
+	"golang.org/x/oauth2"
 )
 
 type contextKey int
 
 const (
-	CtxKeyExpenseID contextKey = iota
-	CtxKeyUsername  contextKey = iota
-	jsonContentType            = "application/json"
+	CtxKeyExpenseID  contextKey = iota
+	CtxKeyUsername   contextKey = iota
+	CtxKeyUserID     contextKey = iota
+	jsonContentType             = "application/json"
+	SessionCookieKey            = "expenseus-session"
 )
 
 type ExpenseStore interface {
@@ -38,12 +43,75 @@ type Expense struct {
 	ID string `json:"id"`
 }
 
-func NewWebService(store ExpenseStore) *WebService {
-	return &WebService{store}
+type ExpenseusOauth interface {
+	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
+	Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error)
+	GetInfoAndGenerateUser(state string, code string) (User, error)
+}
+
+type SessionManager interface {
+	ValidateAuthorizedSession(r *http.Request) bool
+	SaveSession(rw http.ResponseWriter, r *http.Request)
 }
 
 type WebService struct {
-	store ExpenseStore
+	store       ExpenseStore
+	oauthConfig ExpenseusOauth
+	sessions    SessionManager
+}
+
+func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager) *WebService {
+	return &WebService{store: store, oauthConfig: oauth, sessions: sessions}
+}
+
+// VerifyUser is middleware that checks that the user is logged in and authorized
+// before passing the request to the handler
+func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		sessionIsAuthorized := wb.sessions.ValidateAuthorizedSession(r)
+		if !sessionIsAuthorized {
+			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(rw, r)
+	})
+}
+
+func (wb *WebService) OauthLogin(rw http.ResponseWriter, r *http.Request) {
+	// TODO: add proper state string
+	url := wb.oauthConfig.AuthCodeURL("")
+	http.Redirect(rw, r, url, http.StatusTemporaryRedirect)
+}
+
+func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
+	user, err := wb.oauthConfig.GetInfoAndGenerateUser(r.FormValue("state"), r.FormValue("code"))
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: check by UserID instead?
+	existingUsers, err := wb.store.GetAllUsers()
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	// check if the user exists already
+	for _, u := range existingUsers {
+		if u.ID == user.ID {
+			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
+			r = r.WithContext(ctx)
+			wb.sessions.SaveSession(rw, r)
+			return
+		}
+	}
+
+	// otherwise, create the user
+	wb.store.CreateUser(user)
+	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
+	r = r.WithContext(ctx)
+	wb.sessions.SaveSession(rw, r)
+	// TODO: redirect to change username page
 }
 
 // GetExpense handles a HTTP request to get an expense by ID, returning the expense.

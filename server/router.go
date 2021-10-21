@@ -23,6 +23,7 @@ func InitRouter(wb *WebService) *chi.Mux {
 	}))
 
 	r.Route("/expenses", func(r chi.Router) {
+		r.Use(wb.VerifyUser)
 		r.Get("/", wb.GetAllExpenses)
 		r.Post("/", wb.CreateExpense)
 
@@ -38,9 +39,13 @@ func InitRouter(wb *WebService) *chi.Mux {
 	})
 
 	r.Route("/users", func(r chi.Router) {
+		r.Use(wb.VerifyUser)
 		r.Get("/", wb.ListUsers)
 		r.Post("/", wb.CreateUser)
 	})
+
+	r.Get("/login_google", wb.OauthLogin)
+	r.Get("/callback_google", wb.OauthCallback)
 
 	return r
 }

@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
+
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -91,4 +94,111 @@ func AssertResponseStatus(t *testing.T, got, want int) {
 	if got != want {
 		t.Errorf("got status %d, want %d", got, want)
 	}
+}
+
+type StubSessionManager struct {
+	saveSessionCalls []string
+}
+
+var validCookie = http.Cookie{
+	Name:  "session",
+	Value: "authorized",
+}
+
+func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
+	cookies := r.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == validCookie.Name {
+			if cookie.Value == validCookie.Value {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (s *StubSessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
+	s.saveSessionCalls = append(s.saveSessionCalls, userID)
+	http.SetCookie(rw, &validCookie)
+}
+
+type StubOauthConfig struct {
+	AuthCodeURLCalls []string
+}
+
+const oauthProviderMockURL = "oauth-provider-mock-url"
+
+func (o *StubOauthConfig) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	o.AuthCodeURLCalls = append(o.AuthCodeURLCalls, oauthProviderMockURL)
+	return oauthProviderMockURL
+}
+
+func (o *StubOauthConfig) Exchange(ctx context.Context, code string, opts ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
+	return nil, nil
+}
+
+func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (User, error) {
+	return TestSeanUser, nil
+}
+
+// stub store implementation
+type StubExpenseStore struct {
+	expenses map[string]Expense
+	users    []User
+}
+
+func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
+	expense := s.expenses[id]
+	// check for empty Expense
+	if expense == (Expense{}) {
+		return Expense{}, errors.New("expense not found")
+	}
+	return expense, nil
+}
+
+func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, error) {
+	var targetUser User
+	for _, u := range s.users {
+		if u.Username == username {
+			targetUser = u
+			break
+		}
+	}
+
+	var expenses []Expense
+	for _, e := range s.expenses {
+		// if the user id is the same as userid, then append
+		if e.UserID == targetUser.ID {
+			expenses = append(expenses, e)
+		}
+	}
+	return expenses, nil
+}
+
+func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
+	testId := fmt.Sprintf("tid-%v", ed.Name)
+	expense := Expense{
+		ExpenseDetails: ed,
+		ID:             testId,
+	}
+	s.expenses[testId] = expense
+	return nil
+}
+
+func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
+	var expenses []Expense
+	for _, e := range s.expenses {
+		expenses = append(expenses, e)
+	}
+	return expenses, nil
+}
+
+func (s *StubExpenseStore) CreateUser(u User) error {
+	s.users = append(s.users, u)
+	return nil
+}
+
+func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
+	return s.users, nil
 }

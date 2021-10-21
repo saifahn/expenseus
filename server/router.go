@@ -25,30 +25,32 @@ func InitRouter(wb *WebService) *chi.Mux {
 	fs := http.FileServer(http.Dir("./web/dist"))
 	r.Handle("/*", fs)
 
-	r.Route("/expenses", func(r chi.Router) {
-		r.Use(wb.VerifyUser)
-		r.Get("/", wb.GetAllExpenses)
-		r.Post("/", wb.CreateExpense)
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/expenses", func(r chi.Router) {
+			r.Use(wb.VerifyUser)
+			r.Get("/", wb.GetAllExpenses)
+			r.Post("/", wb.CreateExpense)
 
-		r.Route("/user/{username}", func(r chi.Router) {
-			r.Use(UsernameCtx)
-			r.Get("/", wb.GetExpensesByUsername)
+			r.Route("/user/{username}", func(r chi.Router) {
+				r.Use(UsernameCtx)
+				r.Get("/", wb.GetExpensesByUsername)
+			})
+
+			r.Route("/{expenseID}", func(r chi.Router) {
+				r.Use(ExpenseIDCtx)
+				r.Get("/", wb.GetExpense)
+			})
 		})
 
-		r.Route("/{expenseID}", func(r chi.Router) {
-			r.Use(ExpenseIDCtx)
-			r.Get("/", wb.GetExpense)
+		r.Route("/users", func(r chi.Router) {
+			r.Use(wb.VerifyUser)
+			r.Get("/", wb.ListUsers)
+			r.Post("/", wb.CreateUser)
 		})
-	})
 
-	r.Route("/users", func(r chi.Router) {
-		r.Use(wb.VerifyUser)
-		r.Get("/", wb.ListUsers)
-		r.Post("/", wb.CreateUser)
+		r.Get("/login_google", wb.OauthLogin)
+		r.Get("/callback_google", wb.OauthCallback)
 	})
-
-	r.Get("/login_google", wb.OauthLogin)
-	r.Get("/callback_google", wb.OauthCallback)
 
 	return r
 }

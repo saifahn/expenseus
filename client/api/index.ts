@@ -8,8 +8,9 @@ export class UserAPI {
   baseURL = `${apiURL}/users`;
 
   async listUsers() {
-    const url = `${this.baseURL}`;
-    const res = await fetch(url);
+    const res = await fetch(this.baseURL, {
+      credentials: "include",
+    });
     const parsed: User[] = await res.json();
     return parsed;
   }
@@ -17,13 +18,13 @@ export class UserAPI {
   async createUser(username: string, name: string) {
     // TODO: remove this once the back end handles id creation
     const id = uuidv4();
-    const url = `${this.baseURL}`;
-    const res = await fetch(url, {
+    const res = await fetch(this.baseURL, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ username, name, id }),
     });
     if (res.ok) {
@@ -39,7 +40,9 @@ export class ExpenseAPI {
   baseURL = `${apiURL}/expenses`;
 
   async listExpenses() {
-    const res = await fetch(this.baseURL);
+    const res = await fetch(this.baseURL, {
+      credentials: "include",
+    });
     const parsed: Expense[] = await res.json();
     return parsed;
   }
@@ -51,6 +54,7 @@ export class ExpenseAPI {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify({ name: expenseName, userid: userID }),
     });
     if (res.ok) {

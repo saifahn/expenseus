@@ -11,3 +11,6 @@
 
 # environment variables file
 .envrc
+
+# nextjs files
+web/dist

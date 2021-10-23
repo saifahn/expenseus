@@ -357,7 +357,7 @@ func TestVerifyUser(t *testing.T) {
 
 		request := NewGetAllExpensesRequest()
 		// simulate a cookie session storage here
-		request.AddCookie(&validCookie)
+		request.AddCookie(&ValidCookie)
 		response := httptest.NewRecorder()
 
 		handler := wb.VerifyUser(http.HandlerFunc(wb.GetAllExpenses))
@@ -410,7 +410,7 @@ func TestGetSelf(t *testing.T) {
 
 		request, _ := http.NewRequest(http.MethodGet, "/users/self", nil)
 		// add the user into the request cookie
-		request.AddCookie(&validCookie)
+		request.AddCookie(&ValidCookie)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(wb.GetSelf)

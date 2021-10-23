@@ -31,7 +31,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	webservice := expenseus.NewWebService(db, oauth, auth)
 	router := expenseus.InitRouter(webservice)
 
-	// CREAT users in the db
+	// CREATE users in the db
 	testUsers := []expenseus.User{expenseus.TestSeanUser, expenseus.TestTomomiUser}
 	for _, u := range testUsers {
 		userJSON, err := json.Marshal(u)
@@ -40,16 +40,18 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		}
 
 		response := httptest.NewRecorder()
-		request, err := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(userJSON))
+		request, err := http.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(userJSON))
 		if err != nil {
 			t.Fatalf("request could not be created, %v", err)
 		}
+		request.AddCookie(&expenseus.ValidCookie)
 		router.ServeHTTP(response, request)
 	}
 
 	// GET all users
 	response := httptest.NewRecorder()
-	request, err := http.NewRequest(http.MethodGet, "/users", nil)
+	request, err := http.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	request.AddCookie(&expenseus.ValidCookie)
 	if err != nil {
 		t.Fatalf("request could not be created, %v", err)
 	}
@@ -67,14 +69,15 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 
 	// CREATE expenses in the db
 	for _, ed := range wantedExpenseDetails {
-		router.ServeHTTP(httptest.NewRecorder(), expenseus.NewCreateExpenseRequest(
-			ed.UserID, ed.Name,
-		))
+		request := expenseus.NewCreateExpenseRequest(ed.UserID, ed.Name)
+		request.AddCookie(&expenseus.ValidCookie)
+		router.ServeHTTP(httptest.NewRecorder(), request)
 	}
 
 	// GET all expenses
 	response = httptest.NewRecorder()
 	request = expenseus.NewGetAllExpensesRequest()
+	request.AddCookie(&expenseus.ValidCookie)
 	router.ServeHTTP(response, request)
 
 	var expensesGot []expenseus.Expense
@@ -93,6 +96,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	// GET one user's expenses
 	response = httptest.NewRecorder()
 	request = expenseus.NewGetExpensesByUsernameRequest(expenseus.TestTomomiUser.Username)
+	request.AddCookie(&expenseus.ValidCookie)
 	router.ServeHTTP(response, request)
 
 	// reset expensesGot to an empty slice

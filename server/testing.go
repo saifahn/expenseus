@@ -55,7 +55,7 @@ var (
 // NewGetExpenseRequest creates a request to be used in tests get an expense
 // by id, adding the id to the request context.
 func NewGetExpenseRequest(id string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyExpenseID, id)
 	return req.WithContext(ctx)
 }
@@ -65,20 +65,20 @@ func NewGetExpenseRequest(id string) *http.Request {
 func NewCreateExpenseRequest(user, name string) *http.Request {
 	values := ExpenseDetails{UserID: user, Name: name}
 	jsonValue, _ := json.Marshal(values)
-	req, _ := http.NewRequest(http.MethodPost, "/expenses", bytes.NewBuffer(jsonValue))
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", bytes.NewBuffer(jsonValue))
 	return req
 }
 
 // NewGetExpensesByUsernameRequest creates a request to be used in tests to get all
 // expenses of a user, adding the user to the request context.
 func NewGetExpensesByUsernameRequest(username string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/user/%s", username), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/user/%s", username), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)
 }
 
 func NewGetAllExpensesRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/expenses", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/expenses", nil)
 	return req
 }
 
@@ -101,7 +101,7 @@ type StubSessionManager struct {
 	saveSessionCalls []string
 }
 
-var validCookie = http.Cookie{
+var ValidCookie = http.Cookie{
 	Name:  "session",
 	Value: TestSeanUser.ID,
 }
@@ -109,8 +109,8 @@ var validCookie = http.Cookie{
 func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
-		if cookie.Name == validCookie.Name {
-			if cookie.Value == validCookie.Value {
+		if cookie.Name == ValidCookie.Name {
+			if cookie.Value == ValidCookie.Value {
 				return true
 			}
 		}
@@ -121,14 +121,14 @@ func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 func (s *StubSessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
 	s.saveSessionCalls = append(s.saveSessionCalls, userID)
-	http.SetCookie(rw, &validCookie)
+	http.SetCookie(rw, &ValidCookie)
 }
 
 func (s *StubSessionManager) GetUserID(r *http.Request) (string, error) {
 	// get it from the cookie
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
-		if cookie.Name == validCookie.Name {
+		if cookie.Name == ValidCookie.Name {
 			return cookie.Value, nil
 		}
 	}

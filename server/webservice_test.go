@@ -2,6 +2,7 @@ package expenseus
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -373,3 +374,32 @@ func TestVerifyUser(t *testing.T) {
 		assert.ElementsMatch(t, got, []Expense{TestSeanExpense})
 	})
 }
+
+func TestGetUserByID(t *testing.T) {
+	t.Run("returns a users details if the user exists", func(t *testing.T) {
+		store := StubExpenseStore{users: []User{TestSeanUser}}
+		oauth := StubOauthConfig{}
+		wb := NewWebService(&store, &oauth, &StubSessionManager{})
+
+		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", TestSeanUser.ID), nil)
+		// add the context to the request
+		ctx := context.WithValue(request.Context(), CtxKeyUserID, TestSeanUser.ID)
+		request = request.WithContext(ctx)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(wb.GetUser)
+		handler.ServeHTTP(response, request)
+
+		var got User
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
+		}
+
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Equal(t, TestSeanUser, got)
+	})
+}
+
+// func TestGetSelf(t *testing.T) {

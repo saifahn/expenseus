@@ -24,6 +24,7 @@ type ExpenseStore interface {
 	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
+	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
 }
 
@@ -225,3 +226,23 @@ func (wb *WebService) ListUsers(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// GetUser handles a HTTP request to get a user by ID, returning the user.
+func (wb *WebService) GetUser(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
+
+	user, err := wb.store.GetUser(userID)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(user)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// GetSelf handles a HTTP request to return the logged in user.

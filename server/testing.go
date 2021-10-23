@@ -102,7 +102,7 @@ type StubSessionManager struct {
 
 var validCookie = http.Cookie{
 	Name:  "session",
-	Value: "authorized",
+	Value: TestSeanUser.ID,
 }
 
 func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
@@ -192,6 +192,15 @@ func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
 		expenses = append(expenses, e)
 	}
 	return expenses, nil
+}
+
+func (s *StubExpenseStore) GetUser(id string) (User, error) {
+	for _, u := range s.users {
+		if u.ID == id {
+			return u, nil
+		}
+	}
+	return User{}, errors.New("user not found")
 }
 
 func (s *StubExpenseStore) CreateUser(u User) error {

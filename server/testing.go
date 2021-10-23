@@ -53,7 +53,7 @@ var (
 )
 
 // NewGetExpenseRequest creates a request to be used in tests get an expense
-// by id, adding the id to the request context.
+// by ID, with ID in the request context.
 func NewGetExpenseRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyExpenseID, id)
@@ -62,47 +62,58 @@ func NewGetExpenseRequest(id string) *http.Request {
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(user, name string) *http.Request {
-	values := ExpenseDetails{UserID: user, Name: name}
+func NewCreateExpenseRequest(userid, name string) *http.Request {
+	values := ExpenseDetails{UserID: userid, Name: name}
 	jsonValue, _ := json.Marshal(values)
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", bytes.NewBuffer(jsonValue))
 	return req
 }
 
 // NewGetExpensesByUsernameRequest creates a request to be used in tests to get all
-// expenses of a user, adding the user to the request context.
+// expenses of a user, with the user in the request context.
 func NewGetExpensesByUsernameRequest(username string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/user/%s", username), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)
 }
 
+// NewGetAllExpensesRequest creates a request to be used in tests to get all
+// expenses.
 func NewGetAllExpensesRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/expenses", nil)
 	return req
 }
 
+// NewGetUserRequest creates a request to be used in tests to get a user by ID,
+// with the ID in the request context.
 func NewGetUserRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/users/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
 	return req.WithContext(ctx)
 }
 
+// NewCreateUserRequest creates a request to be used in tests to get create a
+// new user.
 func NewCreateUserRequest(userJSON []byte) *http.Request {
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(userJSON))
 	return req
 }
 
+// NewGetSelfRequest creates a request to be used in tests to get the user from
+// the session.
 func NewGetSelfRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/users/self", nil)
 	return req
 }
 
+// NewGetALlUsers creates a request to be used in tests to get all users.
 func NewGetAllUsersRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/users", nil)
 	return req
 }
 
+// NewGoogleCallbackRequest creates a request to be used in tests to call the
+// Google callback route.
 func NewGoogleCallbackRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
 	return req

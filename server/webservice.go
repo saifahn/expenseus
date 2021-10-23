@@ -53,6 +53,7 @@ type ExpenseusOauth interface {
 type SessionManager interface {
 	ValidateAuthorizedSession(r *http.Request) bool
 	SaveSession(rw http.ResponseWriter, r *http.Request)
+	GetUserID(r *http.Request) (string, error)
 }
 
 type WebService struct {
@@ -220,6 +221,7 @@ func (wb *WebService) ListUsers(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.Header().Set("content-type", jsonContentType)
+	// TODO: return under a "users" key in JSON
 	err = json.NewEncoder(rw).Encode(users)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -246,3 +248,25 @@ func (wb *WebService) GetUser(rw http.ResponseWriter, r *http.Request) {
 }
 
 // GetSelf handles a HTTP request to return the logged in user.
+func (wb *WebService) GetSelf(rw http.ResponseWriter, r *http.Request) {
+	id, err := wb.sessions.GetUserID(r)
+
+	// TODO: add case for non-existent user
+	// TODO: handle non-valid session
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	user, err := wb.store.GetUser(id)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(user)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}

@@ -402,4 +402,29 @@ func TestGetUserByID(t *testing.T) {
 	})
 }
 
-// func TestGetSelf(t *testing.T) {
+func TestGetSelf(t *testing.T) {
+	t.Run("returns the user details from the stored session if the user exists", func(t *testing.T) {
+		store := StubExpenseStore{users: []User{TestSeanUser}}
+		oauth := StubOauthConfig{}
+		wb := NewWebService(&store, &oauth, &StubSessionManager{})
+
+		request, _ := http.NewRequest(http.MethodGet, "/users/self", nil)
+		// add the user into the request cookie
+		request.AddCookie(&validCookie)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(wb.GetSelf)
+		handler.ServeHTTP(response, request)
+
+		// decode the response
+		var got User
+		err := json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		}
+
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Equal(t, TestSeanUser, got)
+	})
+}

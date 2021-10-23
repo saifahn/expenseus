@@ -96,6 +96,7 @@ func AssertResponseStatus(t *testing.T, got, want int) {
 	}
 }
 
+// #region Sessions
 type StubSessionManager struct {
 	saveSessionCalls []string
 }
@@ -123,6 +124,20 @@ func (s *StubSessionManager) SaveSession(rw http.ResponseWriter, r *http.Request
 	http.SetCookie(rw, &validCookie)
 }
 
+func (s *StubSessionManager) GetUserID(r *http.Request) (string, error) {
+	// get it from the cookie
+	cookies := r.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == validCookie.Name {
+			return cookie.Value, nil
+		}
+	}
+	return "", errors.New("no user ID was found")
+}
+
+// #endregion Sessions
+
+// #region OAuth
 type StubOauthConfig struct {
 	AuthCodeURLCalls []string
 }
@@ -142,7 +157,9 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 	return TestSeanUser, nil
 }
 
-// stub store implementation
+// #endregion OAuth
+
+// #region Store
 type StubExpenseStore struct {
 	expenses map[string]Expense
 	users    []User
@@ -211,3 +228,5 @@ func (s *StubExpenseStore) CreateUser(u User) error {
 func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 	return s.users, nil
 }
+
+// #endregion Store

@@ -135,6 +135,7 @@ func (r *Redis) CreateUser(u expenseus.User) error {
 }
 
 func (r *Redis) GetUser(id string) (expenseus.User, error) {
+	// get the user data at the user:id key
 	val, err := r.db.Get(ctx, UserKey(id)).Result()
 	if err != nil {
 		return expenseus.User{}, err
@@ -155,17 +156,9 @@ func (r *Redis) GetAllUsers() ([]expenseus.User, error) {
 
 	var users []expenseus.User
 	for _, id := range userIDs {
-		// get the user data at the user:id key
-		val, err := r.db.Get(ctx, UserKey(id)).Result()
+		user, err := r.GetUser(id)
 		if err != nil {
 			return []expenseus.User{}, err
-		}
-
-		// convert the user into the User struct
-		var user expenseus.User
-		err = json.Unmarshal([]byte(val), &user)
-		if err != nil {
-			panic(err)
 		}
 
 		users = append(users, user)

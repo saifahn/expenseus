@@ -1,6 +1,4 @@
 import Head from "next/head";
-import UserList from "components/UserList";
-import ExpenseList from "components/ExpenseList";
 
 export default function Home() {
   return (
@@ -15,8 +13,7 @@ export default function Home() {
         <h1 className="text-4xl">Welcome to Expenseus</h1>
       </main>
 
-      <UserList />
-      <ExpenseList />
+      <button>Sign in with Google</button>
     </div>
   );
 }

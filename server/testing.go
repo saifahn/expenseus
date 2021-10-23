@@ -82,6 +82,32 @@ func NewGetAllExpensesRequest() *http.Request {
 	return req
 }
 
+func NewGetUserRequest(id string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/users/%s", id), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
+	return req.WithContext(ctx)
+}
+
+func NewCreateUserRequest(userJSON []byte) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(userJSON))
+	return req
+}
+
+func NewGetSelfRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/users/self", nil)
+	return req
+}
+
+func NewGetAllUsersRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	return req
+}
+
+func NewGoogleCallbackRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
+	return req
+}
+
 func AssertResponseBody(t *testing.T, got, want string) {
 	t.Helper()
 

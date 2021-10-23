@@ -1,8 +1,6 @@
 package expenseus
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -223,10 +221,7 @@ func TestCreateUser(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	request, err := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(userJSON))
-	if err != nil {
-		t.Fatalf("request could not be created, %v", err)
-	}
+	request := NewCreateUserRequest(userJSON)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(webservice.CreateUser)
@@ -241,17 +236,14 @@ func TestListUsers(t *testing.T) {
 	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
 	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
 
-	request, err := http.NewRequest(http.MethodGet, "/users", nil)
-	if err != nil {
-		t.Fatalf("request could not be created, %v", err)
-	}
+	request := NewGetAllUsersRequest()
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(webservice.ListUsers)
 	handler.ServeHTTP(response, request)
 
 	var got []User
-	err = json.NewDecoder(response.Body).Decode(&got)
+	err := json.NewDecoder(response.Body).Decode(&got)
 	if err != nil {
 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 	}
@@ -266,7 +258,7 @@ func TestOauthLogin(t *testing.T) {
 	oauth := StubOauthConfig{}
 	webservice := NewWebService(&store, &oauth, &StubSessionManager{})
 
-	request, err := http.NewRequest(http.MethodGet, "/login_oauth", nil)
+	request, err := http.NewRequest(http.MethodGet, "/api/v1/login_google", nil)
 	if err != nil {
 		t.Fatalf("request could not be created, %v", err)
 	}
@@ -277,7 +269,7 @@ func TestOauthLogin(t *testing.T) {
 
 	assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
 	// are these even good assertions to have?
-	expectedURL := fmt.Sprintf("/%s", oauthProviderMockURL)
+	expectedURL := fmt.Sprintf("/api/v1/%s", oauthProviderMockURL)
 	assert.Equal(t, expectedURL, response.Header().Get("Location"))
 	// assert AuthCodeURL was called
 	assert.Len(t, oauth.AuthCodeURLCalls, 1)
@@ -290,10 +282,7 @@ func TestOauthCallback(t *testing.T) {
 		sessions := StubSessionManager{}
 		webservice := NewWebService(&store, &oauth, &sessions)
 
-		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
-		if err != nil {
-			t.Fatalf("request could not be created, %v", err)
-		}
+		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.OauthCallback)
@@ -315,10 +304,7 @@ func TestOauthCallback(t *testing.T) {
 		sessions := StubSessionManager{}
 		webservice := NewWebService(&store, &oauth, &sessions)
 
-		request, err := http.NewRequest(http.MethodGet, "/callback_oauth", nil)
-		if err != nil {
-			t.Fatalf("request could not be created, %v", err)
-		}
+		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.OauthCallback)
@@ -381,10 +367,7 @@ func TestGetUserByID(t *testing.T) {
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth, &StubSessionManager{})
 
-		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/users/%s", TestSeanUser.ID), nil)
-		// add the context to the request
-		ctx := context.WithValue(request.Context(), CtxKeyUserID, TestSeanUser.ID)
-		request = request.WithContext(ctx)
+		request := NewGetUserRequest(TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(wb.GetUser)
@@ -408,7 +391,7 @@ func TestGetSelf(t *testing.T) {
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth, &StubSessionManager{})
 
-		request, _ := http.NewRequest(http.MethodGet, "/users/self", nil)
+		request := NewGetSelfRequest()
 		// add the user into the request cookie
 		request.AddCookie(&ValidCookie)
 		response := httptest.NewRecorder()

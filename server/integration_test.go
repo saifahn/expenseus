@@ -1,7 +1,6 @@
 package expenseus_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -40,17 +39,14 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		}
 
 		response := httptest.NewRecorder()
-		request, err := http.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(userJSON))
-		if err != nil {
-			t.Fatalf("request could not be created, %v", err)
-		}
+		request := expenseus.NewCreateUserRequest(userJSON)
 		request.AddCookie(&expenseus.ValidCookie)
 		router.ServeHTTP(response, request)
 	}
 
 	// GET all users
 	response := httptest.NewRecorder()
-	request, err := http.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	request := expenseus.NewGetAllUsersRequest()
 	request.AddCookie(&expenseus.ValidCookie)
 	if err != nil {
 		t.Fatalf("request could not be created, %v", err)

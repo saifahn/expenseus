@@ -46,6 +46,7 @@ func InitRouter(wb *WebService) *chi.Mux {
 			r.Use(wb.VerifyUser)
 			r.Get("/", wb.ListUsers)
 			r.Post("/", wb.CreateUser)
+			r.Get("/self", wb.GetSelf)
 		})
 
 		r.Get("/login_google", wb.OauthLogin)

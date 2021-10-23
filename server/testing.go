@@ -147,7 +147,7 @@ func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
 		if cookie.Name == ValidCookie.Name {
-			if cookie.Value == ValidCookie.Value {
+			if len(cookie.Value) > 0 {
 				return true
 			}
 		}

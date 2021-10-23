@@ -111,3 +111,70 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	assert.Contains(t, edsGot, expenseus.TestTomomiExpense.ExpenseDetails)
 	assert.Contains(t, edsGot, expenseus.TestTomomiExpense2.ExpenseDetails)
 }
+
+func TestRestrictedRoutesAndGettingSelf(t *testing.T) {
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("error starting up miniredis")
+	}
+
+	db := redis.New(mr.Addr())
+	oauth := &expenseus.StubOauthConfig{}
+	auth := &expenseus.StubSessionManager{}
+	webservice := expenseus.NewWebService(db, oauth, auth)
+	router := expenseus.InitRouter(webservice)
+
+	// try to create a user
+	testUser := expenseus.User{
+		Username: "testUser",
+		Name:     "Test User",
+		ID:       "test_user",
+	}
+	testUserJSON, err := json.Marshal(testUser)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	response := httptest.NewRecorder()
+	request := expenseus.NewCreateUserRequest(testUserJSON)
+	router.ServeHTTP(response, request)
+	// with no valid cookie, should be unauthorized
+	assert.Equal(t, http.StatusUnauthorized, response.Code)
+
+	// try again with a valid cookie
+	response = httptest.NewRecorder()
+	request = expenseus.NewCreateUserRequest(testUserJSON)
+	request.AddCookie(&expenseus.ValidCookie)
+	router.ServeHTTP(response, request)
+	assert.Equal(t, http.StatusAccepted, response.Code)
+
+	// try and get a user from a cookie that doesn't exist in the db
+	response = httptest.NewRecorder()
+	request = expenseus.NewGetSelfRequest()
+	request.AddCookie(&expenseus.ValidCookie)
+	router.ServeHTTP(response, request)
+
+	// sessionCookie, _ := request.Cookie("session")
+	// println(sessionCookie.Value)
+
+	assert.Equal(t, http.StatusNotFound, response.Code)
+
+	// try and get the user created earlier
+	response = httptest.NewRecorder()
+	request = expenseus.NewGetSelfRequest()
+	request.AddCookie(&http.Cookie{
+		Name:  expenseus.ValidCookie.Name,
+		Value: testUser.ID,
+	})
+	router.ServeHTTP(response, request)
+
+	var got expenseus.User
+
+	err = json.NewDecoder(response.Body).Decode(&got)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
+	}
+
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.Equal(t, testUser, got)
+}

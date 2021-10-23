@@ -134,6 +134,21 @@ func (r *Redis) CreateUser(u expenseus.User) error {
 	return nil
 }
 
+func (r *Redis) GetUser(id string) (expenseus.User, error) {
+	val, err := r.db.Get(ctx, UserKey(id)).Result()
+	if err != nil {
+		return expenseus.User{}, err
+	}
+
+	// convert the user into a User struct
+	var user expenseus.User
+	err = json.Unmarshal([]byte(val), &user)
+	if err != nil {
+		panic(err)
+	}
+	return user, nil
+}
+
 func (r *Redis) GetAllUsers() ([]expenseus.User, error) {
 	// get the ids from users sorted set
 	userIDs := r.db.ZRange(ctx, AllUsersKey(), 0, -1).Val()

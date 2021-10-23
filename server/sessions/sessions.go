@@ -45,3 +45,18 @@ func (sm *SessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(rw, cookie)
 }
+
+func (sm *SessionManager) GetUserID(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(expenseus.SessionCookieKey)
+	if err != nil {
+		return "", err
+	}
+
+	var userid string
+	err = sm.cookies.Decode(expenseus.SessionCookieKey, cookie.Value, &userid)
+	if err != nil {
+		return "", err
+	}
+
+	return userid, nil
+}

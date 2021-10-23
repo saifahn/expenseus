@@ -69,12 +69,11 @@ describe("Users component", () => {
 
       await waitFor(() =>
         expect(screen.getByRole("status")).toHaveTextContent(
-          `User testuser successfully created`
+          `User testuser was successfully created`
         )
       );
     });
 
-    // NOTE: I think this isn't such a good pattern as I'm mocking the behaviour of the backend too?
     it("should add a different testuser and render it", async () => {
       server.use(
         rest.post(
@@ -108,7 +107,7 @@ describe("Users component", () => {
 
       await waitFor(() =>
         expect(screen.getByRole("status")).toHaveTextContent(
-          `User testuser2 successfully created`
+          `User testuser2 was successfully created`
         )
       );
 

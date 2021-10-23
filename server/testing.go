@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"testing"
 
 	"golang.org/x/oauth2"
 )
@@ -117,20 +116,6 @@ func NewGetAllUsersRequest() *http.Request {
 func NewGoogleCallbackRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
 	return req
-}
-
-func AssertResponseBody(t *testing.T, got, want string) {
-	t.Helper()
-
-	if got != want {
-		t.Errorf("got response body of %q, want %q", got, want)
-	}
-}
-
-func AssertResponseStatus(t *testing.T, got, want int) {
-	if got != want {
-		t.Errorf("got status %d, want %d", got, want)
-	}
 }
 
 // #region Sessions

@@ -55,5 +55,15 @@ describe("HomePage", () => {
 
       expect(button).not.toBeInTheDocument();
     });
+
+    it("should show a welcome message with the user's username", async () => {
+      render(<Home />);
+
+      await waitFor(() => screen.getByText("Welcome to Expenseus"));
+
+      const welcomeText = screen.getByTestId("welcome");
+
+      expect(welcomeText).toHaveTextContent(testSeanUser.username);
+    });
   });
 });

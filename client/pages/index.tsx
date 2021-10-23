@@ -49,7 +49,11 @@ export default function Home() {
           <main className="py-4">
             <h1 className="text-4xl">Welcome to Expenseus</h1>
           </main>
-          {self ? <div>Hi!</div> : <button>Sign in with Google</button>}
+          {self ? (
+            <p data-testid="welcome">Hi {self.username}!</p>
+          ) : (
+            <button>Sign in with Google</button>
+          )}
         </>
       )}
     </div>

@@ -411,3 +411,20 @@ func TestGetSelf(t *testing.T) {
 		assert.Equal(t, TestSeanUser, got)
 	})
 }
+
+func TestLogout(t *testing.T) {
+	t.Run("session manager calls remove", func(t *testing.T) {
+		store := StubExpenseStore{users: []User{TestSeanUser}}
+		oauth := StubOauthConfig{}
+		sessions := StubSessionManager{}
+		wb := NewWebService(&store, &oauth, &sessions)
+
+		request, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(wb.Logout)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, 1, sessions.removeCalls)
+	})
+}

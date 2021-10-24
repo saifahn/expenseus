@@ -121,6 +121,7 @@ func NewGoogleCallbackRequest() *http.Request {
 // #region Sessions
 type StubSessionManager struct {
 	saveSessionCalls []string
+	removeCalls      int
 }
 
 var ValidCookie = http.Cookie{
@@ -155,6 +156,10 @@ func (s *StubSessionManager) GetUserID(r *http.Request) (string, error) {
 		}
 	}
 	return "", errors.New("no user ID was found")
+}
+
+func (s *StubSessionManager) Remove(rw http.ResponseWriter, r *http.Request) {
+	s.removeCalls++
 }
 
 // #endregion Sessions

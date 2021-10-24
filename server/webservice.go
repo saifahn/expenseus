@@ -56,6 +56,7 @@ type SessionManager interface {
 	ValidateAuthorizedSession(r *http.Request) bool
 	SaveSession(rw http.ResponseWriter, r *http.Request)
 	GetUserID(r *http.Request) (string, error)
+	Remove(rw http.ResponseWriter, r *http.Request)
 }
 
 type WebService struct {
@@ -275,4 +276,9 @@ func (wb *WebService) GetSelf(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// Logout handles a HTTP request to log out the current user.
+func (wb *WebService) Logout(rw http.ResponseWriter, r *http.Request) {
+	wb.sessions.Remove(rw, r)
 }

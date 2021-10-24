@@ -58,14 +58,14 @@ type SessionManager interface {
 }
 
 type WebService struct {
-	store        ExpenseStore
-	oauthConfig  ExpenseusOauth
-	sessions     SessionManager
-	frontendBase string
+	store       ExpenseStore
+	oauthConfig ExpenseusOauth
+	sessions    SessionManager
+	frontend    string
 }
 
 func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager, frontend string) *WebService {
-	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontendBase: frontend}
+	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontend: frontend}
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
@@ -106,7 +106,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
 			r = r.WithContext(ctx)
 			wb.sessions.SaveSession(rw, r)
-			http.Redirect(rw, r, wb.frontendBase, http.StatusTemporaryRedirect)
+			http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 			return
 		}
 	}
@@ -116,7 +116,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
 	r = r.WithContext(ctx)
 	wb.sessions.SaveSession(rw, r)
-	http.Redirect(rw, r, wb.frontendBase, http.StatusTemporaryRedirect)
+	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 	// TODO: redirect to change username page
 }
 
@@ -279,6 +279,6 @@ func (wb *WebService) GetSelf(rw http.ResponseWriter, r *http.Request) {
 func (wb *WebService) Logout(rw http.ResponseWriter, r *http.Request) {
 	wb.sessions.Remove(rw, r)
 
-	http.Redirect(rw, r, wb.frontendBase, http.StatusTemporaryRedirect)
+	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 	return
 }

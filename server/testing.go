@@ -141,7 +141,7 @@ func (s *StubSessionManager) Validate(r *http.Request) bool {
 	return false
 }
 
-func (s *StubSessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+func (s *StubSessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
 	s.saveSessionCalls = append(s.saveSessionCalls, userID)
 	http.SetCookie(rw, &ValidCookie)

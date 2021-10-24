@@ -52,7 +52,7 @@ type ExpenseusOauth interface {
 
 type SessionManager interface {
 	Validate(r *http.Request) bool
-	SaveSession(rw http.ResponseWriter, r *http.Request)
+	Save(rw http.ResponseWriter, r *http.Request)
 	GetUserID(r *http.Request) (string, error)
 	Remove(rw http.ResponseWriter, r *http.Request)
 }
@@ -105,7 +105,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 		if u.ID == user.ID {
 			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
 			r = r.WithContext(ctx)
-			wb.sessions.SaveSession(rw, r)
+			wb.sessions.Save(rw, r)
 			http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 			return
 		}
@@ -115,7 +115,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	wb.store.CreateUser(user)
 	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
 	r = r.WithContext(ctx)
-	wb.sessions.SaveSession(rw, r)
+	wb.sessions.Save(rw, r)
 	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 	// TODO: redirect to change username page
 }

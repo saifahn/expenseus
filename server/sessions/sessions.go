@@ -26,7 +26,7 @@ func (sm *SessionManager) Validate(r *http.Request) bool {
 	return err == nil
 }
 
-func (sm *SessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+func (sm *SessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(expenseus.CtxKeyUserID).(string)
 
 	encoded, err := sm.cookies.Encode(expenseus.SessionCookieKey, userID)

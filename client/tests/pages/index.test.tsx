@@ -11,21 +11,20 @@ beforeAll(() => server.listen());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
+const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 describe("HomePage", () => {
   it("should show a 'Sign in with Google' button if not logged in", async () => {
     server.use(
-      rest.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/self`,
-        (_, res, ctx) => {
-          return res(ctx.status(401), ctx.json(""));
-        }
-      )
+      rest.get(`${apiBaseURL}/users/self`, (_, res, ctx) => {
+        return res(ctx.status(401), ctx.json(""));
+      })
     );
 
     render(<Home />);
 
     const button = await waitFor(() =>
-      screen.getByRole("button", { name: "Sign in with Google" })
+      screen.getByRole("link", { name: "Sign in with Google" })
     );
 
     expect(button).toBeInTheDocument();
@@ -34,12 +33,9 @@ describe("HomePage", () => {
   describe("when logged in", () => {
     beforeEach(() => {
       server.use(
-        rest.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/self`,
-          (_, res, ctx) => {
-            return res(ctx.status(202), ctx.json(testSeanUser));
-          }
-        )
+        rest.get(`${apiBaseURL}/users/self`, (_, res, ctx) => {
+          return res(ctx.status(202), ctx.json(testSeanUser));
+        })
       );
     });
 

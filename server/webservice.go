@@ -3,7 +3,9 @@ package expenseus
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 
 	"golang.org/x/oauth2"
 )
@@ -98,12 +100,15 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 
+	frontendMainPage := fmt.Sprintf("%s", os.Getenv("FRONTEND_DEV_SERVER"))
+
 	// check if the user exists already
 	for _, u := range existingUsers {
 		if u.ID == user.ID {
 			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
 			r = r.WithContext(ctx)
 			wb.sessions.SaveSession(rw, r)
+			http.Redirect(rw, r, frontendMainPage, http.StatusTemporaryRedirect)
 			return
 		}
 	}
@@ -113,6 +118,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
 	r = r.WithContext(ctx)
 	wb.sessions.SaveSession(rw, r)
+	http.Redirect(rw, r, frontendMainPage, http.StatusTemporaryRedirect)
 	// TODO: redirect to change username page
 }
 

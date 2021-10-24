@@ -52,7 +52,9 @@ export default function Home() {
           {self ? (
             <p data-testid="welcome">Hi {self.username}!</p>
           ) : (
-            <button>Sign in with Google</button>
+            <a href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}>
+              Sign in with Google
+            </a>
           )}
         </>
       )}

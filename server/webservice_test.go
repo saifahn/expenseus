@@ -18,7 +18,7 @@ func TestGetExpenseByID(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := &WebService{&store, &StubOauthConfig{}, &StubSessionManager{}}
+	webservice := &WebService{&store, &StubOauthConfig{}, &StubSessionManager{}, ""}
 
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := NewGetExpenseRequest("1")
@@ -84,7 +84,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
@@ -130,7 +130,7 @@ func TestCreateExpense(t *testing.T) {
 		users:    []User{},
 		expenses: map[string]Expense{},
 	}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		request := NewCreateExpenseRequest("tomomi", "Test Expense")
@@ -157,7 +157,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"9281": TestTomomiExpense,
 			},
 		}
-		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -189,7 +189,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"14928": TestTomomiExpense2,
 			},
 		}
-		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -213,7 +213,7 @@ func TestGetAllExpenses(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 	user := TestSeanUser
 	userJSON, err := json.Marshal(user)
@@ -234,7 +234,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{})
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 	request := NewGetAllUsersRequest()
 	response := httptest.NewRecorder()
@@ -256,7 +256,7 @@ func TestListUsers(t *testing.T) {
 func TestOauthLogin(t *testing.T) {
 	store := StubExpenseStore{}
 	oauth := StubOauthConfig{}
-	webservice := NewWebService(&store, &oauth, &StubSessionManager{})
+	webservice := NewWebService(&store, &oauth, &StubSessionManager{}, "")
 
 	request, err := http.NewRequest(http.MethodGet, "/api/v1/login_google", nil)
 	if err != nil {
@@ -280,7 +280,7 @@ func TestOauthCallback(t *testing.T) {
 		store := StubExpenseStore{users: []User{}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
-		webservice := NewWebService(&store, &oauth, &sessions)
+		webservice := NewWebService(&store, &oauth, &sessions, "")
 
 		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
@@ -302,7 +302,7 @@ func TestOauthCallback(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
-		webservice := NewWebService(&store, &oauth, &sessions)
+		webservice := NewWebService(&store, &oauth, &sessions, "")
 
 		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
@@ -325,7 +325,7 @@ func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 401 response when the user is not authorized", func(t *testing.T) {
 		store := StubExpenseStore{}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{})
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -339,7 +339,7 @@ func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 200 response when the user is authorized, and passes the request to the appropriate route", func(t *testing.T) {
 		store := StubExpenseStore{expenses: map[string]Expense{"1": TestSeanExpense}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{})
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
 
 		request := NewGetAllExpensesRequest()
 		// simulate a cookie session storage here
@@ -365,7 +365,7 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("returns a users details if the user exists", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{})
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
 
 		request := NewGetUserRequest(TestSeanUser.ID)
 		response := httptest.NewRecorder()
@@ -389,7 +389,7 @@ func TestGetSelf(t *testing.T) {
 	t.Run("returns the user details from the stored session if the user exists", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{})
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
 
 		request := NewGetSelfRequest()
 		// add the user into the request cookie
@@ -417,7 +417,8 @@ func TestLogout(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
-		wb := NewWebService(&store, &oauth, &sessions)
+		frontendBase := "http://test.base"
+		wb := NewWebService(&store, &oauth, &sessions, frontendBase)
 
 		request, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
 		response := httptest.NewRecorder()
@@ -432,6 +433,6 @@ func TestLogout(t *testing.T) {
 		if err != nil {
 			t.Fatalf("url couldn't be found: %v", err)
 		}
-		assert.Equal(t, frontendMainPage, url.String())
+		assert.Equal(t, frontendBase, url.String())
 	})
 }

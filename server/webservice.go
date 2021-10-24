@@ -198,6 +198,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusAccepted)
 }
 
+// CreateUser handles a request to create a new user.
 func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	var u User
 	err := json.NewDecoder(r.Body).Decode(&u)
@@ -217,6 +218,7 @@ func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusAccepted)
 }
 
+// ListUser handles a request to get all users and return the list of users.
 func (wb *WebService) ListUsers(rw http.ResponseWriter, r *http.Request) {
 	users, err := wb.store.GetAllUsers()
 	if err != nil {
@@ -275,8 +277,8 @@ func (wb *WebService) GetSelf(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Logout handles a HTTP request to log out the current user.
-func (wb *WebService) Logout(rw http.ResponseWriter, r *http.Request) {
+// LogOut handles a HTTP request to log out the current user.
+func (wb *WebService) LogOut(rw http.ResponseWriter, r *http.Request) {
 	wb.sessions.Remove(rw, r)
 
 	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)

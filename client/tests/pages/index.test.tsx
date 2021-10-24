@@ -24,7 +24,7 @@ describe("HomePage", () => {
     render(<Home />);
 
     const button = await waitFor(() =>
-      screen.getByRole("link", { name: "Sign in with Google" })
+      screen.getByRole("link", { name: /Sign in with Google/ })
     );
 
     expect(button).toBeInTheDocument();

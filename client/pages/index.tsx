@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { User } from "components/UserList";
 import { UserAPI } from "api";
@@ -52,8 +53,17 @@ export default function Home() {
           {self ? (
             <p data-testid="welcome">Hi {self.username}!</p>
           ) : (
-            <a href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}>
-              Sign in with Google
+            <a
+              href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}
+              className="inline-flex items-center border rounded-md px-3 py-2"
+            >
+              <Image
+                src="/images/google-g-logo.svg"
+                alt="Google G Logo"
+                height={24}
+                width={24}
+              />
+              <span className="ml-3">Sign in with Google</span>
             </a>
           )}
         </>

@@ -51,6 +51,7 @@ func InitRouter(wb *WebService) *chi.Mux {
 
 		r.Get("/login_google", wb.OauthLogin)
 		r.Get("/callback_google", wb.OauthCallback)
+		r.Get("/logout", wb.LogOut)
 	})
 
 	return r

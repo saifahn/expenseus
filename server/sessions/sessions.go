@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/securecookie"
 	"github.com/saifahn/expenseus"
@@ -44,6 +45,19 @@ func (sm *SessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(rw, cookie)
+}
+
+func (sm *SessionManager) Remove(rw http.ResponseWriter, r *http.Request) {
+	// overwrite the cookie with an expired cookie to delete it
+	invalidCookie := &http.Cookie{
+		Name:     expenseus.SessionCookieKey,
+		Value:    "deleted-cookie",
+		Secure:   true,
+		HttpOnly: true,
+		Expires:  time.Now().Add(-100),
+	}
+
+	http.SetCookie(rw, invalidCookie)
 }
 
 func (sm *SessionManager) GetUserID(r *http.Request) (string, error) {

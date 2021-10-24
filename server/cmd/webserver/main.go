@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/securecookie"
 	"github.com/saifahn/expenseus"
@@ -14,6 +15,14 @@ import (
 var redisAddr = "localhost:6379"
 
 func main() {
+	var frontendURL string
+
+	if mode := os.Getenv("MODE"); mode == "development" {
+		frontendURL = os.Getenv("FRONTEND_DEV_SERVER")
+	} else {
+		frontendURL = "/"
+	}
+
 	rdb := redis.New(redisAddr)
 
 	googleOauth := googleoauth.New()
@@ -23,7 +32,7 @@ func main() {
 
 	sessions := sessions.New(tempHashKey, tempBlockKey)
 
-	wb := expenseus.NewWebService(rdb, googleOauth, sessions)
+	wb := expenseus.NewWebService(rdb, googleOauth, sessions, frontendURL)
 
 	r := expenseus.InitRouter(wb)
 

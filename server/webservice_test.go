@@ -280,7 +280,8 @@ func TestOauthCallback(t *testing.T) {
 		store := StubExpenseStore{users: []User{}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
-		webservice := NewWebService(&store, &oauth, &sessions, "")
+		frontend := "http://a.test"
+		webservice := NewWebService(&store, &oauth, &sessions, frontend)
 
 		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
@@ -295,14 +296,21 @@ func TestOauthCallback(t *testing.T) {
 
 		assert.Len(t, sessions.saveSessionCalls, 1)
 		assert.Equal(t, sessions.saveSessionCalls[0], TestSeanUser.ID)
-		// TODO: expect to be routed to update username page
+
+		// get routed to the base page for now
+		url, err := response.Result().Location()
+		if err != nil {
+			t.Fatalf("url couldn't be found: %v", err)
+		}
+		assert.Equal(t, frontend, url.String())
 	})
 
 	t.Run("doesn't create a new user when the user already exists, and saves the session with the user in the context", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
-		webservice := NewWebService(&store, &oauth, &sessions, "")
+		frontend := "http://another.test"
+		webservice := NewWebService(&store, &oauth, &sessions, frontend)
 
 		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
@@ -317,7 +325,13 @@ func TestOauthCallback(t *testing.T) {
 		assert.Len(t, sessions.saveSessionCalls, 1)
 		// the callback will add a context of the appropriate user id
 		assert.Equal(t, sessions.saveSessionCalls[0], TestSeanUser.ID)
-		// TODO: expect to be routed to the welcome page
+
+		// expect to get routed to the main welcome page
+		url, err := response.Result().Location()
+		if err != nil {
+			t.Fatalf("url couldn't be found: %v", err)
+		}
+		assert.Equal(t, frontend, url.String())
 	})
 }
 
@@ -417,8 +431,8 @@ func TestLogout(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
-		frontendBase := "http://test.base"
-		wb := NewWebService(&store, &oauth, &sessions, frontendBase)
+		frontend := "http://test.base"
+		wb := NewWebService(&store, &oauth, &sessions, frontend)
 
 		request, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
 		response := httptest.NewRecorder()
@@ -433,6 +447,6 @@ func TestLogout(t *testing.T) {
 		if err != nil {
 			t.Fatalf("url couldn't be found: %v", err)
 		}
-		assert.Equal(t, frontendBase, url.String())
+		assert.Equal(t, frontend, url.String())
 	})
 }

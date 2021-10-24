@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
 
 	"golang.org/x/oauth2"
 )
@@ -18,8 +17,6 @@ const (
 	jsonContentType             = "application/json"
 	SessionCookieKey            = "expenseus-session"
 )
-
-var frontendMainPage = os.Getenv("FRONTEND_DEV_SERVER")
 
 type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
@@ -109,7 +106,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
 			r = r.WithContext(ctx)
 			wb.sessions.SaveSession(rw, r)
-			http.Redirect(rw, r, frontendMainPage, http.StatusTemporaryRedirect)
+			http.Redirect(rw, r, wb.frontendBase, http.StatusTemporaryRedirect)
 			return
 		}
 	}
@@ -119,7 +116,7 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
 	r = r.WithContext(ctx)
 	wb.sessions.SaveSession(rw, r)
-	http.Redirect(rw, r, frontendMainPage, http.StatusTemporaryRedirect)
+	http.Redirect(rw, r, wb.frontendBase, http.StatusTemporaryRedirect)
 	// TODO: redirect to change username page
 }
 

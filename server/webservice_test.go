@@ -427,5 +427,11 @@ func TestLogout(t *testing.T) {
 
 		assert.Equal(t, 1, sessions.removeCalls)
 		assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
+
+		url, err := response.Result().Location()
+		if err != nil {
+			t.Fatalf("url couldn't be found: %v", err)
+		}
+		assert.Equal(t, frontendMainPage, url.String())
 	})
 }

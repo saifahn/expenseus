@@ -426,5 +426,6 @@ func TestLogout(t *testing.T) {
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, 1, sessions.removeCalls)
+		assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
 	})
 }

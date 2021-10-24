@@ -3,7 +3,6 @@ package expenseus
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -19,6 +18,8 @@ const (
 	jsonContentType             = "application/json"
 	SessionCookieKey            = "expenseus-session"
 )
+
+var frontendMainPage = os.Getenv("FRONTEND_DEV_SERVER")
 
 type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
@@ -70,7 +71,7 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionMan
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
-// before passing the request to the handler
+// before passing the request to the handler.
 func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		sessionIsAuthorized := wb.sessions.ValidateAuthorizedSession(r)
@@ -100,8 +101,6 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
-
-	frontendMainPage := fmt.Sprintf("%s", os.Getenv("FRONTEND_DEV_SERVER"))
 
 	// check if the user exists already
 	for _, u := range existingUsers {
@@ -281,4 +280,7 @@ func (wb *WebService) GetSelf(rw http.ResponseWriter, r *http.Request) {
 // Logout handles a HTTP request to log out the current user.
 func (wb *WebService) Logout(rw http.ResponseWriter, r *http.Request) {
 	wb.sessions.Remove(rw, r)
+
+	http.Redirect(rw, r, frontendMainPage, http.StatusTemporaryRedirect)
+	return
 }

@@ -15,7 +15,7 @@ func New(hashKey, blockKey []byte) *SessionManager {
 	return &SessionManager{cookies: *securecookie.New(hashKey, blockKey)}
 }
 
-func (sm *SessionManager) ValidateAuthorizedSession(r *http.Request) bool {
+func (sm *SessionManager) Validate(r *http.Request) bool {
 	cookie, err := r.Cookie(expenseus.SessionCookieKey)
 	if err != nil {
 		return false

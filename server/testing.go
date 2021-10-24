@@ -129,7 +129,7 @@ var ValidCookie = http.Cookie{
 	Value: TestSeanUser.ID,
 }
 
-func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
+func (s *StubSessionManager) Validate(r *http.Request) bool {
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
 		if cookie.Name == ValidCookie.Name {

@@ -51,7 +51,7 @@ type ExpenseusOauth interface {
 }
 
 type SessionManager interface {
-	ValidateAuthorizedSession(r *http.Request) bool
+	Validate(r *http.Request) bool
 	SaveSession(rw http.ResponseWriter, r *http.Request)
 	GetUserID(r *http.Request) (string, error)
 	Remove(rw http.ResponseWriter, r *http.Request)
@@ -72,7 +72,7 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionMan
 // before passing the request to the handler.
 func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		sessionIsAuthorized := wb.sessions.ValidateAuthorizedSession(r)
+		sessionIsAuthorized := wb.sessions.Validate(r)
 		if !sessionIsAuthorized {
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return

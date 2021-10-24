@@ -12,7 +12,7 @@ import (
 	"github.com/saifahn/expenseus/sessions"
 )
 
-var redisAddr = "localhost:6379"
+var redisAddr = os.Getenv("REDIS_ADDRESS")
 
 func main() {
 	var frontendURL string

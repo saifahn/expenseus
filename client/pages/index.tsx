@@ -51,7 +51,15 @@ export default function Home() {
             <h1 className="text-4xl">Welcome to Expenseus</h1>
           </main>
           {self ? (
-            <p data-testid="welcome">Hi {self.username}!</p>
+            <>
+              <p data-testid="welcome">Hi {self.username}!</p>
+              <a
+                href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`}
+                className="inline-flex items-center border rounded-md px-3 py-2 mt-4"
+              >
+                <span className="">Log out</span>
+              </a>
+            </>
           ) : (
             <a
               href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}

@@ -39,17 +39,19 @@ describe("HomePage", () => {
       );
     });
 
-    it("should not show a 'Sign in with Google' button", async () => {
+    it("should not show a 'Sign in with Google' button, but should show a 'Log out' button", async () => {
       render(<Home />);
 
       // wait for the title to appear
       await waitFor(() => screen.getByText("Welcome to Expenseus"));
 
-      const button = screen.queryByRole("button", {
-        name: "Sign in with Google",
+      const signInButton = screen.queryByRole("link", {
+        name: /Sign in with Google/,
       });
+      expect(signInButton).not.toBeInTheDocument();
 
-      expect(button).not.toBeInTheDocument();
+      const logOutButton = screen.getByRole("link", { name: /Log out/ });
+      expect(logOutButton).toBeInTheDocument();
     });
 
     it("should show a welcome message with the user's username", async () => {

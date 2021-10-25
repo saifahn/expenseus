@@ -61,7 +61,7 @@ export default function ExpenseList() {
   }, []);
 
   return (
-    <section className="p-6 mt-8 shadow-lg bg-indigo-50 rounded-xl">
+    <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
       <h2 className="text-2xl">Expenses</h2>
       {expenses &&
         expenses.map(expense => {

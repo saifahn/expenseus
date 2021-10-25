@@ -22,7 +22,7 @@ export default function Layout({ children }) {
           </li>
         </ul>
       </nav>
-      <main>{children}</main>
+      <main className="container mx-auto mt-4 py-8">{children}</main>
     </>
   );
 }

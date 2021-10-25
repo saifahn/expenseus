@@ -14,20 +14,24 @@ afterAll(() => server.close());
 const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 describe("HomePage", () => {
-  it("should show a 'Sign in with Google' button if not logged in", async () => {
+  describe("when not logged in", () => {
     server.use(
       rest.get(`${apiBaseURL}/users/self`, (_, res, ctx) => {
         return res(ctx.status(401), ctx.json(""));
       })
     );
+  });
 
+  it("should show a 'Sign in with Google' button if not logged in and not show a 'Log out' button", async () => {
     render(<Home />);
 
-    const button = await waitFor(() =>
+    const signInButton = await waitFor(() =>
       screen.getByRole("link", { name: /Sign in with Google/ })
     );
+    expect(signInButton).toBeInTheDocument();
 
-    expect(button).toBeInTheDocument();
+    const logOutButton = screen.queryByRole("link", { name: /Log out/ });
+    expect(logOutButton).not.toBeInTheDocument();
   });
 
   describe("when logged in", () => {

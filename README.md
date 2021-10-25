@@ -29,7 +29,7 @@ You can see the UI at http://127.0.0.1:3000
    - e.g. if you are using `direnv`, you can copy the file to a `.envrc`
 2. Create a Google OAuth client on [Google Cloud Platform](https://console.cloud.google.com/)
 3. Fill in the details. GOOGLE_REDIRECT_URL with the default router settings should be `http://127.0.0.1:5000/api/v1/callback_google`
-4. REDIS_ADDRESS is set by default to `http://localhost:6379`
+4. REDIS_ADDRESS is set by default to `127.0.0.1:6379`
 5. After setting up the environment variables, build the webserver and run it
 
 ```sh

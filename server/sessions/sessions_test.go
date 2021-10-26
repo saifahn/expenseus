@@ -17,14 +17,14 @@ var (
 	testSessionValue = "testSession"
 )
 
-func TestValidateAuthorizedSession(t *testing.T) {
+func TestValidate(t *testing.T) {
 	sessions := New(testHashKey, testBlockKey)
 
 	t.Run("returns false with no cookie", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
 
 		want := false
-		got := sessions.ValidateAuthorizedSession(req)
+		got := sessions.Validate(req)
 		assert.Equal(t, got, want)
 	})
 
@@ -48,7 +48,7 @@ func TestValidateAuthorizedSession(t *testing.T) {
 		req.AddCookie(cookie)
 
 		want := false
-		got := sessions.ValidateAuthorizedSession(req)
+		got := sessions.Validate(req)
 		assert.Equal(t, want, got)
 	})
 
@@ -63,7 +63,7 @@ func TestValidateAuthorizedSession(t *testing.T) {
 		req.AddCookie(cookie)
 
 		want := false
-		got := sessions.ValidateAuthorizedSession(req)
+		got := sessions.Validate(req)
 		assert.Equal(t, want, got)
 	})
 
@@ -84,12 +84,12 @@ func TestValidateAuthorizedSession(t *testing.T) {
 		req.AddCookie(cookie)
 
 		want := true
-		got := sessions.ValidateAuthorizedSession(req)
+		got := sessions.Validate(req)
 		assert.Equal(t, want, got)
 	})
 }
 
-func TestSaveSession(t *testing.T) {
+func TestSave(t *testing.T) {
 	t.Run("given a request with a userid in context, stores the encoded id in a cookie of the appropriate name", func(t *testing.T) {
 		sessions := New(testHashKey, testBlockKey)
 
@@ -99,7 +99,7 @@ func TestSaveSession(t *testing.T) {
 		req = req.WithContext(ctx)
 
 		rw := httptest.NewRecorder()
-		sessions.SaveSession(rw, req)
+		sessions.Save(rw, req)
 
 		cookies := rw.Result().Cookies()
 		for _, c := range cookies {

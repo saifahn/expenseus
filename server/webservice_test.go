@@ -424,6 +424,25 @@ func TestGetSelf(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, TestSeanUser, got)
 	})
+
+	t.Run("returns a 404 if the user does not exist", func(t *testing.T) {
+		store := StubExpenseStore{users: []User{TestSeanUser}}
+		oauth := StubOauthConfig{}
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+
+		request := NewGetSelfRequest()
+		// add the user into the request cookie
+		request.AddCookie(&http.Cookie{
+			Name:  ValidCookie.Name,
+			Value: "non-existent-user",
+		})
+		response := httptest.NewRecorder()
+		handler := http.HandlerFunc(wb.GetSelf)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusNotFound, response.Code)
+		assert.NotEqual(t, jsonContentType, response.Result().Header.Get("content-type"))
+	})
 }
 
 func TestLogOut(t *testing.T) {

@@ -34,6 +34,17 @@ export class UserAPI {
     // TODO: handle this better?
     throw new Error(res.statusText);
   }
+
+  async getSelf() {
+    const res = await fetch(`${this.baseURL}/self`, {
+      credentials: "include",
+    });
+    if (!res.ok) {
+      throw res.status;
+    }
+    const parsed: User = await res.json();
+    return parsed;
+  }
 }
 
 export class ExpenseAPI {

@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/securecookie"
 	"github.com/saifahn/expenseus"
@@ -15,7 +16,7 @@ func New(hashKey, blockKey []byte) *SessionManager {
 	return &SessionManager{cookies: *securecookie.New(hashKey, blockKey)}
 }
 
-func (sm *SessionManager) ValidateAuthorizedSession(r *http.Request) bool {
+func (sm *SessionManager) Validate(r *http.Request) bool {
 	cookie, err := r.Cookie(expenseus.SessionCookieKey)
 	if err != nil {
 		return false
@@ -26,7 +27,7 @@ func (sm *SessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 	return err == nil
 }
 
-func (sm *SessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+func (sm *SessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(expenseus.CtxKeyUserID).(string)
 
 	encoded, err := sm.cookies.Encode(expenseus.SessionCookieKey, userID)
@@ -44,4 +45,32 @@ func (sm *SessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(rw, cookie)
+}
+
+func (sm *SessionManager) Remove(rw http.ResponseWriter, r *http.Request) {
+	// overwrite the cookie with an expired cookie to delete it
+	invalidCookie := &http.Cookie{
+		Name:     expenseus.SessionCookieKey,
+		Value:    "deleted-cookie",
+		Secure:   true,
+		HttpOnly: true,
+		Expires:  time.Now().Add(-100),
+	}
+
+	http.SetCookie(rw, invalidCookie)
+}
+
+func (sm *SessionManager) GetUserID(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(expenseus.SessionCookieKey)
+	if err != nil {
+		return "", err
+	}
+
+	var userid string
+	err = sm.cookies.Decode(expenseus.SessionCookieKey, cookie.Value, &userid)
+	if err != nil {
+		return "", err
+	}
+
+	return userid, nil
 }

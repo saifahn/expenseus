@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"testing"
 
 	"golang.org/x/oauth2"
 )
@@ -53,63 +52,88 @@ var (
 )
 
 // NewGetExpenseRequest creates a request to be used in tests get an expense
-// by id, adding the id to the request context.
+// by ID, with ID in the request context.
 func NewGetExpenseRequest(id string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/%s", id), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyExpenseID, id)
 	return req.WithContext(ctx)
 }
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(user, name string) *http.Request {
-	values := ExpenseDetails{UserID: user, Name: name}
+func NewCreateExpenseRequest(userid, name string) *http.Request {
+	values := ExpenseDetails{UserID: userid, Name: name}
 	jsonValue, _ := json.Marshal(values)
-	req, _ := http.NewRequest(http.MethodPost, "/expenses", bytes.NewBuffer(jsonValue))
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", bytes.NewBuffer(jsonValue))
 	return req
 }
 
 // NewGetExpensesByUsernameRequest creates a request to be used in tests to get all
-// expenses of a user, adding the user to the request context.
+// expenses of a user, with the user in the request context.
 func NewGetExpensesByUsernameRequest(username string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/expenses/user/%s", username), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/user/%s", username), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)
 }
 
+// NewGetAllExpensesRequest creates a request to be used in tests to get all
+// expenses.
 func NewGetAllExpensesRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/expenses", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/expenses", nil)
 	return req
 }
 
-func AssertResponseBody(t *testing.T, got, want string) {
-	t.Helper()
-
-	if got != want {
-		t.Errorf("got response body of %q, want %q", got, want)
-	}
+// NewGetUserRequest creates a request to be used in tests to get a user by ID,
+// with the ID in the request context.
+func NewGetUserRequest(id string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/users/%s", id), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
+	return req.WithContext(ctx)
 }
 
-func AssertResponseStatus(t *testing.T, got, want int) {
-	if got != want {
-		t.Errorf("got status %d, want %d", got, want)
-	}
+// NewCreateUserRequest creates a request to be used in tests to get create a
+// new user.
+func NewCreateUserRequest(userJSON []byte) *http.Request {
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(userJSON))
+	return req
 }
 
+// NewGetSelfRequest creates a request to be used in tests to get the user from
+// the session.
+func NewGetSelfRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/users/self", nil)
+	return req
+}
+
+// NewGetALlUsers creates a request to be used in tests to get all users.
+func NewGetAllUsersRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	return req
+}
+
+// NewGoogleCallbackRequest creates a request to be used in tests to call the
+// Google callback route.
+func NewGoogleCallbackRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
+	return req
+}
+
+// #region Sessions
 type StubSessionManager struct {
 	saveSessionCalls []string
+	removeCalls      int
 }
 
-var validCookie = http.Cookie{
+var ValidCookie = http.Cookie{
 	Name:  "session",
-	Value: "authorized",
+	Value: TestSeanUser.ID,
 }
 
-func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
+func (s *StubSessionManager) Validate(r *http.Request) bool {
 	cookies := r.Cookies()
 	for _, cookie := range cookies {
-		if cookie.Name == validCookie.Name {
-			if cookie.Value == validCookie.Value {
+		if cookie.Name == ValidCookie.Name {
+			if len(cookie.Value) > 0 {
 				return true
 			}
 		}
@@ -117,12 +141,30 @@ func (s *StubSessionManager) ValidateAuthorizedSession(r *http.Request) bool {
 	return false
 }
 
-func (s *StubSessionManager) SaveSession(rw http.ResponseWriter, r *http.Request) {
+func (s *StubSessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
 	s.saveSessionCalls = append(s.saveSessionCalls, userID)
-	http.SetCookie(rw, &validCookie)
+	http.SetCookie(rw, &ValidCookie)
 }
 
+func (s *StubSessionManager) GetUserID(r *http.Request) (string, error) {
+	// get it from the cookie
+	cookies := r.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == ValidCookie.Name {
+			return cookie.Value, nil
+		}
+	}
+	return "", errors.New("no user ID was found")
+}
+
+func (s *StubSessionManager) Remove(rw http.ResponseWriter, r *http.Request) {
+	s.removeCalls++
+}
+
+// #endregion Sessions
+
+// #region OAuth
 type StubOauthConfig struct {
 	AuthCodeURLCalls []string
 }
@@ -142,7 +184,9 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 	return TestSeanUser, nil
 }
 
-// stub store implementation
+// #endregion OAuth
+
+// #region Store
 type StubExpenseStore struct {
 	expenses map[string]Expense
 	users    []User
@@ -194,6 +238,15 @@ func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
 	return expenses, nil
 }
 
+func (s *StubExpenseStore) GetUser(id string) (User, error) {
+	for _, u := range s.users {
+		if u.ID == id {
+			return u, nil
+		}
+	}
+	return User{}, errors.New("user not found")
+}
+
 func (s *StubExpenseStore) CreateUser(u User) error {
 	s.users = append(s.users, u)
 	return nil
@@ -202,3 +255,5 @@ func (s *StubExpenseStore) CreateUser(u User) error {
 func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 	return s.users, nil
 }
+
+// #endregion Store

@@ -1,19 +1,8 @@
-import { render, screen, userEvent, waitFor } from "tests/test-utils";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import UserList, { User } from "components/UserList";
-
-const testSeanUser: User = {
-  username: "saifahn",
-  name: "Sean Li",
-  id: "sean_id",
-};
-
-const testTomomiUser: User = {
-  username: "tomochi",
-  name: "Tomomi Kinoshita",
-  id: "tomomi_id",
-};
+import UserList from "components/UserList";
+import { testSeanUser, testTomomiUser } from "tests/doubles/index";
+import { render, screen, userEvent, waitFor } from "tests/test-utils";
 
 const testUsers = [testSeanUser, testTomomiUser];
 

@@ -24,6 +24,7 @@ type ExpenseStore interface {
 	GetAllExpenses() ([]Expense, error)
 	RecordExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
+	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
 }
 
@@ -50,25 +51,28 @@ type ExpenseusOauth interface {
 }
 
 type SessionManager interface {
-	ValidateAuthorizedSession(r *http.Request) bool
-	SaveSession(rw http.ResponseWriter, r *http.Request)
+	Validate(r *http.Request) bool
+	Save(rw http.ResponseWriter, r *http.Request)
+	GetUserID(r *http.Request) (string, error)
+	Remove(rw http.ResponseWriter, r *http.Request)
 }
 
 type WebService struct {
 	store       ExpenseStore
 	oauthConfig ExpenseusOauth
 	sessions    SessionManager
+	frontend    string
 }
 
-func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager) *WebService {
-	return &WebService{store: store, oauthConfig: oauth, sessions: sessions}
+func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager, frontend string) *WebService {
+	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontend: frontend}
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
-// before passing the request to the handler
+// before passing the request to the handler.
 func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		sessionIsAuthorized := wb.sessions.ValidateAuthorizedSession(r)
+		sessionIsAuthorized := wb.sessions.Validate(r)
 		if !sessionIsAuthorized {
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -101,7 +105,8 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 		if u.ID == user.ID {
 			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
 			r = r.WithContext(ctx)
-			wb.sessions.SaveSession(rw, r)
+			wb.sessions.Save(rw, r)
+			http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 			return
 		}
 	}
@@ -110,7 +115,8 @@ func (wb *WebService) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	wb.store.CreateUser(user)
 	ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
 	r = r.WithContext(ctx)
-	wb.sessions.SaveSession(rw, r)
+	wb.sessions.Save(rw, r)
+	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
 	// TODO: redirect to change username page
 }
 
@@ -192,6 +198,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusAccepted)
 }
 
+// CreateUser handles a request to create a new user.
 func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	var u User
 	err := json.NewDecoder(r.Body).Decode(&u)
@@ -211,6 +218,7 @@ func (wb *WebService) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusAccepted)
 }
 
+// ListUser handles a request to get all users and return the list of users.
 func (wb *WebService) ListUsers(rw http.ResponseWriter, r *http.Request) {
 	users, err := wb.store.GetAllUsers()
 	if err != nil {
@@ -219,9 +227,60 @@ func (wb *WebService) ListUsers(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.Header().Set("content-type", jsonContentType)
+	// TODO: return under a "users" key in JSON
 	err = json.NewEncoder(rw).Encode(users)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// GetUser handles a HTTP request to get a user by ID, returning the user.
+func (wb *WebService) GetUser(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
+
+	user, err := wb.store.GetUser(userID)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(user)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// GetSelf handles a HTTP request to return the logged in user.
+func (wb *WebService) GetSelf(rw http.ResponseWriter, r *http.Request) {
+	id, err := wb.sessions.GetUserID(r)
+
+	// TODO: add case for non-existent user
+	// TODO: handle non-valid session
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
+
+	user, err := wb.store.GetUser(id)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(user)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// LogOut handles a HTTP request to log out the current user.
+func (wb *WebService) LogOut(rw http.ResponseWriter, r *http.Request) {
+	wb.sessions.Remove(rw, r)
+
+	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
+	return
 }

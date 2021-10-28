@@ -15,23 +15,46 @@ const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 describe("HomePage", () => {
   describe("when not logged in", () => {
-    server.use(
-      rest.get(`${apiBaseURL}/users/self`, (_, res, ctx) => {
-        return res(ctx.status(401), ctx.json(""));
-      })
-    );
+    beforeEach(() => {
+      server.use(
+        rest.get(`${apiBaseURL}/users/self`, (_, res, ctx) => {
+          return res(ctx.status(401), ctx.json(""));
+        })
+      );
+    });
+
+    it("should show a 'Sign in with Google' button if not logged in and not show a 'Log out' button", async () => {
+      render(<Home />);
+
+      const signInButton = await waitFor(() =>
+        screen.getByRole("link", { name: /Sign in with Google/ })
+      );
+      expect(signInButton).toBeInTheDocument();
+
+      const logOutButton = screen.queryByRole("link", { name: /Log out/ });
+      expect(logOutButton).not.toBeInTheDocument();
+    });
   });
 
-  it("should show a 'Sign in with Google' button if not logged in and not show a 'Log out' button", async () => {
-    render(<Home />);
+  describe("when there is an error that isn't unauthorized", () => {
+    beforeEach(() => {
+      server.use(
+        rest.get(`${apiBaseURL}/users/self`, (_, res, ctx) => {
+          return res(ctx.status(404), ctx.json(""));
+        })
+      );
+    });
 
-    const signInButton = await waitFor(() =>
-      screen.getByRole("link", { name: /Sign in with Google/ })
-    );
-    expect(signInButton).toBeInTheDocument();
+    it("should show an error message", async () => {
+      render(<Home />);
 
-    const logOutButton = screen.queryByRole("link", { name: /Log out/ });
-    expect(logOutButton).not.toBeInTheDocument();
+      const errorMessage = "There was an error. Please refresh and try again.";
+      const errorTextEl = await waitFor(() => screen.getByText(errorMessage));
+      expect(errorTextEl).toBeInTheDocument();
+
+      const welcomeText = screen.queryByText(/Hi/);
+      expect(welcomeText).not.toBeInTheDocument();
+    });
   });
 
   describe("when logged in", () => {

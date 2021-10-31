@@ -292,13 +292,15 @@ func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 
 // #region ImageStore
 
+const testImageKey = "TEST_IMAGE_KEY"
+
 type StubImageStore struct {
 	uploadCalls []string
 }
 
-func (is *StubImageStore) Upload(file multipart.File) error {
+func (is *StubImageStore) Upload(file multipart.File) (string, error) {
 	is.uploadCalls = append(is.uploadCalls, "called")
-	return nil
+	return testImageKey, nil
 }
 
 // #endregion ImageStore

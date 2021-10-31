@@ -60,7 +60,7 @@ type SessionManager interface {
 }
 
 type ImageStore interface {
-	Upload(file multipart.File) error
+	Upload(file multipart.File) (string, error)
 }
 
 type WebService struct {
@@ -200,20 +200,18 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "user ID not found", http.StatusBadRequest)
 	}
 
-	file, header, err := r.FormFile("image")
-	var imageKey string
-	if err == nil {
-		imageKey = header.Filename
-	}
+	file, _, err := r.FormFile("image")
 	if err != nil && err != http.ErrMissingFile {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	// Upload the file
-	err = wb.images.Upload(file)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	var imageKey string
+	// Upload the file only if one was supplied
+	if err == nil {
+		imageKey, err = wb.images.Upload(file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
 	}
 
 	err = wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})

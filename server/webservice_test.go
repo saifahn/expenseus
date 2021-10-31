@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -189,7 +188,7 @@ func TestCreateExpense(t *testing.T) {
 		want := ExpenseDetails{
 			Name:     expenseName,
 			UserID:   userID,
-			ImageKey: filepath.Base(f.Name()),
+			ImageKey: testImageKey,
 		}
 		assert.Equal(t, want, got)
 	})

@@ -289,3 +289,16 @@ func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 }
 
 // #endregion Store
+
+// #region ImageStore
+
+type StubImageStore struct {
+	uploadCalls []string
+}
+
+func (is *StubImageStore) Upload(file multipart.File) error {
+	is.uploadCalls = append(is.uploadCalls, "called")
+	return nil
+}
+
+// #endregion ImageStore

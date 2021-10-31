@@ -3,6 +3,7 @@ package expenseus
 import (
 	"context"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -58,15 +59,20 @@ type SessionManager interface {
 	Remove(rw http.ResponseWriter, r *http.Request)
 }
 
+type ImageStore interface {
+	Upload(file multipart.File) error
+}
+
 type WebService struct {
 	store       ExpenseStore
 	oauthConfig ExpenseusOauth
 	sessions    SessionManager
+	images      ImageStore
 	frontend    string
 }
 
-func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager, frontend string) *WebService {
-	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontend: frontend}
+func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager, frontend string, images ImageStore) *WebService {
+	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontend: frontend, images: images}
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
@@ -194,16 +200,20 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "user ID not found", http.StatusBadRequest)
 	}
 
-	_, header, err := r.FormFile("image")
-
+	file, header, err := r.FormFile("image")
 	var imageKey string
 	if err == nil {
 		imageKey = header.Filename
 	}
-
 	if err != nil && err != http.ErrMissingFile {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Upload the file
+	err = wb.images.Upload(file)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 	}
 
 	err = wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})

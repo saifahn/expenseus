@@ -29,7 +29,8 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	db := redis.New(mr.Addr())
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
-	webservice := expenseus.NewWebService(db, oauth, auth, "")
+	images := &expenseus.StubImageStore{}
+	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
 	router := expenseus.InitRouter(webservice)
 
 	// CREATE users in the db
@@ -127,7 +128,8 @@ func TestRestrictedRoutesAndGettingSelf(t *testing.T) {
 	db := redis.New(mr.Addr())
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
-	webservice := expenseus.NewWebService(db, oauth, auth, "")
+	images := &expenseus.StubImageStore{}
+	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
 	router := expenseus.InitRouter(webservice)
 
 	// try to create a user

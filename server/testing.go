@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
 
 	"golang.org/x/oauth2"
 )
@@ -68,12 +69,21 @@ func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
 	w := multipart.NewWriter(&b)
 	for key, r := range values {
 		var fw io.Writer
+		var err error
 		if x, ok := r.(io.Closer); ok {
 			defer x.Close()
 		}
-		fw, err := w.CreateFormField(key)
-		if err != nil {
-			fmt.Println(err.Error())
+		if x, ok := r.(*os.File); ok {
+			fw, err = w.CreateFormFile(key, x.Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		} else {
+			// non-file values
+			fw, err = w.CreateFormField(key)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
 		}
 		if _, err := io.Copy(fw, r); err != nil {
 			fmt.Println(err.Error())
@@ -206,8 +216,9 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 
 // #region Store
 type StubExpenseStore struct {
-	expenses map[string]Expense
-	users    []User
+	expenses           map[string]Expense
+	users              []User
+	recordExpenseCalls []ExpenseDetails
 }
 
 func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
@@ -245,6 +256,9 @@ func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
 		ID:             testId,
 	}
 	s.expenses[testId] = expense
+	s.recordExpenseCalls = append(s.recordExpenseCalls, ExpenseDetails{
+		Name: ed.Name, UserID: ed.UserID, ImageKey: ed.ImageKey,
+	})
 	return nil
 }
 

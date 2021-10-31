@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -128,13 +130,13 @@ func TestGetExpenseByUser(t *testing.T) {
 }
 
 func TestCreateExpense(t *testing.T) {
-	store := StubExpenseStore{
-		users:    []User{},
-		expenses: map[string]Expense{},
-	}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
-
 	t.Run("creates a new expense on POST", func(t *testing.T) {
+		store := StubExpenseStore{
+			users:    []User{},
+			expenses: map[string]Expense{},
+		}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+
 		values := map[string]io.Reader{
 			"userID":      strings.NewReader("tomomi"),
 			"expenseName": strings.NewReader("Test Expense"),
@@ -149,6 +151,45 @@ func TestCreateExpense(t *testing.T) {
 		// this is technically actually testing implementation
 		// I should just test that RecordExpense has been called correctly with the right thing, not the outcome
 		assert.Len(t, store.expenses, 1)
+	})
+
+	t.Run("creates a new expense with an image if provided on POST", func(t *testing.T) {
+		store := StubExpenseStore{
+			users:    []User{},
+			expenses: map[string]Expense{},
+		}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+
+		f, err := os.CreateTemp("", "example-file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		defer os.Remove(f.Name())
+
+		userID := "saifahn"
+		expenseName := "Test Expense with Image"
+
+		values := map[string]io.Reader{
+			"userID":      strings.NewReader(userID),
+			"expenseName": strings.NewReader(expenseName),
+			"image":       f,
+		}
+		request := NewCreateExpenseRequest(values)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.CreateExpense)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusAccepted, response.Code)
+		assert.Len(t, store.recordExpenseCalls, 1)
+		got := store.recordExpenseCalls[0]
+		want := ExpenseDetails{
+			Name:     expenseName,
+			UserID:   userID,
+			ImageKey: filepath.Base(f.Name()),
+		}
+		assert.Equal(t, want, got)
 	})
 }
 

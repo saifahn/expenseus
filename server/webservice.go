@@ -35,8 +35,9 @@ type User struct {
 }
 
 type ExpenseDetails struct {
-	Name   string `json:"name"`
-	UserID string `json:"userid"`
+	Name     string `json:"name"`
+	UserID   string `json:"userid"`
+	ImageKey string `json:"imageKey"`
 }
 
 type Expense struct {
@@ -180,6 +181,7 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
+	// TODO add "too big" error
 	r.ParseMultipartForm(1024 * 1024 * 5)
 
 	expenseName := r.FormValue("expenseName")
@@ -192,7 +194,19 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "user ID not found", http.StatusBadRequest)
 	}
 
-	err := wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID})
+	_, header, err := r.FormFile("image")
+
+	var imageKey string
+	if err == nil {
+		imageKey = header.Filename
+	}
+
+	if err != nil && err != http.ErrMissingFile {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

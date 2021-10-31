@@ -8,7 +8,6 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
-	"strings"
 
 	"golang.org/x/oauth2"
 )
@@ -63,13 +62,7 @@ func NewGetExpenseRequest(id string) *http.Request {
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(userid, expense string) *http.Request {
-	// create a map of reader instances to encode
-	values := map[string]io.Reader{
-		"userID":      strings.NewReader(userid),
-		"expenseName": strings.NewReader(expense),
-	}
-
+func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
 	// prepare FormData to submit
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

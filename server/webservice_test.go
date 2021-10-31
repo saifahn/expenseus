@@ -3,8 +3,10 @@ package expenseus
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -133,7 +135,11 @@ func TestCreateExpense(t *testing.T) {
 	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
-		request := NewCreateExpenseRequest("tomomi", "Test Expense")
+		values := map[string]io.Reader{
+			"userID":      strings.NewReader("tomomi"),
+			"expenseName": strings.NewReader("Test Expense"),
+		}
+		request := NewCreateExpenseRequest(values)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)

@@ -2,8 +2,10 @@ package expenseus_test
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/alicebob/miniredis/v2"
@@ -65,7 +67,11 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 
 	// CREATE expenses in the db
 	for _, ed := range wantedExpenseDetails {
-		request := expenseus.NewCreateExpenseRequest(ed.UserID, ed.Name)
+		values := map[string]io.Reader{
+			"userID":      strings.NewReader(ed.UserID),
+			"expenseName": strings.NewReader(ed.Name),
+		}
+		request := expenseus.NewCreateExpenseRequest(values)
 		request.AddCookie(&expenseus.ValidCookie)
 		router.ServeHTTP(httptest.NewRecorder(), request)
 	}

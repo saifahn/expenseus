@@ -180,15 +180,19 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
-	var ed ExpenseDetails
-	err := json.NewDecoder(r.Body).Decode(&ed)
+	r.ParseMultipartForm(1024 * 1024 * 5)
 
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
+	expenseName := r.FormValue("expenseName")
+	if expenseName == "" {
+		http.Error(rw, "expense name not found", http.StatusBadRequest)
 	}
 
-	err = wb.store.RecordExpense(ed)
+	userID := r.FormValue("userID")
+	if userID == "" {
+		http.Error(rw, "user ID not found", http.StatusBadRequest)
+	}
+
+	err := wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

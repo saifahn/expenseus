@@ -3,10 +3,12 @@ package expenseus
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"golang.org/x/oauth2"
 )
@@ -61,10 +63,33 @@ func NewGetExpenseRequest(id string) *http.Request {
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(userid, name string) *http.Request {
-	values := ExpenseDetails{UserID: userid, Name: name}
-	jsonValue, _ := json.Marshal(values)
-	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", bytes.NewBuffer(jsonValue))
+func NewCreateExpenseRequest(userid, expense string) *http.Request {
+	// create a map of reader instances to encode
+	values := map[string]io.Reader{
+		"userID":      strings.NewReader(userid),
+		"expenseName": strings.NewReader(expense),
+	}
+
+	// prepare FormData to submit
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for key, r := range values {
+		var fw io.Writer
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+		fw, err := w.CreateFormField(key)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+	w.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req
 }
 

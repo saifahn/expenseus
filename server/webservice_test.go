@@ -19,9 +19,11 @@ func TestGetExpenseByID(t *testing.T) {
 		expenses: map[string]Expense{
 			"1":    TestSeanExpense,
 			"9281": TestTomomiExpense,
+			"134":  TestExpenseWithImage,
 		},
 	}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+	images := StubImageStore{}
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := NewGetExpenseRequest("1")
@@ -72,6 +74,22 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.NotContains(t, rawJSON, "imageKey")
 		assert.NotContains(t, rawJSON, "imageURL")
+	})
+
+	t.Run("returns a response with an imageURL but no imageKey for an expense that has an image", func(t *testing.T) {
+		request := NewGetExpenseRequest("134")
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.GetExpense)
+		handler.ServeHTTP(response, request)
+
+		rawJSON := response.Body.String()
+
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.NotContains(t, rawJSON, "imageKey")
+		assert.Len(t, images.addImageToExpenseCalls, 1)
+		assert.Contains(t, rawJSON, "imageURL")
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {

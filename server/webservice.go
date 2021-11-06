@@ -38,12 +38,13 @@ type User struct {
 type ExpenseDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userid"`
-	ImageKey string `json:"imageKey,omitempty"`
+	ImageKey string `json:"-"`
 }
 
 type Expense struct {
 	ExpenseDetails
-	ID string `json:"id"`
+	ID       string `json:"id"`
+	ImageURL string `json:"imageURL,omitempty"`
 }
 
 type ExpenseusOauth interface {
@@ -62,6 +63,7 @@ type SessionManager interface {
 type ImageStore interface {
 	Upload(file multipart.File) (string, error)
 	Validate(file multipart.File) (bool, error)
+	AddImageToExpense(expense Expense) (Expense, error)
 }
 
 type WebService struct {
@@ -139,9 +141,14 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 	}
 
-	// TODO: needs to be like ExpenseWithPresignedURL or something
-	// the Expense to be returned will be different here
-	// remove the imageKey, add ImageURL
+	if expense.ImageKey != "" {
+		expense, err = wb.images.AddImageToExpense(expense)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	rw.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(rw).Encode(expense)
 	if err != nil {

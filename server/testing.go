@@ -51,6 +51,15 @@ var (
 		ID:             "3",
 		ExpenseDetails: TestTomomiExpense2Details,
 	}
+
+	TestExpenseWithImage = Expense{
+		ID: "123",
+		ExpenseDetails: ExpenseDetails{
+			Name:     "ExpenseWithImage",
+			UserID:   "an_ID",
+			ImageKey: "test-image-key",
+		},
+	}
 )
 
 // NewGetExpenseRequest creates a request to be used in tests get an expense
@@ -295,7 +304,8 @@ func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 const testImageKey = "TEST_IMAGE_KEY"
 
 type StubImageStore struct {
-	uploadCalls []string
+	uploadCalls            []string
+	addImageToExpenseCalls []string
 }
 
 func (is *StubImageStore) Upload(file multipart.File) (string, error) {
@@ -305,6 +315,16 @@ func (is *StubImageStore) Upload(file multipart.File) (string, error) {
 
 func (is *StubImageStore) Validate(file multipart.File) (bool, error) {
 	return true, nil
+}
+
+func (is *StubImageStore) AddImageToExpense(expense Expense) (Expense, error) {
+	is.addImageToExpenseCalls = append(is.addImageToExpenseCalls, "called")
+	expense = Expense{
+		ExpenseDetails: expense.ExpenseDetails,
+		ID:             expense.ID,
+		ImageURL:       "test-image-url",
+	}
+	return expense, nil
 }
 
 // #endregion ImageStore
@@ -321,6 +341,10 @@ func (is *StubInvalidImageStore) Upload(file multipart.File) (string, error) {
 
 func (is *StubInvalidImageStore) Validate(file multipart.File) (bool, error) {
 	return false, nil
+}
+
+func (is *StubInvalidImageStore) AddImageToExpense(expense Expense) (Expense, error) {
+	return expense, errors.New("image could not be added")
 }
 
 // #endregion InvalidImageStore

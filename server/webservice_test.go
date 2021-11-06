@@ -59,6 +59,21 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, got, TestTomomiExpense)
 	})
 
+	t.Run("returns a response without an imageKey or imageURL for an expense without an image", func(t *testing.T) {
+		request := NewGetExpenseRequest("9281")
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.GetExpense)
+		handler.ServeHTTP(response, request)
+
+		rawJSON := response.Body.String()
+
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.NotContains(t, rawJSON, "imageKey")
+		assert.NotContains(t, rawJSON, "imageURL")
+	})
+
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
 		request := NewGetExpenseRequest("13371337")
 		response := httptest.NewRecorder()

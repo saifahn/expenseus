@@ -38,7 +38,7 @@ type User struct {
 type ExpenseDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userid"`
-	ImageKey string `json:"imageKey"`
+	ImageKey string `json:"imageKey,omitempty"`
 }
 
 type Expense struct {
@@ -139,7 +139,7 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 	}
 
-	// needs to be like ExpenseWithPresignedURL or something
+	// TODO: needs to be like ExpenseWithPresignedURL or something
 	// the Expense to be returned will be different here
 	// remove the imageKey, add ImageURL
 	rw.Header().Set("content-type", jsonContentType)

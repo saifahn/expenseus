@@ -188,8 +188,13 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
-	// TODO add "too big" error
-	r.ParseMultipartForm(1024 * 1024 * 5)
+	err := r.ParseMultipartForm(1024 * 1024 * 5)
+	if err != nil {
+		if err == multipart.ErrMessageTooLarge {
+			http.Error(rw, "image size too large", http.StatusRequestEntityTooLarge)
+		}
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+	}
 
 	expenseName := r.FormValue("expenseName")
 	if expenseName == "" {

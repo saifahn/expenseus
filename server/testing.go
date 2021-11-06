@@ -300,7 +300,6 @@ func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 // #endregion Store
 
 // #region ImageStore
-
 const testImageKey = "TEST_IMAGE_KEY"
 
 type StubImageStore struct {
@@ -319,18 +318,13 @@ func (is *StubImageStore) Validate(file multipart.File) (bool, error) {
 
 func (is *StubImageStore) AddImageToExpense(expense Expense) (Expense, error) {
 	is.addImageToExpenseCalls = append(is.addImageToExpenseCalls, "called")
-	expense = Expense{
-		ExpenseDetails: expense.ExpenseDetails,
-		ID:             expense.ID,
-		ImageURL:       "test-image-url",
-	}
+	expense.ImageURL = "test-image-url"
 	return expense, nil
 }
 
 // #endregion ImageStore
 
 // #region InvalidImageStore
-
 type StubInvalidImageStore struct {
 	uploadCalls []string
 }

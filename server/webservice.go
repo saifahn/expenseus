@@ -61,6 +61,7 @@ type SessionManager interface {
 
 type ImageStore interface {
 	Upload(file multipart.File) (string, error)
+	Validate(file multipart.File) (bool, error)
 }
 
 type WebService struct {
@@ -201,13 +202,24 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	file, _, err := r.FormFile("image")
+	// don't error on missing file - it's ok not to have an image
 	if err != nil && err != http.ErrMissingFile {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	var imageKey string
-	// Upload the file only if one was supplied
-	if err == nil {
+	// upload the image only if one was supplied
+	if file != nil {
+		// check image is OK
+		ok, err := wb.images.Validate(file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+		if !ok {
+			http.Error(rw, "image invalid", http.StatusUnprocessableEntity)
+		}
+
 		imageKey, err = wb.images.Upload(file)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)

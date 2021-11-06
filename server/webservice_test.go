@@ -131,7 +131,6 @@ func TestGetExpenseByUser(t *testing.T) {
 func TestCreateExpense(t *testing.T) {
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		store := StubExpenseStore{
-			users:    []User{},
 			expenses: map[string]Expense{},
 		}
 		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
@@ -154,7 +153,6 @@ func TestCreateExpense(t *testing.T) {
 
 	t.Run("if an image is provided, the image is uploaded and an expense is created with an image key", func(t *testing.T) {
 		store := StubExpenseStore{
-			users:    []User{},
 			expenses: map[string]Expense{},
 		}
 		images := StubImageStore{}
@@ -166,7 +164,6 @@ func TestCreateExpense(t *testing.T) {
 		}
 		defer f.Close()
 		defer os.Remove(f.Name())
-
 		userID := "saifahn"
 		expenseName := "Test Expense with Image"
 
@@ -191,6 +188,38 @@ func TestCreateExpense(t *testing.T) {
 			ImageKey: testImageKey,
 		}
 		assert.Equal(t, want, got)
+	})
+
+	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
+		store := StubExpenseStore{
+			expenses: map[string]Expense{},
+		}
+		images := StubInvalidImageStore{}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
+
+		f, err := os.CreateTemp("", "example-file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+		defer os.Remove(f.Name())
+		userID := "saifahn"
+		expenseName := "Test Expense with Image"
+
+		values := map[string]io.Reader{
+			"userID":      strings.NewReader(userID),
+			"expenseName": strings.NewReader(expenseName),
+			"image":       f,
+		}
+		request := NewCreateExpenseRequest(values)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.CreateExpense)
+		handler.ServeHTTP(response, request)
+
+		// the invalid image store will return this error if the image is invalid
+		assert.Equal(t, http.StatusUnprocessableEntity, response.Code)
+		assert.Len(t, images.uploadCalls, 0)
 	})
 }
 

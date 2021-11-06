@@ -303,4 +303,24 @@ func (is *StubImageStore) Upload(file multipart.File) (string, error) {
 	return testImageKey, nil
 }
 
+func (is *StubImageStore) Validate(file multipart.File) (bool, error) {
+	return true, nil
+}
+
 // #endregion ImageStore
+
+// #region InvalidImageStore
+
+type StubInvalidImageStore struct {
+	uploadCalls []string
+}
+
+func (is *StubInvalidImageStore) Upload(file multipart.File) (string, error) {
+	return "", errors.New("upload failed for some reason")
+}
+
+func (is *StubInvalidImageStore) Validate(file multipart.File) (bool, error) {
+	return false, nil
+}
+
+// #endregion InvalidImageStore

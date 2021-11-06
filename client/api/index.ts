@@ -66,7 +66,7 @@ export class ExpenseAPI {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ name: expenseName, userid: userID }),
+      body: JSON.stringify({ name: expenseName, userID }),
     });
     if (res.ok) {
       // TODO: return the message from the server

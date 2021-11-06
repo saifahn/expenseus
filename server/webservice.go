@@ -37,7 +37,7 @@ type User struct {
 
 type ExpenseDetails struct {
 	Name     string `json:"name"`
-	UserID   string `json:"userid"`
+	UserID   string `json:"userID"`
 	ImageKey string `json:"-"`
 }
 
@@ -335,5 +335,4 @@ func (wb *WebService) LogOut(rw http.ResponseWriter, r *http.Request) {
 	wb.sessions.Remove(rw, r)
 
 	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
-	return
 }

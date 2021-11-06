@@ -139,6 +139,9 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 	}
 
+	// needs to be like ExpenseWithPresignedURL or something
+	// the Expense to be returned will be different here
+	// remove the imageKey, add ImageURL
 	rw.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(rw).Encode(expense)
 	if err != nil {

@@ -202,18 +202,22 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == multipart.ErrMessageTooLarge {
 			http.Error(rw, "image size too large", http.StatusRequestEntityTooLarge)
+			return
 		}
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	expenseName := r.FormValue("expenseName")
 	if expenseName == "" {
 		http.Error(rw, "expense name not found", http.StatusBadRequest)
+		return
 	}
 
 	userID := r.FormValue("userID")
 	if userID == "" {
 		http.Error(rw, "user ID not found", http.StatusBadRequest)
+		return
 	}
 
 	file, _, err := r.FormFile("image")
@@ -230,14 +234,17 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		ok, err := wb.images.Validate(file)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		if !ok {
 			http.Error(rw, "image invalid", http.StatusUnprocessableEntity)
+			return
 		}
 
 		imageKey, err = wb.images.Upload(file)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 	}
 

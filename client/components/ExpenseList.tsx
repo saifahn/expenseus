@@ -109,6 +109,18 @@ export default function ExpenseList() {
                 onChange={e => setExpenseUserID(e.target.value)}
               />
             </div>
+            <div className="mt-6">
+              <label className="block font-semibold" htmlFor="addPicture">
+                Add a picture?
+              </label>
+              <input
+                id="addPicture"
+                type="file"
+                role="button"
+                aria-label="Add picture"
+                accept="image/*"
+              />
+            </div>
             <div className="mt-6 flex justify-end">
               <button
                 className="bg-indigo-500 hover:bg-indigo-700 text-white py-2 px-4 rounded focus:outline-none focus:ring"

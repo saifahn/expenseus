@@ -8,4 +8,12 @@ describe("ExpenseList component", () => {
 
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
   });
+
+  test("has an input to upload an image", () => {
+    render(<ExpenseList />);
+
+    expect(
+      screen.getByRole("button", { name: /Add picture/ })
+    ).toBeInTheDocument();
+  });
 });

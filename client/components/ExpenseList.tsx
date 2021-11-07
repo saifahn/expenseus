@@ -17,6 +17,7 @@ export default function ExpenseList() {
   });
   const [statusMessage, setStatusMessage] = useState<string>();
   const cancelled = useRef(false);
+  const imageInput = useRef(null);
 
   async function fetchExpenses() {
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
@@ -31,10 +32,10 @@ export default function ExpenseList() {
     }
   }
 
-  async function createExpense(expenseName: string, userID: string) {
+  async function createExpense(data: FormData) {
     try {
       const api = new ExpenseAPI();
-      const response = await api.createExpense(expenseName, userID);
+      const response = await api.createExpense(data);
       setStatusMessage(response);
     } catch (err) {
       console.error(err);
@@ -45,7 +46,14 @@ export default function ExpenseList() {
     e.preventDefault();
     setStatus({ status: "loading", error: null });
     try {
-      await createExpense(expenseName, expenseUserID);
+      const data = new FormData();
+      data.append("userID", expenseUserID);
+      data.append("expenseName", expenseName);
+      if (imageInput.current?.files.length) {
+        data.append("image", imageInput.current.files[0]);
+      }
+
+      await createExpense(data);
       setStatus({ status: "fulfilled", error: null });
       await fetchExpenses();
     } catch (err) {
@@ -90,10 +98,10 @@ export default function ExpenseList() {
               <input
                 className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
                 id="name"
-                name="name"
                 type="text"
                 value={expenseName}
                 onChange={e => setExpenseName(e.target.value)}
+                required
               />
             </div>
             <div className="mt-6">
@@ -103,7 +111,6 @@ export default function ExpenseList() {
               <input
                 className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
                 id="userID"
-                name="user_id"
                 type="text"
                 value={expenseUserID}
                 onChange={e => setExpenseUserID(e.target.value)}
@@ -119,6 +126,7 @@ export default function ExpenseList() {
                 role="button"
                 aria-label="Add picture"
                 accept="image/*"
+                ref={imageInput}
               />
             </div>
             <div className="mt-6 flex justify-end">

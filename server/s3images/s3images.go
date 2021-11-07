@@ -1,19 +1,24 @@
 package s3images
 
 import (
+	"errors"
+	"fmt"
 	"mime/multipart"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
+	"github.com/saifahn/expenseus"
 )
 
 type ImageStoreS3 struct {
-	session  *session.Session
-	storeKey string
+	session *session.Session
+	bucket  string
 }
 
 func New(useConfig bool) *ImageStoreS3 {
@@ -30,11 +35,11 @@ func New(useConfig bool) *ImageStoreS3 {
 		sess = session.Must(session.NewSession())
 	}
 
-	storeKey := os.Getenv("AWS_IMAGES_BUCKET_KEY")
+	bucket := os.Getenv("AWS_IMAGES_BUCKET_KEY")
 
 	return &ImageStoreS3{
-		session:  sess,
-		storeKey: storeKey,
+		session: sess,
+		bucket:  bucket,
 	}
 }
 
@@ -44,7 +49,7 @@ func (i *ImageStoreS3) Upload(file multipart.File) (string, error) {
 	key := uuid.New().String()
 
 	_, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(i.storeKey),
+		Bucket: aws.String(i.bucket),
 		Key:    aws.String(key),
 		Body:   file,
 	})
@@ -58,4 +63,24 @@ func (i *ImageStoreS3) Upload(file multipart.File) (string, error) {
 func (i *ImageStoreS3) Validate(file multipart.File) (bool, error) {
 	// TODO: actually check the image file is OK
 	return true, nil
+}
+
+func (i *ImageStoreS3) AddImageToExpense(expense expenseus.Expense) (expenseus.Expense, error) {
+	if expense.ImageKey == "" {
+		return expenseus.Expense{}, errors.New("expense is missing imageKey")
+	}
+
+	svc := s3.New(i.session)
+	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String(i.bucket),
+		Key:    aws.String(expense.ImageKey),
+	})
+
+	urlStr, err := req.Presign(15 * time.Minute)
+	if err != nil {
+		return expenseus.Expense{}, errors.New(fmt.Sprintf("failed to sign image URL: %v", err))
+	}
+
+	expense.ImageURL = urlStr
+	return expense, nil
 }

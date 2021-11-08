@@ -3,7 +3,6 @@ package expenseus
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"mime/multipart"
 	"net/http"
 
@@ -143,7 +142,6 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if expense.ImageKey != "" {
-		log.Printf("expense %v has an ImageKey %v", expense, expense.ImageKey)
 		expense, err = wb.images.AddImageToExpense(expense)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)

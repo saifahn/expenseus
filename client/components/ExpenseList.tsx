@@ -1,6 +1,7 @@
 import { ExpenseAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
 import Image from "next/image";
+import ExpenseCard from "./ExpenseCard";
 
 export interface Expense {
   userID: string;
@@ -73,27 +74,9 @@ export default function ExpenseList() {
     <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
       <h2 className="text-2xl">Expenses</h2>
       {expenses &&
-        expenses.map(expense => {
-          return (
-            <article
-              className="p-4 mt-4 rounded-md shadow-md bg-white"
-              key={expense.id}
-            >
-              <h3 className="text-xl">{expense.name}</h3>
-              <p>{expense.userID}</p>
-              <p>{expense.id}</p>
-              {expense.imageURL && (
-                <Image
-                  src={expense.imageURL}
-                  width={400}
-                  height={400}
-                  objectFit="contain"
-                  alt="expense image"
-                />
-              )}
-            </article>
-          );
-        })}
+        expenses.map(expense => (
+          <ExpenseCard expense={expense} key={expense.id} />
+        ))}
       <div className="mt-6">
         <h2 className="text-2xl">Create a new expense</h2>
         <div className="mx-auto w-full max-w-xs">

@@ -1,4 +1,3 @@
-import { rest } from "msw";
 import ExpenseList from "components/ExpenseList";
 import { render, screen } from "tests/test-utils";
 

@@ -307,7 +307,7 @@ type StubImageStore struct {
 	addImageToExpenseCalls []string
 }
 
-func (is *StubImageStore) Upload(file multipart.File) (string, error) {
+func (is *StubImageStore) Upload(file multipart.File, header multipart.FileHeader) (string, error) {
 	is.uploadCalls = append(is.uploadCalls, "called")
 	return testImageKey, nil
 }
@@ -329,7 +329,7 @@ type StubInvalidImageStore struct {
 	uploadCalls []string
 }
 
-func (is *StubInvalidImageStore) Upload(file multipart.File) (string, error) {
+func (is *StubInvalidImageStore) Upload(file multipart.File, header multipart.FileHeader) (string, error) {
 	return "", errors.New("upload failed for some reason")
 }
 

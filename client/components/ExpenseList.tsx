@@ -1,10 +1,12 @@
 import { ExpenseAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
+import Image from "next/image";
 
 export interface Expense {
   userID: string;
   name: string;
   id: string;
+  imageURL?: string;
 }
 
 export default function ExpenseList() {
@@ -20,7 +22,6 @@ export default function ExpenseList() {
   const imageInput = useRef(null);
 
   async function fetchExpenses() {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
     try {
       const api = new ExpenseAPI();
       const expenses = await api.listExpenses();
@@ -81,6 +82,15 @@ export default function ExpenseList() {
               <h3 className="text-xl">{expense.name}</h3>
               <p>{expense.userID}</p>
               <p>{expense.id}</p>
+              {expense.imageURL && (
+                <Image
+                  src={expense.imageURL}
+                  width={400}
+                  height={400}
+                  objectFit="contain"
+                  alt="expense image"
+                />
+              )}
             </article>
           );
         })}

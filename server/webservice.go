@@ -3,6 +3,7 @@ package expenseus
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"mime/multipart"
 	"net/http"
 
@@ -38,7 +39,7 @@ type User struct {
 type ExpenseDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userID"`
-	ImageKey string `json:"-"`
+	ImageKey string `json:"imageKey,omitempty"`
 }
 
 type Expense struct {
@@ -61,7 +62,7 @@ type SessionManager interface {
 }
 
 type ImageStore interface {
-	Upload(file multipart.File) (string, error)
+	Upload(file multipart.File, header multipart.FileHeader) (string, error)
 	Validate(file multipart.File) (bool, error)
 	AddImageToExpense(expense Expense) (Expense, error)
 }
@@ -142,6 +143,7 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if expense.ImageKey != "" {
+		log.Printf("expense %v has an ImageKey %v", expense, expense.ImageKey)
 		expense, err = wb.images.AddImageToExpense(expense)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -188,6 +190,16 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for i, e := range expenses {
+		if e.ImageKey != "" {
+			expenses[i], err = wb.images.AddImageToExpense(e)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	rw.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(rw).Encode(expenses)
 	if err != nil {
@@ -220,7 +232,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, _, err := r.FormFile("image")
+	file, header, err := r.FormFile("image")
 	// don't error on missing file - it's ok not to have an image
 	if err != nil && err != http.ErrMissingFile {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -241,7 +253,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		imageKey, err = wb.images.Upload(file)
+		imageKey, err = wb.images.Upload(file, *header)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return

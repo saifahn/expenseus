@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"time"
 
@@ -43,15 +44,23 @@ func New(useConfig bool) *ImageStoreS3 {
 	}
 }
 
-func (i *ImageStoreS3) Upload(file multipart.File) (string, error) {
+func (i *ImageStoreS3) Upload(file multipart.File, header multipart.FileHeader) (string, error) {
 	uploader := s3manager.NewUploader(i.session)
-	// generate the key
-	key := uuid.New().String()
+	// uuid generated to keep key unique but filename is preserved
+	key := fmt.Sprintf("%v/%v", uuid.New().String(), header.Filename)
+
+	// file must be read to byte buffer before detecting content type
+	buffer := make([]byte, header.Size)
+	file.Read(buffer)
+	fileType := http.DetectContentType(buffer)
+	// return the file position to the start before uploading
+	file.Seek(0, 0)
 
 	_, err := uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(i.bucket),
-		Key:    aws.String(key),
-		Body:   file,
+		Bucket:      aws.String(i.bucket),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(fileType),
 	})
 	if err != nil {
 		return "", err

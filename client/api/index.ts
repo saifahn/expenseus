@@ -74,4 +74,12 @@ export class ExpenseAPI {
     // TODO: handle this better?
     throw new Error(res.statusText);
   }
+
+  async getExpense(id: string) {
+    const res = await fetch(`${this.baseURL}/${id}`, {
+      credentials: "include",
+    });
+    const parsed: Expense = await res.json();
+    return parsed;
+  }
 }

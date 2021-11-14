@@ -3,6 +3,7 @@ package expenseus
 import (
 	"context"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -35,13 +36,15 @@ type User struct {
 }
 
 type ExpenseDetails struct {
-	Name   string `json:"name"`
-	UserID string `json:"userid"`
+	Name     string `json:"name"`
+	UserID   string `json:"userID"`
+	ImageKey string `json:"imageKey,omitempty"`
 }
 
 type Expense struct {
 	ExpenseDetails
-	ID string `json:"id"`
+	ID       string `json:"id"`
+	ImageURL string `json:"imageURL,omitempty"`
 }
 
 type ExpenseusOauth interface {
@@ -57,15 +60,22 @@ type SessionManager interface {
 	Remove(rw http.ResponseWriter, r *http.Request)
 }
 
+type ImageStore interface {
+	Upload(file multipart.File, header multipart.FileHeader) (string, error)
+	Validate(file multipart.File) (bool, error)
+	AddImageToExpense(expense Expense) (Expense, error)
+}
+
 type WebService struct {
 	store       ExpenseStore
 	oauthConfig ExpenseusOauth
 	sessions    SessionManager
+	images      ImageStore
 	frontend    string
 }
 
-func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager, frontend string) *WebService {
-	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontend: frontend}
+func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionManager, frontend string, images ImageStore) *WebService {
+	return &WebService{store: store, oauthConfig: oauth, sessions: sessions, frontend: frontend, images: images}
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
@@ -131,6 +141,14 @@ func (wb *WebService) GetExpense(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusNotFound)
 	}
 
+	if expense.ImageKey != "" {
+		expense, err = wb.images.AddImageToExpense(expense)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	rw.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(rw).Encode(expense)
 	if err != nil {
@@ -170,6 +188,16 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for i, e := range expenses {
+		if e.ImageKey != "" {
+			expenses[i], err = wb.images.AddImageToExpense(e)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	rw.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(rw).Encode(expenses)
 	if err != nil {
@@ -180,15 +208,57 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
-	var ed ExpenseDetails
-	err := json.NewDecoder(r.Body).Decode(&ed)
-
+	err := r.ParseMultipartForm(1024 * 1024 * 5)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		if err == multipart.ErrMessageTooLarge {
+			http.Error(rw, "image size too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = wb.store.RecordExpense(ed)
+	expenseName := r.FormValue("expenseName")
+	if expenseName == "" {
+		http.Error(rw, "expense name not found", http.StatusBadRequest)
+		return
+	}
+
+	userID := r.FormValue("userID")
+	if userID == "" {
+		http.Error(rw, "user ID not found", http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("image")
+	// don't error on missing file - it's ok not to have an image
+	if err != nil && err != http.ErrMissingFile {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var imageKey string
+	// upload the image only if one was supplied
+	if file != nil {
+		// check image is OK
+		ok, err := wb.images.Validate(file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !ok {
+			http.Error(rw, "image invalid", http.StatusUnprocessableEntity)
+			return
+		}
+
+		imageKey, err = wb.images.Upload(file, *header)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err = wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
@@ -282,5 +352,4 @@ func (wb *WebService) LogOut(rw http.ResponseWriter, r *http.Request) {
 	wb.sessions.Remove(rw, r)
 
 	http.Redirect(rw, r, wb.frontend, http.StatusTemporaryRedirect)
-	return
 }

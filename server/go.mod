@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.97.0 // indirect
 	github.com/alicebob/miniredis/v2 v2.15.1
+	github.com/aws/aws-sdk-go v1.41.19 // indirect
 	github.com/go-chi/chi/v5 v5.0.4
 	github.com/go-chi/cors v1.2.0
 	github.com/go-redis/redis/v8 v8.11.4

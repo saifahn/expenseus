@@ -58,21 +58,28 @@ export class ExpenseAPI {
     return parsed;
   }
 
-  async createExpense(expenseName: string, userID: string) {
+  async createExpense(data: FormData) {
     const res = await fetch(this.baseURL, {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ name: expenseName, userid: userID }),
+      body: data,
     });
     if (res.ok) {
       // TODO: return the message from the server
-      return `Expense ${expenseName} was successfully created`;
+      return `Expense was successfully created`;
     }
     // TODO: handle this better?
     throw new Error(res.statusText);
+  }
+
+  async getExpense(id: string) {
+    const res = await fetch(`${this.baseURL}/${id}`, {
+      credentials: "include",
+    });
+    const parsed: Expense = await res.json();
+    return parsed;
   }
 }

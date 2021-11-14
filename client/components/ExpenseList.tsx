@@ -1,10 +1,13 @@
 import { ExpenseAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
+import Image from "next/image";
+import ExpenseCard from "./ExpenseCard";
 
 export interface Expense {
   userID: string;
   name: string;
   id: string;
+  imageURL?: string;
 }
 
 export default function ExpenseList() {
@@ -17,9 +20,9 @@ export default function ExpenseList() {
   });
   const [statusMessage, setStatusMessage] = useState<string>();
   const cancelled = useRef(false);
+  const imageInput = useRef(null);
 
   async function fetchExpenses() {
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/expenses`;
     try {
       const api = new ExpenseAPI();
       const expenses = await api.listExpenses();
@@ -31,10 +34,10 @@ export default function ExpenseList() {
     }
   }
 
-  async function createExpense(expenseName: string, userID: string) {
+  async function createExpense(data: FormData) {
     try {
       const api = new ExpenseAPI();
-      const response = await api.createExpense(expenseName, userID);
+      const response = await api.createExpense(data);
       setStatusMessage(response);
     } catch (err) {
       console.error(err);
@@ -45,7 +48,14 @@ export default function ExpenseList() {
     e.preventDefault();
     setStatus({ status: "loading", error: null });
     try {
-      await createExpense(expenseName, expenseUserID);
+      const data = new FormData();
+      data.append("userID", expenseUserID);
+      data.append("expenseName", expenseName);
+      if (imageInput.current?.files.length) {
+        data.append("image", imageInput.current.files[0]);
+      }
+
+      await createExpense(data);
       setStatus({ status: "fulfilled", error: null });
       await fetchExpenses();
     } catch (err) {
@@ -64,18 +74,9 @@ export default function ExpenseList() {
     <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
       <h2 className="text-2xl">Expenses</h2>
       {expenses &&
-        expenses.map(expense => {
-          return (
-            <article
-              className="p-4 mt-4 rounded-md shadow-md bg-white"
-              key={expense.id}
-            >
-              <h3 className="text-xl">{expense.name}</h3>
-              <p>{expense.userID}</p>
-              <p>{expense.id}</p>
-            </article>
-          );
-        })}
+        expenses.map(expense => (
+          <ExpenseCard expense={expense} key={expense.id} />
+        ))}
       <div className="mt-6">
         <h2 className="text-2xl">Create a new expense</h2>
         <div className="mx-auto w-full max-w-xs">
@@ -90,10 +91,10 @@ export default function ExpenseList() {
               <input
                 className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
                 id="name"
-                name="name"
                 type="text"
                 value={expenseName}
                 onChange={e => setExpenseName(e.target.value)}
+                required
               />
             </div>
             <div className="mt-6">
@@ -103,10 +104,22 @@ export default function ExpenseList() {
               <input
                 className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
                 id="userID"
-                name="user_id"
                 type="text"
                 value={expenseUserID}
                 onChange={e => setExpenseUserID(e.target.value)}
+              />
+            </div>
+            <div className="mt-6">
+              <label className="block font-semibold" htmlFor="addPicture">
+                Add a picture?
+              </label>
+              <input
+                id="addPicture"
+                type="file"
+                role="button"
+                aria-label="Add picture"
+                accept="image/*"
+                ref={imageInput}
               />
             </div>
             <div className="mt-6 flex justify-end">

@@ -3,8 +3,11 @@ package expenseus
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,9 +19,11 @@ func TestGetExpenseByID(t *testing.T) {
 		expenses: map[string]Expense{
 			"1":    TestSeanExpense,
 			"9281": TestTomomiExpense,
+			"134":  TestExpenseWithImage,
 		},
 	}
-	webservice := &WebService{&store, &StubOauthConfig{}, &StubSessionManager{}, ""}
+	images := StubImageStore{}
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 
 	t.Run("get an expense by id", func(t *testing.T) {
 		request := NewGetExpenseRequest("1")
@@ -56,6 +61,38 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, got, TestTomomiExpense)
 	})
 
+	t.Run("returns a response without an imageKey or imageURL for an expense without an image", func(t *testing.T) {
+		request := NewGetExpenseRequest("9281")
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.GetExpense)
+		handler.ServeHTTP(response, request)
+
+		rawJSON := response.Body.String()
+
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.NotContains(t, rawJSON, "imageKey")
+		assert.NotContains(t, rawJSON, "imageURL")
+	})
+
+	t.Run("returns a response with an imageURL for an expense that has an image", func(t *testing.T) {
+		request := NewGetExpenseRequest("134")
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.GetExpense)
+		handler.ServeHTTP(response, request)
+
+		rawJSON := response.Body.String()
+
+		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
+		assert.Equal(t, http.StatusOK, response.Code)
+		// TODO somehow don't return this to the front end but we need to use it in the back end so we can't just use "-"?
+		// assert.NotContains(t, rawJSON, "imageKey")
+		assert.Len(t, images.addImageToExpenseCalls, 1)
+		assert.Contains(t, rawJSON, "imageURL")
+	})
+
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
 		request := NewGetExpenseRequest("13371337")
 		response := httptest.NewRecorder()
@@ -84,7 +121,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			"9281": TestTomomiExpense,
 		},
 	}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
 		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
@@ -126,14 +163,17 @@ func TestGetExpenseByUser(t *testing.T) {
 }
 
 func TestCreateExpense(t *testing.T) {
-	store := StubExpenseStore{
-		users:    []User{},
-		expenses: map[string]Expense{},
-	}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
-
 	t.Run("creates a new expense on POST", func(t *testing.T) {
-		request := NewCreateExpenseRequest("tomomi", "Test Expense")
+		store := StubExpenseStore{
+			expenses: map[string]Expense{},
+		}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+
+		values := map[string]io.Reader{
+			"userID":      strings.NewReader("tomomi"),
+			"expenseName": strings.NewReader("Test Expense"),
+		}
+		request := NewCreateExpenseRequest(values)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -143,6 +183,74 @@ func TestCreateExpense(t *testing.T) {
 		// this is technically actually testing implementation
 		// I should just test that RecordExpense has been called correctly with the right thing, not the outcome
 		assert.Len(t, store.expenses, 1)
+	})
+
+	// prepares a temp file, information, and values for image upload tests
+	prepareFileAndInfo := func(t *testing.T) (*os.File, string, string, map[string]io.Reader) {
+		f, err := os.CreateTemp("", "example-file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		userID := "saifahn"
+		expenseName := "Test Expense with Image"
+
+		values := map[string]io.Reader{
+			"userID":      strings.NewReader(userID),
+			"expenseName": strings.NewReader(expenseName),
+			"image":       f,
+		}
+		return f, userID, expenseName, values
+	}
+
+	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
+		store := StubExpenseStore{
+			expenses: map[string]Expense{},
+		}
+		images := StubInvalidImageStore{}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
+
+		f, _, _, values := prepareFileAndInfo(t)
+		defer f.Close()
+		defer os.Remove(f.Name())
+
+		request := NewCreateExpenseRequest(values)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.CreateExpense)
+		handler.ServeHTTP(response, request)
+
+		// the invalid image store will return this error if the image is invalid
+		assert.Equal(t, http.StatusUnprocessableEntity, response.Code)
+		assert.Len(t, images.uploadCalls, 0)
+	})
+
+	t.Run("if an image is provided and the image check is successful, the image is uploaded and an expense is created with an image key", func(t *testing.T) {
+		store := StubExpenseStore{
+			expenses: map[string]Expense{},
+		}
+		images := StubImageStore{}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
+
+		f, userID, expenseName, values := prepareFileAndInfo(t)
+		defer f.Close()
+		defer os.Remove(f.Name())
+
+		request := NewCreateExpenseRequest(values)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.CreateExpense)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusAccepted, response.Code)
+		assert.Len(t, images.uploadCalls, 1)
+		assert.Len(t, store.recordExpenseCalls, 1)
+		got := store.recordExpenseCalls[0]
+		want := ExpenseDetails{
+			Name:     expenseName,
+			UserID:   userID,
+			ImageKey: testImageKey,
+		}
+		assert.Equal(t, want, got)
 	})
 }
 
@@ -157,7 +265,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"9281": TestTomomiExpense,
 			},
 		}
-		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -189,7 +297,7 @@ func TestGetAllExpenses(t *testing.T) {
 				"14928": TestTomomiExpense2,
 			},
 		}
-		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -213,7 +321,7 @@ func TestGetAllExpenses(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	store := StubExpenseStore{}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	user := TestSeanUser
 	userJSON, err := json.Marshal(user)
@@ -234,7 +342,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
-	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "")
+	webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	request := NewGetAllUsersRequest()
 	response := httptest.NewRecorder()
@@ -256,7 +364,7 @@ func TestListUsers(t *testing.T) {
 func TestOauthLogin(t *testing.T) {
 	store := StubExpenseStore{}
 	oauth := StubOauthConfig{}
-	webservice := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+	webservice := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
 	request, err := http.NewRequest(http.MethodGet, "/api/v1/login_google", nil)
 	if err != nil {
@@ -281,7 +389,7 @@ func TestOauthCallback(t *testing.T) {
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
 		frontend := "http://a.test"
-		webservice := NewWebService(&store, &oauth, &sessions, frontend)
+		webservice := NewWebService(&store, &oauth, &sessions, frontend, &StubImageStore{})
 
 		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
@@ -310,7 +418,7 @@ func TestOauthCallback(t *testing.T) {
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
 		frontend := "http://another.test"
-		webservice := NewWebService(&store, &oauth, &sessions, frontend)
+		webservice := NewWebService(&store, &oauth, &sessions, frontend, &StubImageStore{})
 
 		request := NewGoogleCallbackRequest()
 		response := httptest.NewRecorder()
@@ -339,7 +447,7 @@ func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 401 response when the user is not authorized", func(t *testing.T) {
 		store := StubExpenseStore{}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetAllExpensesRequest()
 		response := httptest.NewRecorder()
@@ -353,7 +461,7 @@ func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 200 response when the user is authorized, and passes the request to the appropriate route", func(t *testing.T) {
 		store := StubExpenseStore{expenses: map[string]Expense{"1": TestSeanExpense}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetAllExpensesRequest()
 		// simulate a cookie session storage here
@@ -379,7 +487,7 @@ func TestGetUserByID(t *testing.T) {
 	t.Run("returns a users details if the user exists", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetUserRequest(TestSeanUser.ID)
 		response := httptest.NewRecorder()
@@ -403,7 +511,7 @@ func TestGetSelf(t *testing.T) {
 	t.Run("returns the user details from the stored session if the user exists", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetSelfRequest()
 		// add the user into the request cookie
@@ -428,7 +536,7 @@ func TestGetSelf(t *testing.T) {
 	t.Run("returns a 404 if the user does not exist", func(t *testing.T) {
 		store := StubExpenseStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
-		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "")
+		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
 		request := NewGetSelfRequest()
 		// add the user into the request cookie
@@ -451,7 +559,7 @@ func TestLogOut(t *testing.T) {
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
 		frontend := "http://test.base"
-		wb := NewWebService(&store, &oauth, &sessions, frontend)
+		wb := NewWebService(&store, &oauth, &sessions, frontend, &StubImageStore{})
 
 		request, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
 		response := httptest.NewRecorder()

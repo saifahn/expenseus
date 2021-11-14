@@ -7,7 +7,7 @@ import { render, screen, userEvent, waitFor } from "tests/test-utils";
 const testUsers = [testSeanUser, testTomomiUser];
 
 const server = setupServer(
-  rest.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, (req, res, ctx) => {
+  rest.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, (_, res, ctx) => {
     return res(ctx.json(testUsers));
   })
 );

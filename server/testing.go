@@ -3,10 +3,12 @@ package expenseus
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
 
 	"golang.org/x/oauth2"
 )
@@ -49,6 +51,15 @@ var (
 		ID:             "3",
 		ExpenseDetails: TestTomomiExpense2Details,
 	}
+
+	TestExpenseWithImage = Expense{
+		ID: "123",
+		ExpenseDetails: ExpenseDetails{
+			Name:     "ExpenseWithImage",
+			UserID:   "an_ID",
+			ImageKey: "test-image-key",
+		},
+	}
 )
 
 // NewGetExpenseRequest creates a request to be used in tests get an expense
@@ -61,10 +72,36 @@ func NewGetExpenseRequest(id string) *http.Request {
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(userid, name string) *http.Request {
-	values := ExpenseDetails{UserID: userid, Name: name}
-	jsonValue, _ := json.Marshal(values)
-	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", bytes.NewBuffer(jsonValue))
+func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
+	// prepare FormData to submit
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for key, r := range values {
+		var fw io.Writer
+		var err error
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+		if x, ok := r.(*os.File); ok {
+			fw, err = w.CreateFormFile(key, x.Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		} else {
+			// non-file values
+			fw, err = w.CreateFormField(key)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+	w.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req
 }
 
@@ -188,8 +225,9 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 
 // #region Store
 type StubExpenseStore struct {
-	expenses map[string]Expense
-	users    []User
+	expenses           map[string]Expense
+	users              []User
+	recordExpenseCalls []ExpenseDetails
 }
 
 func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
@@ -227,6 +265,9 @@ func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
 		ID:             testId,
 	}
 	s.expenses[testId] = expense
+	s.recordExpenseCalls = append(s.recordExpenseCalls, ExpenseDetails{
+		Name: ed.Name, UserID: ed.UserID, ImageKey: ed.ImageKey,
+	})
 	return nil
 }
 
@@ -257,3 +298,47 @@ func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 }
 
 // #endregion Store
+
+// #region ImageStore
+const testImageKey = "TEST_IMAGE_KEY"
+
+type StubImageStore struct {
+	uploadCalls            []string
+	addImageToExpenseCalls []string
+}
+
+func (is *StubImageStore) Upload(file multipart.File, header multipart.FileHeader) (string, error) {
+	is.uploadCalls = append(is.uploadCalls, "called")
+	return testImageKey, nil
+}
+
+func (is *StubImageStore) Validate(file multipart.File) (bool, error) {
+	return true, nil
+}
+
+func (is *StubImageStore) AddImageToExpense(expense Expense) (Expense, error) {
+	is.addImageToExpenseCalls = append(is.addImageToExpenseCalls, "called")
+	expense.ImageURL = "test-image-url"
+	return expense, nil
+}
+
+// #endregion ImageStore
+
+// #region InvalidImageStore
+type StubInvalidImageStore struct {
+	uploadCalls []string
+}
+
+func (is *StubInvalidImageStore) Upload(file multipart.File, header multipart.FileHeader) (string, error) {
+	return "", errors.New("upload failed for some reason")
+}
+
+func (is *StubInvalidImageStore) Validate(file multipart.File) (bool, error) {
+	return false, nil
+}
+
+func (is *StubInvalidImageStore) AddImageToExpense(expense Expense) (Expense, error) {
+	return expense, errors.New("image could not be added")
+}
+
+// #endregion InvalidImageStore

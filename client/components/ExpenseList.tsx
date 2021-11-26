@@ -1,6 +1,5 @@
 import { ExpenseAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
-import Image from "next/image";
 import ExpenseCard from "./ExpenseCard";
 
 export interface Expense {

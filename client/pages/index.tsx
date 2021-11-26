@@ -1,5 +1,4 @@
 import Head from "next/head";
-import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { User } from "components/UserList";
 import { UserAPI } from "api";
@@ -56,7 +55,7 @@ export default function Home() {
                 href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}
                 className="inline-flex items-center border rounded-md px-3 py-2 mt-4"
               >
-                <Image
+                <img
                   src="/images/google-g-logo.svg"
                   alt="Google G Logo"
                   height={24}

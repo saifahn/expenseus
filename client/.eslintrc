@@ -1,3 +1,7 @@
 {
-  "extends": ["next", "next/core-web-vitals"]
+  "extends": ["next", "next/core-web-vitals"],
+  "rules": {
+    // I am building the site as a static site, which Next image optimization is not compatible with
+    "@next/next/no-img-element": "off"
+  }
 }

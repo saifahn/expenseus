@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Expense } from "./ExpenseList";
 
 export default function ExpenseCard({ expense }: { expense: Expense }) {
@@ -11,11 +10,10 @@ export default function ExpenseCard({ expense }: { expense: Expense }) {
       <p>{expense.userID}</p>
       <p>{expense.id}</p>
       {expense.imageURL && (
-        <Image
+        <img
           src={expense.imageURL}
           width={400}
           height={400}
-          objectFit="contain"
           alt="expense image"
         />
       )}

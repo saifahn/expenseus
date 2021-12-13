@@ -72,7 +72,7 @@ func NewGetExpenseRequest(id string) *http.Request {
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
+func NewCreateExpenseRequest(values map[string]io.Reader, userid string) *http.Request {
 	// prepare FormData to submit
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -102,7 +102,8 @@ func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	return req
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userid)
+	return req.WithContext(ctx)
 }
 
 // NewGetExpensesByUsernameRequest creates a request to be used in tests to get all

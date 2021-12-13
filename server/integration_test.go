@@ -69,11 +69,16 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	// CREATE expenses in the db
 	for _, ed := range wantedExpenseDetails {
 		values := map[string]io.Reader{
-			"userID":      strings.NewReader(ed.UserID),
 			"expenseName": strings.NewReader(ed.Name),
 		}
-		request := expenseus.NewCreateExpenseRequest(values)
-		request.AddCookie(&expenseus.ValidCookie)
+		// TODO: should probably not use this method to be more like a real request
+		request := expenseus.NewCreateExpenseRequest(values, ed.UserID)
+		// VerifyUser now gets the UserID and passes it to the next handler, so
+		// the proper UserID should be passed here.
+		request.AddCookie(&http.Cookie{
+			Name:  "session",
+			Value: ed.UserID,
+		})
 		router.ServeHTTP(httptest.NewRecorder(), request)
 	}
 

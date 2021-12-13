@@ -1,9 +1,11 @@
 package expenseus
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -163,6 +165,36 @@ func TestGetExpenseByUser(t *testing.T) {
 }
 
 func TestCreateExpense(t *testing.T) {
+	t.Run("returns an error if there is no user in the context", func(t *testing.T) {
+		store := StubExpenseStore{}
+		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+
+		values := map[string]io.Reader{
+			"expenseName": strings.NewReader("Test Expense"),
+		}
+
+		var b bytes.Buffer
+		w := multipart.NewWriter(&b)
+		for _, reader := range values {
+			var fw io.Writer
+			fw, _ = w.CreateFormField("expenseName")
+			if _, err := io.Copy(fw, reader); err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+		w.Close()
+		request, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
+		request.Header.Set("Content-Type", w.FormDataContentType())
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(webservice.CreateExpense)
+		assert.Panics(t, func() {
+			handler.ServeHTTP(response, request)
+		}, "The code did not panic due to a lack of context")
+
+		// assert.Equal(t, http.StatusUnauthorized, response.Code)
+	})
+
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		store := StubExpenseStore{
 			expenses: map[string]Expense{},
@@ -170,10 +202,9 @@ func TestCreateExpense(t *testing.T) {
 		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		values := map[string]io.Reader{
-			"userID":      strings.NewReader("tomomi"),
 			"expenseName": strings.NewReader("Test Expense"),
 		}
-		request := NewCreateExpenseRequest(values)
+		request := NewCreateExpenseRequest(values, TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -186,20 +217,18 @@ func TestCreateExpense(t *testing.T) {
 	})
 
 	// prepares a temp file, information, and values for image upload tests
-	prepareFileAndInfo := func(t *testing.T) (*os.File, string, string, map[string]io.Reader) {
+	prepareFileAndInfo := func(t *testing.T) (*os.File, string, map[string]io.Reader) {
 		f, err := os.CreateTemp("", "example-file")
 		if err != nil {
 			t.Fatal(err)
 		}
-		userID := "saifahn"
 		expenseName := "Test Expense with Image"
 
 		values := map[string]io.Reader{
-			"userID":      strings.NewReader(userID),
 			"expenseName": strings.NewReader(expenseName),
 			"image":       f,
 		}
-		return f, userID, expenseName, values
+		return f, expenseName, values
 	}
 
 	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
@@ -209,11 +238,11 @@ func TestCreateExpense(t *testing.T) {
 		images := StubInvalidImageStore{}
 		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 
-		f, _, _, values := prepareFileAndInfo(t)
+		f, _, values := prepareFileAndInfo(t)
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequest(values)
+		request := NewCreateExpenseRequest(values, TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -230,12 +259,13 @@ func TestCreateExpense(t *testing.T) {
 		}
 		images := StubImageStore{}
 		webservice := NewWebService(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
+		userID := TestSeanUser.ID
 
-		f, userID, expenseName, values := prepareFileAndInfo(t)
+		f, expenseName, values := prepareFileAndInfo(t)
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequest(values)
+		request := NewCreateExpenseRequest(values, userID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -458,7 +488,7 @@ func TestVerifyUser(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 
-	t.Run("returns a 200 response when the user is authorized, and passes the request to the appropriate route", func(t *testing.T) {
+	t.Run("returns a 200 response when the user is authorized, and passes the request with the user ID in the context to the appropriate route", func(t *testing.T) {
 		store := StubExpenseStore{expenses: map[string]Expense{"1": TestSeanExpense}}
 		oauth := StubOauthConfig{}
 		wb := NewWebService(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})

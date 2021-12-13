@@ -212,7 +212,7 @@ func TestCreateExpense(t *testing.T) {
 
 		assert.Equal(t, http.StatusAccepted, response.Code)
 		// this is technically actually testing implementation
-		// I should just test that RecordExpense has been called correctly with the right thing, not the outcome
+		// I should just test that CreateExpense has been called correctly with the right thing, not the outcome
 		assert.Len(t, store.expenses, 1)
 	})
 

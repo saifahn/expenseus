@@ -259,7 +259,7 @@ func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, er
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
+func (s *StubExpenseStore) CreateExpense(ed ExpenseDetails) error {
 	testId := fmt.Sprintf("tid-%v", ed.Name)
 	expense := Expense{
 		ExpenseDetails: ed,

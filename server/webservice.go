@@ -23,7 +23,7 @@ type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
 	GetExpensesByUsername(username string) ([]Expense, error)
 	GetAllExpenses() ([]Expense, error)
-	RecordExpense(expenseDetails ExpenseDetails) error
+	CreateExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
 	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
@@ -266,7 +266,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
+	err = wb.store.CreateExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

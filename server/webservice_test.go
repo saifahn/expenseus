@@ -402,8 +402,8 @@ func TestOauthCallback(t *testing.T) {
 		assert.Len(t, store.users, 1)
 		assert.ElementsMatch(t, expected, store.users)
 
-		assert.Len(t, sessions.saveSessionCalls, 1)
-		assert.Equal(t, sessions.saveSessionCalls[0], TestSeanUser.ID)
+		assert.Len(t, sessions.saveCalls, 1)
+		assert.Equal(t, sessions.saveCalls[0], TestSeanUser.ID)
 
 		// get routed to the base page for now
 		url, err := response.Result().Location()
@@ -430,9 +430,9 @@ func TestOauthCallback(t *testing.T) {
 		assert.Len(t, store.users, 1)
 		assert.ElementsMatch(t, expected, store.users)
 
-		assert.Len(t, sessions.saveSessionCalls, 1)
+		assert.Len(t, sessions.saveCalls, 1)
 		// the callback will add a context of the appropriate user id
-		assert.Equal(t, sessions.saveSessionCalls[0], TestSeanUser.ID)
+		assert.Equal(t, sessions.saveCalls[0], TestSeanUser.ID)
 
 		// expect to get routed to the main welcome page
 		url, err := response.Result().Location()

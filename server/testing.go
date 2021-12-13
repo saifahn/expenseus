@@ -157,8 +157,8 @@ func NewGoogleCallbackRequest() *http.Request {
 
 // #region Sessions
 type StubSessionManager struct {
-	saveSessionCalls []string
-	removeCalls      int
+	saveCalls   []string
+	removeCalls int
 }
 
 var ValidCookie = http.Cookie{
@@ -180,7 +180,7 @@ func (s *StubSessionManager) Validate(r *http.Request) bool {
 
 func (s *StubSessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
-	s.saveSessionCalls = append(s.saveSessionCalls, userID)
+	s.saveCalls = append(s.saveCalls, userID)
 	http.SetCookie(rw, &ValidCookie)
 }
 

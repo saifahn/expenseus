@@ -23,7 +23,7 @@ type ExpenseStore interface {
 	GetExpense(id string) (Expense, error)
 	GetExpensesByUsername(username string) ([]Expense, error)
 	GetAllExpenses() ([]Expense, error)
-	RecordExpense(expenseDetails ExpenseDetails) error
+	CreateExpense(expenseDetails ExpenseDetails) error
 	CreateUser(user User) error
 	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
@@ -79,7 +79,7 @@ func NewWebService(store ExpenseStore, oauth ExpenseusOauth, sessions SessionMan
 }
 
 // VerifyUser is middleware that checks that the user is logged in and authorized
-// before passing the request to the handler.
+// before passing the request to the handler with the userID in the context.
 func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		sessionIsAuthorized := wb.sessions.Validate(r)
@@ -87,6 +87,14 @@ func (wb *WebService) VerifyUser(next http.Handler) http.Handler {
 			http.Error(rw, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
+
+		id, err := wb.sessions.GetUserID(r)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+		}
+
+		ctx := context.WithValue(r.Context(), CtxKeyUserID, id)
+		r = r.WithContext(ctx)
 		next.ServeHTTP(rw, r)
 	})
 }
@@ -208,6 +216,12 @@ func (wb *WebService) GetAllExpenses(rw http.ResponseWriter, r *http.Request) {
 
 // CreateExpense handles a HTTP request to create a new expense.
 func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
+	// get the userID from the context
+	userID, ok := r.Context().Value(CtxKeyUserID).(string)
+	if !ok {
+		http.Error(rw, "user id not found in context", http.StatusUnauthorized)
+	}
+
 	err := r.ParseMultipartForm(1024 * 1024 * 5)
 	if err != nil {
 		if err == multipart.ErrMessageTooLarge {
@@ -221,12 +235,6 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 	expenseName := r.FormValue("expenseName")
 	if expenseName == "" {
 		http.Error(rw, "expense name not found", http.StatusBadRequest)
-		return
-	}
-
-	userID := r.FormValue("userID")
-	if userID == "" {
-		http.Error(rw, "user ID not found", http.StatusBadRequest)
 		return
 	}
 
@@ -258,7 +266,7 @@ func (wb *WebService) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = wb.store.RecordExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
+	err = wb.store.CreateExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

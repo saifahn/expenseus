@@ -32,7 +32,7 @@ type Redis struct {
 	db redis.Client
 }
 
-func (r *Redis) RecordExpense(ed expenseus.ExpenseDetails) error {
+func (r *Redis) CreateExpense(ed expenseus.ExpenseDetails) error {
 	// generate id for expense
 	expenseID := uuid.New().String()
 	// get the time now for the score on the sets

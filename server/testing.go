@@ -72,7 +72,7 @@ func NewGetExpenseRequest(id string) *http.Request {
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
+func NewCreateExpenseRequest(values map[string]io.Reader, userid string) *http.Request {
 	// prepare FormData to submit
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -102,7 +102,8 @@ func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	return req
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userid)
+	return req.WithContext(ctx)
 }
 
 // NewGetExpensesByUsernameRequest creates a request to be used in tests to get all
@@ -157,8 +158,8 @@ func NewGoogleCallbackRequest() *http.Request {
 
 // #region Sessions
 type StubSessionManager struct {
-	saveSessionCalls []string
-	removeCalls      int
+	saveCalls   []string
+	removeCalls int
 }
 
 var ValidCookie = http.Cookie{
@@ -180,7 +181,7 @@ func (s *StubSessionManager) Validate(r *http.Request) bool {
 
 func (s *StubSessionManager) Save(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
-	s.saveSessionCalls = append(s.saveSessionCalls, userID)
+	s.saveCalls = append(s.saveCalls, userID)
 	http.SetCookie(rw, &ValidCookie)
 }
 
@@ -258,7 +259,7 @@ func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, er
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) RecordExpense(ed ExpenseDetails) error {
+func (s *StubExpenseStore) CreateExpense(ed ExpenseDetails) error {
 	testId := fmt.Sprintf("tid-%v", ed.Name)
 	expense := Expense{
 		ExpenseDetails: ed,

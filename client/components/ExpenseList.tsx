@@ -3,7 +3,6 @@ import { useState, useRef, useEffect, FormEvent } from "react";
 import ExpenseCard from "./ExpenseCard";
 
 export interface Expense {
-  userID: string;
   name: string;
   id: string;
   imageURL?: string;
@@ -12,7 +11,6 @@ export interface Expense {
 export default function ExpenseList() {
   const [expenses, setExpenses] = useState<Expense[]>();
   const [expenseName, setExpenseName] = useState("");
-  const [expenseUserID, setExpenseUserID] = useState("");
   const [{ status, error }, setStatus] = useState({
     status: "idle",
     error: null,
@@ -48,7 +46,6 @@ export default function ExpenseList() {
     setStatus({ status: "loading", error: null });
     try {
       const data = new FormData();
-      data.append("userID", expenseUserID);
       data.append("expenseName", expenseName);
       if (imageInput.current?.files.length) {
         data.append("image", imageInput.current.files[0]);
@@ -94,18 +91,6 @@ export default function ExpenseList() {
                 value={expenseName}
                 onChange={e => setExpenseName(e.target.value)}
                 required
-              />
-            </div>
-            <div className="mt-6">
-              <label className="block font-semibold" htmlFor="userID">
-                User ID
-              </label>
-              <input
-                className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
-                id="userID"
-                type="text"
-                value={expenseUserID}
-                onChange={e => setExpenseUserID(e.target.value)}
               />
             </div>
             <div className="mt-6">

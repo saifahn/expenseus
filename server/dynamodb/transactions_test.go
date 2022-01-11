@@ -77,4 +77,7 @@ func TestTransactionTable(t *testing.T) {
 
 	err = transactions.PutIfNotExists(*item)
 	assert.NoError(err)
+
+	err = transactions.Delete(item.ID)
+	assert.NoError(err)
 }

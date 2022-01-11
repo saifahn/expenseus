@@ -55,6 +55,7 @@ func createTestTable(d dynamodbiface.DynamoDBAPI) error {
 }
 
 func TestTransactionTable(t *testing.T) {
+	assert := assert.New(t)
 	dynamodb := newDynamoDBLocalAPI()
 
 	// create the table in the local test database
@@ -67,5 +68,13 @@ func TestTransactionTable(t *testing.T) {
 	transactions := NewTransactionsTable(tbl)
 
 	_, err = transactions.Get("non-existent-item")
-	assert.Equal(t, table.ErrItemNotFound, err)
+	assert.Equal(table.ErrItemNotFound, err)
+
+	item := &TransactionItem{
+		ID:     "test-item-id",
+		Amount: 123,
+	}
+
+	err = transactions.PutIfNotExists(*item)
+	assert.NoError(err)
 }

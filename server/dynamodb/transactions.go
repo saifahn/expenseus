@@ -17,6 +17,7 @@ type TransactionItem struct {
 type TransactionsTable interface {
 	Get(id string) (*TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
+	Put(item TransactionItem) error
 	Delete(id string) error
 }
 
@@ -58,6 +59,10 @@ func (t *transactionsTable) PutIfNotExists(item TransactionItem) error {
 	}
 
 	return nil
+}
+
+func (t *transactionsTable) Put(item TransactionItem) error {
+	return t.table.PutItem(item)
 }
 
 func (t *transactionsTable) Delete(id string) error {

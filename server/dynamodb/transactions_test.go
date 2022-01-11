@@ -78,6 +78,11 @@ func TestTransactionTable(t *testing.T) {
 	err = transactions.PutIfNotExists(*item)
 	assert.NoError(err)
 
+	// assert that it is possible to overwrite
+	err = transactions.Put(*item)
+	assert.NoError(err)
+
 	err = transactions.Delete(item.ID)
 	assert.NoError(err)
+
 }

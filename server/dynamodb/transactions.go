@@ -9,6 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ErrConflict = errors.New("dynamodb: conflict")
+
 type TransactionItem struct {
 	ID     string `json:"id"`
 	Amount int64  `json:"amount"`
@@ -30,7 +32,7 @@ const TransactionsHashKeyName = "id"
 func conflictOrErr(err error) error {
 	dynamoErr, ok := errors.Cause(err).(awserr.Error)
 	if ok && dynamoErr.Code() == "ConditionalCheckFailedException" {
-		return errors.New("dynamodb: conflict")
+		return ErrConflict
 	}
 	return err
 }

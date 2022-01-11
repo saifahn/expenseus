@@ -75,14 +75,18 @@ func TestTransactionTable(t *testing.T) {
 		Amount: 123,
 	}
 
+	// no error raised the first time
 	err = transactions.PutIfNotExists(*item)
 	assert.NoError(err)
 
-	// assert that it is possible to overwrite
+	// it is possible to overwrite with Put
 	err = transactions.Put(*item)
 	assert.NoError(err)
 
+	// it will now raise an error as the item exists
+	err = transactions.PutIfNotExists(*item)
+	assert.EqualError(err, ErrConflict.Error())
+
 	err = transactions.Delete(item.ID)
 	assert.NoError(err)
-
 }

@@ -64,11 +64,12 @@ func TestTransactionTable(t *testing.T) {
 		t.Logf("table could not be crated: %v", err)
 	}
 	tbl := table.New(dynamodb, testTableName)
-	// create the transactions table
+	// create the transactions table instance
 	transactions := NewTransactionsTable(tbl)
 
+	// retrieving a non-existent item will give an error
 	_, err = transactions.Get("non-existent-item")
-	assert.Equal(table.ErrItemNotFound, err)
+	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	item := &TransactionItem{
 		ID:     "test-item-id",
@@ -87,6 +88,14 @@ func TestTransactionTable(t *testing.T) {
 	err = transactions.PutIfNotExists(*item)
 	assert.EqualError(err, ErrConflict.Error())
 
+	// the item is successfully retrieved
+	got, err := transactions.Get(item.ID)
+	assert.NoError(err)
+	assert.Equal(item, got)
+
+	// the item is successfully deleted
 	err = transactions.Delete(item.ID)
 	assert.NoError(err)
+	_, err = transactions.Get(item.ID)
+	assert.EqualError(err, table.ErrItemNotFound.Error())
 }

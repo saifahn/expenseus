@@ -1,15 +1,11 @@
 package dynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
-	"github.com/pkg/errors"
 )
-
-var ErrConflict = errors.New("dynamodb: conflict")
 
 type TransactionItem struct {
 	ID     string `json:"id"`
@@ -28,14 +24,6 @@ type transactionsTable struct {
 }
 
 const TransactionsHashKeyName = "id"
-
-func conflictOrErr(err error) error {
-	dynamoErr, ok := errors.Cause(err).(awserr.Error)
-	if ok && dynamoErr.Code() == "ConditionalCheckFailedException" {
-		return ErrConflict
-	}
-	return err
-}
 
 func NewTransactionsTable(t *table.Table) TransactionsTable {
 	t.WithHashKey(TransactionsHashKeyName, dynamodb.ScalarAttributeTypeS)

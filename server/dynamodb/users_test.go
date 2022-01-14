@@ -37,6 +37,13 @@ func TestUsersTable(t *testing.T) {
 	err = users.PutIfNotExists(*user)
 	assert.EqualError(err, ErrConflict.Error())
 
+	// the user can be retrieved
+	got, err := users.Get(user.ID)
+	assert.NoError(err)
+	assert.Equal(user, got)
+
 	err = users.Delete(user.ID)
 	assert.NoError(err)
+	_, err = users.Get(user.ID)
+	assert.EqualError(err, table.ErrItemNotFound.Error())
 }

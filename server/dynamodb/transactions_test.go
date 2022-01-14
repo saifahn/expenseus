@@ -16,7 +16,7 @@ func TestTransactionTable(t *testing.T) {
 	// create the table in the local test database
 	err := createTestTable(dynamodb, testTransactionsTableName)
 	if err != nil {
-		t.Logf("table could not be crated: %v", err)
+		t.Logf("table could not be created: %v", err)
 	}
 	tbl := table.New(dynamodb, testTransactionsTableName)
 	// create the transactions table instance

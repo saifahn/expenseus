@@ -16,6 +16,7 @@ type UserItem struct {
 type UsersTable interface {
 	Get(id string) (*UserItem, error)
 	PutIfNotExists(item UserItem) error
+	Delete(id string) error
 }
 
 type usersTable struct {
@@ -45,4 +46,8 @@ func (u *usersTable) PutIfNotExists(item UserItem) error {
 	}
 
 	return nil
+}
+
+func (u *usersTable) Delete(id string) error {
+	return u.table.DeleteItem(attributes.String(id), nil)
 }

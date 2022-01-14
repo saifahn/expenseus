@@ -32,4 +32,11 @@ func TestUsersTable(t *testing.T) {
 
 	err = users.PutIfNotExists(*user)
 	assert.NoError(err)
+
+	// trying to put the same user will result in an error
+	err = users.PutIfNotExists(*user)
+	assert.EqualError(err, ErrConflict.Error())
+
+	err = users.Delete(user.ID)
+	assert.NoError(err)
 }

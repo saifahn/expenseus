@@ -320,7 +320,8 @@ func (wb *WebService) GetUser(rw http.ResponseWriter, r *http.Request) {
 	user, err := wb.store.GetUser(userID)
 
 	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
+		http.Error(rw, err.Error(), http.StatusNotFound)
+		return
 	}
 
 	rw.Header().Set("content-type", jsonContentType)

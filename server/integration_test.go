@@ -2,6 +2,7 @@ package expenseus_test
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -34,12 +35,14 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	// create user in the db
 	userJSON, err := json.Marshal(expenseus.TestSeanUser)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("failed to marshal the user JSON: %v", err)
 	}
 	response := httptest.NewRecorder()
 	request := expenseus.NewCreateUserRequest(userJSON)
 	request.AddCookie(&expenseus.ValidCookie)
 	router.ServeHTTP(response, request)
+	// assert that the user was added correctly
+	assert.Equal(t, http.StatusAccepted, response.Code)
 
 	// get user from the db
 	response = httptest.NewRecorder()

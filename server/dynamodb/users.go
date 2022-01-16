@@ -5,12 +5,11 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
+	"github.com/saifahn/expenseus"
 )
 
 type UserItem struct {
-	ID           string `json:"id"`
-	EmailAddress string `json:"emailAddress"`
-	ExternalID   string `json:"externalId"`
+	expenseus.User
 }
 
 type UsersTable interface {

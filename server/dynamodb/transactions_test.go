@@ -11,10 +11,10 @@ const testTransactionsTableName = "expenseus-testing-transactions"
 
 func TestTransactionTable(t *testing.T) {
 	assert := assert.New(t)
-	dynamodb := newDynamoDBLocalAPI()
+	dynamodb := NewDynamoDBLocalAPI()
 
 	// create the table in the local test database
-	err := createTestTable(dynamodb, testTransactionsTableName)
+	err := CreateTestTable(dynamodb, testTransactionsTableName)
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}

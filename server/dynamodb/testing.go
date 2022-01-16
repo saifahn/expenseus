@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
-func newDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
+func NewDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	sess := session.Must(
 		session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials("dynamodb-testing", "test-secret", ""))),
 	)
@@ -20,7 +20,7 @@ func newDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	return dynamodb.New(sess)
 }
 
-func createTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
+func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	input := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
@@ -46,5 +46,15 @@ func createTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	}
 
 	fmt.Println("successfully created the table", name)
+	return nil
+}
+
+func DeleteTable(d dynamodbiface.DynamoDBAPI, name string) error {
+	_, err := d.DeleteTable(&dynamodb.DeleteTableInput{TableName: aws.String(name)})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("successfully deleted the table", name)
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
+	"github.com/saifahn/expenseus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,9 +12,9 @@ const testUsersTableName = "expenseus-testing-users"
 
 func TestUsersTable(t *testing.T) {
 	assert := assert.New(t)
-	dynamodb := newDynamoDBLocalAPI()
+	dynamodb := NewDynamoDBLocalAPI()
 
-	err := createTestTable(dynamodb, testUsersTableName)
+	err := CreateTestTable(dynamodb, testUsersTableName)
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}
@@ -25,9 +26,11 @@ func TestUsersTable(t *testing.T) {
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	user := &UserItem{
-		ID:           "test-user",
-		EmailAddress: "test-user@test.com",
-		ExternalID:   "test-external-id",
+		User: expenseus.User{
+			ID:       "test-user",
+			Name:     "Testman",
+			Username: "testman-23",
+		},
 	}
 
 	err = users.PutIfNotExists(*user)

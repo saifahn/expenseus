@@ -27,8 +27,8 @@ func TestTransactionTable(t *testing.T) {
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	item := &TransactionItem{
-		ID:     "test-item-id",
-		Amount: 123,
+		ID: "test-item-id",
+		// Amount: 123,
 	}
 
 	// no error raised the first time
@@ -53,4 +53,32 @@ func TestTransactionTable(t *testing.T) {
 	assert.NoError(err)
 	_, err = transactions.Get(item.ID)
 	assert.EqualError(err, table.ErrItemNotFound.Error())
+	DeleteTable(dynamodb, testTransactionsTableName)
+}
+
+func TestGetAll(t *testing.T) {
+	assert := assert.New(t)
+	dynamodb := NewDynamoDBLocalAPI()
+	err := CreateTestTable(dynamodb, testTransactionsTableName)
+	if err != nil {
+		t.Logf("table could not be created: %v", err)
+	}
+
+	tbl := table.New(dynamodb, testTransactionsTableName)
+	// create the transactions table instance
+	transactions := NewTransactionsTable(tbl)
+
+	item := TransactionItem{
+		ID: "test-item-id",
+	}
+
+	// no error raised the first time
+	err = transactions.PutIfNotExists(item)
+	assert.NoError(err)
+
+	items, err := transactions.GetAll()
+	assert.NoError(err)
+	assert.Len(items, 1)
+	assert.Contains(items, item)
+	DeleteTable(dynamodb, testTransactionsTableName)
 }

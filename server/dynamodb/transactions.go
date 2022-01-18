@@ -2,18 +2,21 @@ package dynamodb
 
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
+	"github.com/saifahn/expenseus"
 )
 
 type TransactionItem struct {
-	ID     string `json:"id"`
-	Amount int64  `json:"amount"`
+	expenseus.ExpenseDetails
+	ID string `json:"id"`
 }
 
 type TransactionsTable interface {
 	Get(id string) (*TransactionItem, error)
+	GetAll() ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
 	Put(item TransactionItem) error
 	Delete(id string) error
@@ -57,4 +60,23 @@ func (t *transactionsTable) Put(item TransactionItem) error {
 
 func (t *transactionsTable) Delete(id string) error {
 	return t.table.DeleteItem(attributes.String(id), nil)
+}
+
+func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
+	response, err := t.table.DynamoDB.Scan(&dynamodb.ScanInput{TableName: t.table.Name})
+	if err != nil {
+		return nil, err
+	}
+	var items []TransactionItem
+
+	for _, i := range response.Items {
+		var item TransactionItem
+		err = dynamodbattribute.UnmarshalMap(i, &item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
 }

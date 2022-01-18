@@ -1,15 +1,19 @@
 package dynamodb
 
 import (
+	"fmt"
+
+	"github.com/google/uuid"
 	"github.com/saifahn/expenseus"
 )
 
 type dynamoDB struct {
-	usersTable UsersTable
+	usersTable        UsersTable
+	transactionsTable TransactionsTable
 }
 
-func New(u *UsersTable) *dynamoDB {
-	return &dynamoDB{usersTable: *u}
+func New(u *UsersTable, t *TransactionsTable) *dynamoDB {
+	return &dynamoDB{usersTable: *u, transactionsTable: *t}
 }
 
 func (d *dynamoDB) CreateUser(u expenseus.User) error {
@@ -43,10 +47,34 @@ func (d *dynamoDB) GetExpensesByUsername(id string) ([]expenseus.Expense, error)
 }
 
 func (d *dynamoDB) GetAllExpenses() ([]expenseus.Expense, error) {
-	return []expenseus.Expense{}, nil
+	transactions, err := d.transactionsTable.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var expenses []expenseus.Expense
+	for _, t := range transactions {
+		expenses = append(expenses, expenseus.Expense{
+			ExpenseDetails: t.ExpenseDetails,
+		})
+	}
+
+	return expenses, nil
 }
 
 func (d *dynamoDB) CreateExpense(ed expenseus.ExpenseDetails) error {
+	// generate an ID
+	expenseID := uuid.New().String()
+	item := &TransactionItem{
+		ID:             expenseID,
+		ExpenseDetails: ed,
+	}
+	err := d.transactionsTable.PutIfNotExists(*item)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("expense successfully created")
 	return nil
 }
 

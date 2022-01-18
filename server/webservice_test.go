@@ -204,7 +204,7 @@ func TestCreateExpense(t *testing.T) {
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader("Test Expense"),
 		}
-		request := NewCreateExpenseRequest(values, TestTomomiUser.ID)
+		request := NewCreateExpenseRequestWithID(values, TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -242,7 +242,7 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequest(values, TestSeanUser.ID)
+		request := NewCreateExpenseRequestWithID(values, TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -265,7 +265,7 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequest(values, userID)
+		request := NewCreateExpenseRequestWithID(values, userID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)

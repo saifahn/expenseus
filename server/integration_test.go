@@ -2,8 +2,10 @@ package expenseus_test
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
@@ -13,6 +15,7 @@ import (
 )
 
 const usersTableName = "integtest-users-table"
+const transactionsTableName = "integtest-transactions-table"
 
 func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	// set up the db
@@ -21,11 +24,17 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating users table: %v", err)
 	}
-	tbl := table.New(ddbLocal, usersTableName)
-	usersTable := dynamodb.NewUsersTable(tbl)
+	err = dynamodb.CreateTestTable(ddbLocal, transactionsTableName)
+	if err != nil {
+		t.Fatalf("error creating transactions table: %v", err)
+	}
+	uTbl := table.New(ddbLocal, usersTableName)
+	usersTable := dynamodb.NewUsersTable(uTbl)
+	tTbl := table.New(ddbLocal, transactionsTableName)
+	transactionsTable := dynamodb.NewTransactionsTable(tTbl)
 
 	// set up the webservice
-	db := dynamodb.New(&usersTable)
+	db := dynamodb.New(&usersTable, &transactionsTable)
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
 	images := &expenseus.StubImageStore{}
@@ -61,6 +70,84 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	err = dynamodb.DeleteTable(ddbLocal, usersTableName)
 	if err != nil {
 		t.Logf("error deleting the users table: %v", err)
+	}
+	err = dynamodb.DeleteTable(ddbLocal, transactionsTableName)
+	if err != nil {
+		t.Logf("error deleting the transactions table: %v", err)
+	}
+}
+
+func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
+	// set up the db
+	ddbLocal := dynamodb.NewDynamoDBLocalAPI()
+	err := dynamodb.CreateTestTable(ddbLocal, usersTableName)
+	if err != nil {
+		t.Fatalf("error creating users table: %v", err)
+	}
+	err = dynamodb.CreateTestTable(ddbLocal, transactionsTableName)
+	if err != nil {
+		t.Fatalf("error creating transactions table: %v", err)
+	}
+	uTbl := table.New(ddbLocal, usersTableName)
+	usersTable := dynamodb.NewUsersTable(uTbl)
+	tTbl := table.New(ddbLocal, transactionsTableName)
+	transactionsTable := dynamodb.NewTransactionsTable(tTbl)
+
+	// set up the webservice
+	db := dynamodb.New(&usersTable, &transactionsTable)
+	oauth := &expenseus.StubOauthConfig{}
+	auth := &expenseus.StubSessionManager{}
+	images := &expenseus.StubImageStore{}
+	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
+	router := expenseus.InitRouter(webservice)
+
+	// create user in the db
+	userJSON, err := json.Marshal(expenseus.TestSeanUser)
+	if err != nil {
+		t.Fatalf("failed to marshal the user JSON: %v", err)
+	}
+	response := httptest.NewRecorder()
+	request := expenseus.NewCreateUserRequest(userJSON)
+	request.AddCookie(&expenseus.ValidCookie)
+	router.ServeHTTP(response, request)
+	// assert that the user was added correctly
+	assert.Equal(t, http.StatusAccepted, response.Code)
+
+	// create a transaction and store it
+	wantedExpenseDetails := expenseus.TestSeanExpenseDetails
+	values := map[string]io.Reader{
+		"expenseName": strings.NewReader(wantedExpenseDetails.Name),
+	}
+	request = expenseus.NewCreateExpenseRequest(values)
+	request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	assert.Equal(t, http.StatusAccepted, response.Code)
+
+	// try and get it
+	request = expenseus.NewGetAllExpensesRequest()
+	request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	var expensesGot []expenseus.Expense
+	err = json.NewDecoder(response.Body).Decode(&expensesGot)
+	if err != nil {
+		t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+	}
+
+	assert.Equal(t, http.StatusOK, response.Code)
+	assert.Len(t, expensesGot, 1)
+	assert.Equal(t, expensesGot[0].ExpenseDetails, wantedExpenseDetails)
+
+	// delete the table
+	err = dynamodb.DeleteTable(ddbLocal, usersTableName)
+	if err != nil {
+		t.Logf("error deleting the users table: %v", err)
+	}
+	err = dynamodb.DeleteTable(ddbLocal, transactionsTableName)
+	if err != nil {
+		t.Logf("error deleting the transactions table: %v", err)
 	}
 }
 

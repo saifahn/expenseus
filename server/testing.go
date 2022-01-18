@@ -71,8 +71,42 @@ func NewGetExpenseRequest(id string) *http.Request {
 }
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
+// expense
+func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for key, r := range values {
+		var fw io.Writer
+		var err error
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+		if x, ok := r.(*os.File); ok {
+			fw, err = w.CreateFormFile(key, x.Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		} else {
+			// non-file values
+			fw, err = w.CreateFormField(key)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+	w.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req
+}
+
+// NewCreateExpenseRequestWithID creates a request to be used in tests to create an
 // expense that is associated with a user.
-func NewCreateExpenseRequest(values map[string]io.Reader, userid string) *http.Request {
+func NewCreateExpenseRequestWithID(values map[string]io.Reader, userid string) *http.Request {
 	// prepare FormData to submit
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

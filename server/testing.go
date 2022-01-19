@@ -62,6 +62,12 @@ var (
 	}
 )
 
+func addUserCookieAndContext(req *http.Request, id string) *http.Request {
+	req.AddCookie(&http.Cookie{Name: "session", Value: id})
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
+	return req.WithContext(ctx)
+}
+
 // NewGetExpenseRequest creates a request to be used in tests get an expense
 // by ID, with ID in the request context.
 func NewGetExpenseRequest(id string) *http.Request {

@@ -191,8 +191,6 @@ func TestCreateExpense(t *testing.T) {
 		assert.Panics(t, func() {
 			handler.ServeHTTP(response, request)
 		}, "The code did not panic due to a lack of context")
-
-		// assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
@@ -204,16 +202,15 @@ func TestCreateExpense(t *testing.T) {
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader("Test Expense"),
 		}
-		request := NewCreateExpenseRequestWithID(values, TestTomomiUser.ID)
+		request := NewCreateExpenseRequest(values)
+		request = addUserCookieAndContext(request, TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusAccepted, response.Code)
-		// this is technically actually testing implementation
-		// I should just test that CreateExpense has been called correctly with the right thing, not the outcome
-		assert.Len(t, store.expenses, 1)
+		assert.Len(t, store.recordExpenseCalls, 1)
 	})
 
 	// prepares a temp file, information, and values for image upload tests

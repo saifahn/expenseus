@@ -202,8 +202,7 @@ func TestCreateExpense(t *testing.T) {
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader("Test Expense"),
 		}
-		request := NewCreateExpenseRequest(values)
-		request = addUserCookieAndContext(request, TestTomomiUser.ID)
+		request := addUserCookieAndContext(NewCreateExpenseRequest(values), TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -239,7 +238,7 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequestWithID(values, TestSeanUser.ID)
+		request := addUserCookieAndContext(NewCreateExpenseRequest(values), TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -262,7 +261,7 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequestWithID(values, userID)
+		request := addUserCookieAndContext(NewCreateExpenseRequest(values), userID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)

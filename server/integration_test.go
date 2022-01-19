@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/saifahn/expenseus"
 	"github.com/saifahn/expenseus/ddb"
@@ -17,24 +18,43 @@ import (
 const usersTableName = "integtest-users-table"
 const transactionsTableName = "integtest-transactions-table"
 
-func TestCreatingUsersAndRetrievingThem(t *testing.T) {
-	// set up the db
-	ddbLocal := ddb.NewDynamoDBLocalAPI()
-	err := ddb.CreateTestTable(ddbLocal, usersTableName)
+func setUpDB(d dynamodbiface.DynamoDBAPI) (expenseus.ExpenseStore, error) {
+	err := ddb.CreateTestTable(d, usersTableName)
 	if err != nil {
-		t.Fatalf("error creating users table: %v", err)
+		return nil, err
 	}
-	err = ddb.CreateTestTable(ddbLocal, transactionsTableName)
+	err = ddb.CreateTestTable(d, transactionsTableName)
 	if err != nil {
-		t.Fatalf("error creating transactions table: %v", err)
+		return nil, err
 	}
-	uTbl := table.New(ddbLocal, usersTableName)
+	uTbl := table.New(d, usersTableName)
 	usersTable := ddb.NewUsersTable(uTbl)
-	tTbl := table.New(ddbLocal, transactionsTableName)
+	tTbl := table.New(d, transactionsTableName)
 	transactionsTable := ddb.NewTransactionsTable(tTbl)
 
+	return ddb.New(&usersTable, &transactionsTable), nil
+}
+
+func tearDownDB(d dynamodbiface.DynamoDBAPI) error {
+	err := ddb.DeleteTable(d, usersTableName)
+	if err != nil {
+		return err
+	}
+	err = ddb.DeleteTable(d, transactionsTableName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func TestCreatingUsersAndRetrievingThem(t *testing.T) {
+	ddbLocal := ddb.NewDynamoDBLocalAPI()
 	// set up the webservice
-	db := ddb.New(&usersTable, &transactionsTable)
+	db, err := setUpDB(ddbLocal)
+	if err != nil {
+		t.Errorf("could not set up the database: %v", err)
+	}
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
 	images := &expenseus.StubImageStore{}
@@ -66,35 +86,19 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	}
 	assert.Equal(t, expenseus.TestSeanUser, userGot)
 
-	// delete the table
-	err = ddb.DeleteTable(ddbLocal, usersTableName)
+	err = tearDownDB(ddbLocal)
 	if err != nil {
-		t.Logf("error deleting the users table: %v", err)
-	}
-	err = ddb.DeleteTable(ddbLocal, transactionsTableName)
-	if err != nil {
-		t.Logf("error deleting the transactions table: %v", err)
+		t.Errorf("could not tear down the database: %v", err)
 	}
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-	// set up the db
 	ddbLocal := ddb.NewDynamoDBLocalAPI()
-	err := ddb.CreateTestTable(ddbLocal, usersTableName)
-	if err != nil {
-		t.Fatalf("error creating users table: %v", err)
-	}
-	err = ddb.CreateTestTable(ddbLocal, transactionsTableName)
-	if err != nil {
-		t.Fatalf("error creating transactions table: %v", err)
-	}
-	uTbl := table.New(ddbLocal, usersTableName)
-	usersTable := ddb.NewUsersTable(uTbl)
-	tTbl := table.New(ddbLocal, transactionsTableName)
-	transactionsTable := ddb.NewTransactionsTable(tTbl)
-
 	// set up the webservice
-	db := ddb.New(&usersTable, &transactionsTable)
+	db, err := setUpDB(ddbLocal)
+	if err != nil {
+		t.Errorf("could not set up the database: %v", err)
+	}
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
 	images := &expenseus.StubImageStore{}
@@ -140,14 +144,9 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	assert.Len(t, expensesGot, 1)
 	assert.Equal(t, expensesGot[0].ExpenseDetails, wantedExpenseDetails)
 
-	// delete the table
-	err = ddb.DeleteTable(ddbLocal, usersTableName)
+	err = tearDownDB(ddbLocal)
 	if err != nil {
-		t.Logf("error deleting the users table: %v", err)
-	}
-	err = ddb.DeleteTable(ddbLocal, transactionsTableName)
-	if err != nil {
-		t.Logf("error deleting the transactions table: %v", err)
+		t.Errorf("could not tear down the database: %v", err)
 	}
 }
 

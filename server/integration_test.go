@@ -10,7 +10,7 @@ import (
 
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/saifahn/expenseus"
-	"github.com/saifahn/expenseus/dynamodb"
+	"github.com/saifahn/expenseus/ddb"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,22 +19,22 @@ const transactionsTableName = "integtest-transactions-table"
 
 func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	// set up the db
-	ddbLocal := dynamodb.NewDynamoDBLocalAPI()
-	err := dynamodb.CreateTestTable(ddbLocal, usersTableName)
+	ddbLocal := ddb.NewDynamoDBLocalAPI()
+	err := ddb.CreateTestTable(ddbLocal, usersTableName)
 	if err != nil {
 		t.Fatalf("error creating users table: %v", err)
 	}
-	err = dynamodb.CreateTestTable(ddbLocal, transactionsTableName)
+	err = ddb.CreateTestTable(ddbLocal, transactionsTableName)
 	if err != nil {
 		t.Fatalf("error creating transactions table: %v", err)
 	}
 	uTbl := table.New(ddbLocal, usersTableName)
-	usersTable := dynamodb.NewUsersTable(uTbl)
+	usersTable := ddb.NewUsersTable(uTbl)
 	tTbl := table.New(ddbLocal, transactionsTableName)
-	transactionsTable := dynamodb.NewTransactionsTable(tTbl)
+	transactionsTable := ddb.NewTransactionsTable(tTbl)
 
 	// set up the webservice
-	db := dynamodb.New(&usersTable, &transactionsTable)
+	db := ddb.New(&usersTable, &transactionsTable)
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
 	images := &expenseus.StubImageStore{}
@@ -67,11 +67,11 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	assert.Equal(t, expenseus.TestSeanUser, userGot)
 
 	// delete the table
-	err = dynamodb.DeleteTable(ddbLocal, usersTableName)
+	err = ddb.DeleteTable(ddbLocal, usersTableName)
 	if err != nil {
 		t.Logf("error deleting the users table: %v", err)
 	}
-	err = dynamodb.DeleteTable(ddbLocal, transactionsTableName)
+	err = ddb.DeleteTable(ddbLocal, transactionsTableName)
 	if err != nil {
 		t.Logf("error deleting the transactions table: %v", err)
 	}
@@ -79,22 +79,22 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	// set up the db
-	ddbLocal := dynamodb.NewDynamoDBLocalAPI()
-	err := dynamodb.CreateTestTable(ddbLocal, usersTableName)
+	ddbLocal := ddb.NewDynamoDBLocalAPI()
+	err := ddb.CreateTestTable(ddbLocal, usersTableName)
 	if err != nil {
 		t.Fatalf("error creating users table: %v", err)
 	}
-	err = dynamodb.CreateTestTable(ddbLocal, transactionsTableName)
+	err = ddb.CreateTestTable(ddbLocal, transactionsTableName)
 	if err != nil {
 		t.Fatalf("error creating transactions table: %v", err)
 	}
 	uTbl := table.New(ddbLocal, usersTableName)
-	usersTable := dynamodb.NewUsersTable(uTbl)
+	usersTable := ddb.NewUsersTable(uTbl)
 	tTbl := table.New(ddbLocal, transactionsTableName)
-	transactionsTable := dynamodb.NewTransactionsTable(tTbl)
+	transactionsTable := ddb.NewTransactionsTable(tTbl)
 
 	// set up the webservice
-	db := dynamodb.New(&usersTable, &transactionsTable)
+	db := ddb.New(&usersTable, &transactionsTable)
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
 	images := &expenseus.StubImageStore{}
@@ -141,11 +141,11 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	assert.Equal(t, expensesGot[0].ExpenseDetails, wantedExpenseDetails)
 
 	// delete the table
-	err = dynamodb.DeleteTable(ddbLocal, usersTableName)
+	err = ddb.DeleteTable(ddbLocal, usersTableName)
 	if err != nil {
 		t.Logf("error deleting the users table: %v", err)
 	}
-	err = dynamodb.DeleteTable(ddbLocal, transactionsTableName)
+	err = ddb.DeleteTable(ddbLocal, transactionsTableName)
 	if err != nil {
 		t.Logf("error deleting the transactions table: %v", err)
 	}

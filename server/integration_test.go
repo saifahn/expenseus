@@ -48,18 +48,32 @@ func tearDownDB(d dynamodbiface.DynamoDBAPI) error {
 	return nil
 }
 
-func TestCreatingUsersAndRetrievingThem(t *testing.T) {
+// setUpTestServer sets up a server with with the real routes and a test
+// dynamodb instance, with stubs for the rest of the webservice
+func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 	ddbLocal := ddb.NewDynamoDBLocalAPI()
-	// set up the webservice
 	db, err := setUpDB(ddbLocal)
 	if err != nil {
-		t.Errorf("could not set up the database: %v", err)
+		t.Fatalf("could not set up the database: %v", err)
 	}
+
 	oauth := &expenseus.StubOauthConfig{}
 	auth := &expenseus.StubSessionManager{}
 	images := &expenseus.StubImageStore{}
 	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
 	router := expenseus.InitRouter(webservice)
+
+	return router, func(t *testing.T) {
+		err := tearDownDB(ddbLocal)
+		if err != nil {
+			t.Fatalf("could not tear down the database: %v", err)
+		}
+	}
+}
+
+func TestCreatingUsersAndRetrievingThem(t *testing.T) {
+	router, tearDownDB := setUpTestServer(t)
+	defer tearDownDB(t)
 
 	// create user in the db
 	userJSON, err := json.Marshal(expenseus.TestSeanUser)
@@ -85,25 +99,11 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
 	}
 	assert.Equal(t, expenseus.TestSeanUser, userGot)
-
-	err = tearDownDB(ddbLocal)
-	if err != nil {
-		t.Errorf("could not tear down the database: %v", err)
-	}
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-	ddbLocal := ddb.NewDynamoDBLocalAPI()
-	// set up the webservice
-	db, err := setUpDB(ddbLocal)
-	if err != nil {
-		t.Errorf("could not set up the database: %v", err)
-	}
-	oauth := &expenseus.StubOauthConfig{}
-	auth := &expenseus.StubSessionManager{}
-	images := &expenseus.StubImageStore{}
-	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
-	router := expenseus.InitRouter(webservice)
+	router, tearDownDB := setUpTestServer(t)
+	defer tearDownDB(t)
 
 	// create user in the db
 	userJSON, err := json.Marshal(expenseus.TestSeanUser)
@@ -143,11 +143,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	assert.Equal(t, http.StatusOK, response.Code)
 	assert.Len(t, expensesGot, 1)
 	assert.Equal(t, expensesGot[0].ExpenseDetails, wantedExpenseDetails)
-
-	err = tearDownDB(ddbLocal)
-	if err != nil {
-		t.Errorf("could not tear down the database: %v", err)
-	}
+}
 }
 
 // func TestCreatingExpensesAndRetrievingThem(t *testing.T) {

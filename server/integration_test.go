@@ -74,36 +74,69 @@ func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	router, tearDownDB := setUpTestServer(t)
 	defer tearDownDB(t)
+	assert := assert.New(t)
 
-	// create user in the db
+	// TRY to create a user WITHOUT a valid cookie
 	userJSON, err := json.Marshal(expenseus.TestSeanUser)
 	if err != nil {
 		t.Fatalf("failed to marshal the user JSON: %v", err)
 	}
 	response := httptest.NewRecorder()
 	request := expenseus.NewCreateUserRequest(userJSON)
+	router.ServeHTTP(response, request)
+	assert.Equal(http.StatusUnauthorized, response.Code)
+
+	// use a VALID cookie
+	// assert that the user was added correctly
+	response = httptest.NewRecorder()
+	request = expenseus.NewCreateUserRequest(userJSON)
 	request.AddCookie(&expenseus.ValidCookie)
 	router.ServeHTTP(response, request)
-	// assert that the user was added correctly
-	assert.Equal(t, http.StatusAccepted, response.Code)
+	assert.Equal(http.StatusAccepted, response.Code)
 
-	// get user from the db
+	// TRY GetSelf with different ID in the cookie
+	// should not work as the userID from the cookie does not exist
 	response = httptest.NewRecorder()
-	request = expenseus.NewGetUserRequest(expenseus.TestSeanUser.ID)
+	request = expenseus.NewGetSelfRequest()
+	request.AddCookie(&http.Cookie{
+		Name:  "session",
+		Value: "not-real-id",
+	})
+	router.ServeHTTP(response, request)
+	assert.Equal(http.StatusNotFound, response.Code)
+
+	// use a cookie with the SAME ID\
+	response = httptest.NewRecorder()
+	request = expenseus.NewGetSelfRequest()
 	request.AddCookie(&expenseus.ValidCookie)
 	router.ServeHTTP(response, request)
 
 	var userGot expenseus.User
 	err = json.NewDecoder(response.Body).Decode(&userGot)
 	if err != nil {
-		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
 	}
-	assert.Equal(t, expenseus.TestSeanUser, userGot)
+	assert.Equal(http.StatusOK, response.Code)
+	assert.Equal(expenseus.TestSeanUser, userGot)
+
+	// GET the specifically created user from the db by ID
+	response = httptest.NewRecorder()
+	request = expenseus.NewGetUserRequest(expenseus.TestSeanUser.ID)
+	request.AddCookie(&expenseus.ValidCookie)
+	router.ServeHTTP(response, request)
+
+	err = json.NewDecoder(response.Body).Decode(&userGot)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
+	}
+	assert.Equal(http.StatusOK, response.Code)
+	assert.Equal(expenseus.TestSeanUser, userGot)
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	router, tearDownDB := setUpTestServer(t)
 	defer tearDownDB(t)
+	assert := assert.New(t)
 
 	// create user in the db
 	userJSON, err := json.Marshal(expenseus.TestSeanUser)
@@ -114,8 +147,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	request := expenseus.NewCreateUserRequest(userJSON)
 	request.AddCookie(&expenseus.ValidCookie)
 	router.ServeHTTP(response, request)
-	// assert that the user was added correctly
-	assert.Equal(t, http.StatusAccepted, response.Code)
+	assert.Equal(http.StatusAccepted, response.Code)
 
 	// create a transaction and store it
 	wantedExpenseDetails := expenseus.TestSeanExpenseDetails
@@ -126,7 +158,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
 	response = httptest.NewRecorder()
 	router.ServeHTTP(response, request)
-	assert.Equal(t, http.StatusAccepted, response.Code)
+	assert.Equal(http.StatusAccepted, response.Code)
 
 	// try and get it
 	request = expenseus.NewGetAllExpensesRequest()
@@ -140,10 +172,9 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
 	}
 
-	assert.Equal(t, http.StatusOK, response.Code)
-	assert.Len(t, expensesGot, 1)
-	assert.Equal(t, expensesGot[0].ExpenseDetails, wantedExpenseDetails)
-}
+	assert.Equal(http.StatusOK, response.Code)
+	assert.Len(expensesGot, 1)
+	assert.Equal(expensesGot[0].ExpenseDetails, wantedExpenseDetails)
 }
 
 // func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
@@ -254,72 +285,4 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 // 	}
 // 	assert.Contains(t, edsGot, expenseus.TestTomomiExpense.ExpenseDetails)
 // 	assert.Contains(t, edsGot, expenseus.TestTomomiExpense2.ExpenseDetails)
-// }
-
-// func TestRestrictedRoutesAndGettingSelf(t *testing.T) {
-// 	mr, err := miniredis.Run()
-// 	if err != nil {
-// 		t.Fatalf("error starting up miniredis")
-// 	}
-
-// 	db := redis.New(mr.Addr())
-// 	oauth := &expenseus.StubOauthConfig{}
-// 	auth := &expenseus.StubSessionManager{}
-// 	images := &expenseus.StubImageStore{}
-// 	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
-// 	router := expenseus.InitRouter(webservice)
-
-// 	// try to create a user
-// 	testUser := expenseus.User{
-// 		Username: "testUser",
-// 		Name:     "Test User",
-// 		ID:       "test_user",
-// 	}
-// 	testUserJSON, err := json.Marshal(testUser)
-// 	if err != nil {
-// 		t.Fatalf(err.Error())
-// 	}
-
-// 	response := httptest.NewRecorder()
-// 	request := expenseus.NewCreateUserRequest(testUserJSON)
-// 	router.ServeHTTP(response, request)
-// 	// with no valid cookie, should be unauthorized
-// 	assert.Equal(t, http.StatusUnauthorized, response.Code)
-
-// 	// try again with a valid cookie
-// 	response = httptest.NewRecorder()
-// 	request = expenseus.NewCreateUserRequest(testUserJSON)
-// 	request.AddCookie(&expenseus.ValidCookie)
-// 	router.ServeHTTP(response, request)
-// 	assert.Equal(t, http.StatusAccepted, response.Code)
-
-// 	// try and get a user from a cookie that doesn't exist in the db
-// 	response = httptest.NewRecorder()
-// 	request = expenseus.NewGetSelfRequest()
-// 	request.AddCookie(&expenseus.ValidCookie)
-// 	router.ServeHTTP(response, request)
-
-// 	// sessionCookie, _ := request.Cookie("session")
-// 	// println(sessionCookie.Value)
-
-// 	assert.Equal(t, http.StatusNotFound, response.Code)
-
-// 	// try and get the user created earlier
-// 	response = httptest.NewRecorder()
-// 	request = expenseus.NewGetSelfRequest()
-// 	request.AddCookie(&http.Cookie{
-// 		Name:  expenseus.ValidCookie.Name,
-// 		Value: testUser.ID,
-// 	})
-// 	router.ServeHTTP(response, request)
-
-// 	var got expenseus.User
-
-// 	err = json.NewDecoder(response.Body).Decode(&got)
-// 	if err != nil {
-// 		t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
-// 	}
-
-// 	assert.Equal(t, http.StatusOK, response.Code)
-// 	assert.Equal(t, testUser, got)
 // }

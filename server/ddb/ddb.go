@@ -79,5 +79,14 @@ func (d *dynamoDB) CreateExpense(ed expenseus.ExpenseDetails) error {
 }
 
 func (d *dynamoDB) GetAllUsers() ([]expenseus.User, error) {
-	return []expenseus.User{}, nil
+	userItems, err := d.usersTable.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var users []expenseus.User
+	for _, u := range userItems {
+		users = append(users, u.User)
+	}
+	return users, nil
 }

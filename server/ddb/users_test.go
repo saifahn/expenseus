@@ -18,6 +18,8 @@ func TestUsersTable(t *testing.T) {
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}
+	defer DeleteTable(dynamodb, testUsersTableName)
+
 	tbl := table.New(dynamodb, testUsersTableName)
 	users := NewUsersTable(tbl)
 
@@ -25,7 +27,7 @@ func TestUsersTable(t *testing.T) {
 	_, err = users.Get("non-existent-user")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	user := &UserItem{
+	user := UserItem{
 		User: expenseus.User{
 			ID:       "test-user",
 			Name:     "Testman",
@@ -33,17 +35,23 @@ func TestUsersTable(t *testing.T) {
 		},
 	}
 
-	err = users.PutIfNotExists(*user)
+	err = users.PutIfNotExists(user)
 	assert.NoError(err)
 
 	// trying to put the same user will result in an error
-	err = users.PutIfNotExists(*user)
+	err = users.PutIfNotExists(user)
 	assert.EqualError(err, ErrConflict.Error())
 
 	// the user can be retrieved
 	got, err := users.Get(user.ID)
 	assert.NoError(err)
 	assert.Equal(user, got)
+
+	// retrieve all users
+	usersGot, err := users.GetAll()
+	assert.NoError(err)
+	assert.Len(usersGot, 1)
+	assert.Contains(usersGot, user)
 
 	err = users.Delete(user.ID)
 	assert.NoError(err)

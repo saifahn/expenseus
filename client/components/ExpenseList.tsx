@@ -5,7 +5,8 @@ import ExpenseCard from "./ExpenseCard";
 export interface Expense {
   name: string;
   id: string;
-  imageURL?: string;
+  userId: string;
+  imageUrl?: string;
 }
 
 export default function ExpenseList() {

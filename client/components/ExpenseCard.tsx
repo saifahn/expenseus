@@ -7,11 +7,11 @@ export default function ExpenseCard({ expense }: { expense: Expense }) {
       key={expense.id}
     >
       <h3 className="text-xl">{expense.name}</h3>
-      <p>{expense.userID}</p>
+      <p>{expense.userId}</p>
       <p>{expense.id}</p>
-      {expense.imageURL && (
+      {expense.imageUrl && (
         <img
-          src={expense.imageURL}
+          src={expense.imageUrl}
           width={400}
           height={400}
           alt="expense image"

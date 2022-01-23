@@ -168,6 +168,17 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
+	var createTestExpense = func(t *testing.T, r http.Handler, ed expenseus.ExpenseDetails, userid string) {
+		values := map[string]io.Reader{
+			"expenseName": strings.NewReader(ed.Name),
+		}
+		request := expenseus.NewCreateExpenseRequest(values)
+		request.AddCookie(&http.Cookie{Name: "session", Value: userid})
+		response := httptest.NewRecorder()
+		r.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusAccepted, response.Code)
+	}
+
 	t.Run("an expense can be added with a valid cookie and be retrieved as part of a GetAll request", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
@@ -178,19 +189,12 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 
 		// create a transaction and store it
 		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
-		values := map[string]io.Reader{
-			"expenseName": strings.NewReader(wantedExpenseDetails.Name),
-		}
-		request := expenseus.NewCreateExpenseRequest(values)
-		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
-		response := httptest.NewRecorder()
-		router.ServeHTTP(response, request)
-		assert.Equal(http.StatusAccepted, response.Code)
+		createTestExpense(t, router, wantedExpenseDetails, wantedExpenseDetails.UserID)
 
 		// try and get it
-		request = expenseus.NewGetAllExpensesRequest()
+		request := expenseus.NewGetAllExpensesRequest()
 		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
-		response = httptest.NewRecorder()
+		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
 		var expensesGot []expenseus.Expense
@@ -211,18 +215,11 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		createUser(t, expenseus.TestSeanUser, router)
 
 		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
-		values := map[string]io.Reader{
-			"expenseName": strings.NewReader(wantedExpenseDetails.Name),
-		}
-		request := expenseus.NewCreateExpenseRequest(values)
-		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
-		response := httptest.NewRecorder()
-		router.ServeHTTP(response, request)
-		assert.Equal(http.StatusAccepted, response.Code)
+		createTestExpense(t, router, wantedExpenseDetails, wantedExpenseDetails.UserID)
 
-		request = expenseus.NewGetAllExpensesRequest()
+		request := expenseus.NewGetAllExpensesRequest()
 		request.AddCookie(&expenseus.ValidCookie)
-		response = httptest.NewRecorder()
+		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
 		var expensesGot []expenseus.Expense
@@ -244,7 +241,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		var got expenseus.Expense
 		err = json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Errorf("error parsing response from server %q into struct of Expense: %v", response.Body, err)
+			t.Errorf("error parsing response from server %q into Expense struct: %v", response.Body, err)
 		}
 
 		assert.Equal(wantedExpenseDetails, got.ExpenseDetails)
@@ -252,116 +249,28 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 	})
 
 	// maybe just by user ID is better
-	t.Run("expenses can be retrieved by username", func(t *testing.T) {})
+	t.Run("expenses can be retrieved by username", func(t *testing.T) {
+		router, tearDownDB := setUpTestServer(t)
+		defer tearDownDB(t)
+		assert := assert.New(t)
+		createUser(t, expenseus.TestSeanUser, router)
 
+		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
+		createTestExpense(t, router, wantedExpenseDetails, expenseus.TestSeanUser.ID)
+
+		request := expenseus.NewGetExpensesByUsernameRequest(expenseus.TestSeanUser.Username)
+		request.AddCookie(&expenseus.ValidCookie)
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(http.StatusOK, response.Code)
+
+		var expensesGot []expenseus.Expense
+		err := json.NewDecoder(response.Body).Decode(&expensesGot)
+		if err != nil {
+			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+		}
+
+		assert.Len(expensesGot, 1)
+		assert.Equal(wantedExpenseDetails, expensesGot[0].ExpenseDetails)
+	})
 }
-
-// func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-// 	wantedExpenseDetails := []expenseus.ExpenseDetails{
-// 		expenseus.TestSeanExpenseDetails,
-// 		expenseus.TestTomomiExpenseDetails,
-// 		expenseus.TestTomomiExpense2Details,
-// 	}
-
-// 	mr, err := miniredis.Run()
-// 	if err != nil {
-// 		t.Fatalf("error starting up miniredis, %v", err)
-// 	}
-
-// 	db := redis.New(mr.Addr())
-// 	oauth := &expenseus.StubOauthConfig{}
-// 	auth := &expenseus.StubSessionManager{}
-// 	images := &expenseus.StubImageStore{}
-// 	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
-// 	router := expenseus.InitRouter(webservice)
-
-// 	// CREATE users in the db
-// 	testUsers := []expenseus.User{expenseus.TestSeanUser, expenseus.TestTomomiUser}
-// 	for _, u := range testUsers {
-// 		userJSON, err := json.Marshal(u)
-// 		if err != nil {
-// 			t.Fatalf(err.Error())
-// 		}
-
-// 	response := httptest.NewRecorder()
-// 	request := expenseus.NewCreateUserRequest(userJSON)
-// 	request.AddCookie(&expenseus.ValidCookie)
-// 	router.ServeHTTP(response, request)
-// }
-
-// 	// GET all users
-// 	response := httptest.NewRecorder()
-// 	request := expenseus.NewGetAllUsersRequest()
-// 	request.AddCookie(&expenseus.ValidCookie)
-// 	if err != nil {
-// 		t.Fatalf("request could not be created, %v", err)
-// 	}
-// 	router.ServeHTTP(response, request)
-
-// 	var usersGot []expenseus.User
-// 	err = json.NewDecoder(response.Body).Decode(&usersGot)
-// 	if err != nil {
-// 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
-// 	}
-
-// 	// ASSERT that the users received are correct
-// 	assert.Len(t, usersGot, len(testUsers))
-// 	assert.ElementsMatch(t, usersGot, testUsers)
-
-// 	// CREATE expenses in the db
-// 	for _, ed := range wantedExpenseDetails {
-// 		values := map[string]io.Reader{
-// 			"expenseName": strings.NewReader(ed.Name),
-// 		}
-// 		// TODO: should probably not use this method to be more like a real request
-// 		request := expenseus.NewCreateExpenseRequest(values, ed.UserID)
-// 		// VerifyUser now gets the UserID and passes it to the next handler, so
-// 		// the proper UserID should be passed here.
-// 		request.AddCookie(&http.Cookie{
-// 			Name:  "session",
-// 			Value: ed.UserID,
-// 		})
-// 		router.ServeHTTP(httptest.NewRecorder(), request)
-// 	}
-
-// 	// GET all expenses
-// 	response = httptest.NewRecorder()
-// 	request = expenseus.NewGetAllExpensesRequest()
-// 	request.AddCookie(&expenseus.ValidCookie)
-// 	router.ServeHTTP(response, request)
-
-// 	var expensesGot []expenseus.Expense
-// 	err = json.NewDecoder(response.Body).Decode(&expensesGot)
-// 	if err != nil {
-// 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
-// 	}
-
-// 	assert.Equal(t, response.Code, http.StatusOK)
-// 	assert.Equal(t, len(wantedExpenseDetails), len(expensesGot))
-// 	// ASSERT there is an expense with the right details
-// 	for _, expense := range expensesGot {
-// 		assert.Contains(t, wantedExpenseDetails, expense.ExpenseDetails)
-// 	}
-
-// 	// GET one user's expenses
-// 	response = httptest.NewRecorder()
-// 	request = expenseus.NewGetExpensesByUsernameRequest(expenseus.TestTomomiUser.Username)
-// 	request.AddCookie(&expenseus.ValidCookie)
-// 	router.ServeHTTP(response, request)
-
-// 	// reset expensesGot to an empty slice
-// 	expensesGot = []expenseus.Expense{}
-// 	err = json.NewDecoder(response.Body).Decode(&expensesGot)
-// 	if err != nil {
-// 		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
-// 	}
-
-// 	assert.Len(t, expensesGot, 2)
-// 	// ASSERT the expense details are the same. The ID is assigned separately, and we're currently not going to test that implementation
-// 	var edsGot []expenseus.ExpenseDetails
-// 	for _, e := range expensesGot {
-// 		edsGot = append(edsGot, e.ExpenseDetails)
-// 	}
-// 	assert.Contains(t, edsGot, expenseus.TestTomomiExpense.ExpenseDetails)
-// 	assert.Contains(t, edsGot, expenseus.TestTomomiExpense2.ExpenseDetails)
-// }

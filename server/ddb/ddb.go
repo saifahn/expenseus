@@ -51,8 +51,26 @@ func (d *dynamoDB) GetExpense(id string) (expenseus.Expense, error) {
 	return expense, nil
 }
 
-func (d *dynamoDB) GetExpensesByUsername(id string) ([]expenseus.Expense, error) {
-	return []expenseus.Expense{}, nil
+func (d *dynamoDB) GetExpensesByUsername(username string) ([]expenseus.Expense, error) {
+	// look up users table for user with the name
+	u, err := d.usersTable.GetByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	// then look in the transactions table for expenses with that ID
+	tItems, err := d.transactionsTable.GetByUserID(u.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	expenses := []expenseus.Expense{}
+	for _, t := range tItems {
+		expenses = append(expenses, expenseus.Expense{
+			ID:             t.ID,
+			ExpenseDetails: t.ExpenseDetails,
+		})
+	}
+	return expenses, nil
 }
 
 func (d *dynamoDB) GetAllExpenses() ([]expenseus.Expense, error) {

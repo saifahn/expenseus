@@ -63,7 +63,7 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, got, TestTomomiExpense)
 	})
 
-	t.Run("returns a response without an imageKey or imageURL for an expense without an image", func(t *testing.T) {
+	t.Run("returns a response without an imageKey or imageUrl for an expense without an image", func(t *testing.T) {
 		request := NewGetExpenseRequest("9281")
 		response := httptest.NewRecorder()
 
@@ -75,10 +75,10 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.NotContains(t, rawJSON, "imageKey")
-		assert.NotContains(t, rawJSON, "imageURL")
+		assert.NotContains(t, rawJSON, "imageUrl")
 	})
 
-	t.Run("returns a response with an imageURL for an expense that has an image", func(t *testing.T) {
+	t.Run("returns a response with an imageUrl for an expense that has an image", func(t *testing.T) {
 		request := NewGetExpenseRequest("134")
 		response := httptest.NewRecorder()
 
@@ -92,7 +92,7 @@ func TestGetExpenseByID(t *testing.T) {
 		// TODO somehow don't return this to the front end but we need to use it in the back end so we can't just use "-"?
 		// assert.NotContains(t, rawJSON, "imageKey")
 		assert.Len(t, images.addImageToExpenseCalls, 1)
-		assert.Contains(t, rawJSON, "imageURL")
+		assert.Contains(t, rawJSON, "imageUrl")
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
@@ -191,8 +191,6 @@ func TestCreateExpense(t *testing.T) {
 		assert.Panics(t, func() {
 			handler.ServeHTTP(response, request)
 		}, "The code did not panic due to a lack of context")
-
-		// assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
@@ -204,16 +202,14 @@ func TestCreateExpense(t *testing.T) {
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader("Test Expense"),
 		}
-		request := NewCreateExpenseRequest(values, TestTomomiUser.ID)
+		request := addUserCookieAndContext(NewCreateExpenseRequest(values), TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusAccepted, response.Code)
-		// this is technically actually testing implementation
-		// I should just test that CreateExpense has been called correctly with the right thing, not the outcome
-		assert.Len(t, store.expenses, 1)
+		assert.Len(t, store.recordExpenseCalls, 1)
 	})
 
 	// prepares a temp file, information, and values for image upload tests
@@ -242,7 +238,7 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequest(values, TestSeanUser.ID)
+		request := addUserCookieAndContext(NewCreateExpenseRequest(values), TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)
@@ -265,7 +261,7 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := NewCreateExpenseRequest(values, userID)
+		request := addUserCookieAndContext(NewCreateExpenseRequest(values), userID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(webservice.CreateExpense)

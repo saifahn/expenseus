@@ -47,6 +47,11 @@ func InitRouter(wb *WebService) *chi.Mux {
 			r.Get("/", wb.ListUsers)
 			r.Post("/", wb.CreateUser)
 			r.Get("/self", wb.GetSelf)
+
+			r.Route("/{userID}", func(r chi.Router) {
+				r.Use(UserIDCtx)
+				r.Get("/", wb.GetUser)
+			})
 		})
 
 		r.Get("/login_google", wb.OauthLogin)
@@ -71,6 +76,15 @@ func UsernameCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		username := chi.URLParam(r, "username")
 		ctx := context.WithValue(r.Context(), CtxKeyUsername, username)
+		next.ServeHTTP(rw, r.WithContext(ctx))
+	})
+}
+
+// Gets the UserID from the URL and adds it to the UserID context for the request.
+func UserIDCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "userID")
+		ctx := context.WithValue(r.Context(), CtxKeyUserID, id)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

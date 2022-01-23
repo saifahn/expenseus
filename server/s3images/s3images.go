@@ -27,7 +27,7 @@ func New(useConfig bool) *ImageStoreS3 {
 	if useConfig {
 		sess = session.Must(session.NewSession(&aws.Config{
 			Credentials:      credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"), ""),
-			Endpoint:         aws.String(os.Getenv("AWS_ENDPOINT")),
+			Endpoint:         aws.String(os.Getenv("S3_ENDPOINT_LOCAL")),
 			Region:           aws.String("ap-northeast-1"),
 			DisableSSL:       aws.Bool(true),
 			S3ForcePathStyle: aws.Bool(true),

@@ -37,14 +37,14 @@ type User struct {
 
 type ExpenseDetails struct {
 	Name     string `json:"name"`
-	UserID   string `json:"userID"`
+	UserID   string `json:"userId"`
 	ImageKey string `json:"imageKey,omitempty"`
 }
 
 type Expense struct {
 	ExpenseDetails
 	ID       string `json:"id"`
-	ImageURL string `json:"imageURL,omitempty"`
+	ImageURL string `json:"imageUrl,omitempty"`
 }
 
 type ExpenseusOauth interface {
@@ -320,7 +320,8 @@ func (wb *WebService) GetUser(rw http.ResponseWriter, r *http.Request) {
 	user, err := wb.store.GetUser(userID)
 
 	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
+		http.Error(rw, err.Error(), http.StatusNotFound)
+		return
 	}
 
 	rw.Header().Set("content-type", jsonContentType)

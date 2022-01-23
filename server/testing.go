@@ -62,6 +62,12 @@ var (
 	}
 )
 
+func addUserCookieAndContext(req *http.Request, id string) *http.Request {
+	req.AddCookie(&http.Cookie{Name: "session", Value: id})
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
+	return req.WithContext(ctx)
+}
+
 // NewGetExpenseRequest creates a request to be used in tests get an expense
 // by ID, with ID in the request context.
 func NewGetExpenseRequest(id string) *http.Request {
@@ -71,9 +77,8 @@ func NewGetExpenseRequest(id string) *http.Request {
 }
 
 // NewCreateExpenseRequest creates a request to be used in tests to create an
-// expense that is associated with a user.
-func NewCreateExpenseRequest(values map[string]io.Reader, userid string) *http.Request {
-	// prepare FormData to submit
+// expense
+func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for key, r := range values {
@@ -102,8 +107,7 @@ func NewCreateExpenseRequest(values map[string]io.Reader, userid string) *http.R
 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	ctx := context.WithValue(req.Context(), CtxKeyUserID, userid)
-	return req.WithContext(ctx)
+	return req
 }
 
 // NewGetExpensesByUsernameRequest creates a request to be used in tests to get all

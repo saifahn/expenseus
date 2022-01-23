@@ -53,6 +53,11 @@ func TestUsersTable(t *testing.T) {
 	assert.Len(usersGot, 1)
 	assert.Contains(usersGot, user)
 
+	// get a user by username
+	got, err = users.GetByUsername(user.Username)
+	assert.NoError(err)
+	assert.Equal(user, got)
+
 	err = users.Delete(user.ID)
 	assert.NoError(err)
 	_, err = users.Get(user.ID)

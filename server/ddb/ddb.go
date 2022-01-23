@@ -39,7 +39,16 @@ func (d *dynamoDB) GetUser(id string) (expenseus.User, error) {
 }
 
 func (d *dynamoDB) GetExpense(id string) (expenseus.Expense, error) {
-	return expenseus.Expense{}, nil
+	t, err := d.transactionsTable.Get(id)
+	if err != nil {
+		return expenseus.Expense{}, err
+	}
+
+	expense := expenseus.Expense{
+		ID:             t.ID,
+		ExpenseDetails: t.ExpenseDetails,
+	}
+	return expense, nil
 }
 
 func (d *dynamoDB) GetExpensesByUsername(id string) ([]expenseus.Expense, error) {

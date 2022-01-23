@@ -221,7 +221,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		assert.Equal(http.StatusAccepted, response.Code)
 
 		request = expenseus.NewGetAllExpensesRequest()
-		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		request.AddCookie(&expenseus.ValidCookie)
 		response = httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
@@ -234,6 +234,21 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		// make sure the ID exists on the struct
 		expenseID := expensesGot[0].ID
 		assert.NotZero(expenseID)
+
+		request = expenseus.NewGetExpenseRequest(expenseID)
+		request.AddCookie(&expenseus.ValidCookie)
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(http.StatusOK, response.Code)
+
+		var got expenseus.Expense
+		err = json.NewDecoder(response.Body).Decode(&got)
+		if err != nil {
+			t.Errorf("error parsing response from server %q into struct of Expense: %v", response.Body, err)
+		}
+
+		assert.Equal(wantedExpenseDetails, got.ExpenseDetails)
+		assert.Equal(expensesGot[0], got)
 	})
 
 	// maybe just by user ID is better

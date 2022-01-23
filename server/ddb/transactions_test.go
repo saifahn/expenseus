@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
+	"github.com/saifahn/expenseus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,6 +19,7 @@ func TestTransactionTable(t *testing.T) {
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}
+	defer DeleteTable(dynamodb, testTransactionsTableName)
 	tbl := table.New(dynamodb, testTransactionsTableName)
 	// create the transactions table instance
 	transactions := NewTransactionsTable(tbl)
@@ -26,9 +28,14 @@ func TestTransactionTable(t *testing.T) {
 	_, err = transactions.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
+	testED := &expenseus.ExpenseDetails{
+		UserID: "test-user",
+		Name:   "test-expense",
+	}
+
 	item := &TransactionItem{
-		ID: "test-item-id",
-		// Amount: 123,
+		ID:             "test-item-id",
+		ExpenseDetails: *testED,
 	}
 
 	// no error raised the first time
@@ -48,37 +55,20 @@ func TestTransactionTable(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(item, got)
 
+	// get all expenses
+	itemsGot, err := transactions.GetAll()
+	assert.NoError(err)
+	assert.Len(itemsGot, 1)
+	assert.Contains(itemsGot, *item)
+
+	// get the expenses by username
+	itemsGot, err = transactions.GetByUserID(testED.UserID)
+	assert.NoError(err)
+	assert.Contains(itemsGot, *item)
+
 	// the item is successfully deleted
 	err = transactions.Delete(item.ID)
 	assert.NoError(err)
 	_, err = transactions.Get(item.ID)
 	assert.EqualError(err, table.ErrItemNotFound.Error())
-	DeleteTable(dynamodb, testTransactionsTableName)
-}
-
-func TestGetAll(t *testing.T) {
-	assert := assert.New(t)
-	dynamodb := NewDynamoDBLocalAPI()
-	err := CreateTestTable(dynamodb, testTransactionsTableName)
-	if err != nil {
-		t.Logf("table could not be created: %v", err)
-	}
-
-	tbl := table.New(dynamodb, testTransactionsTableName)
-	// create the transactions table instance
-	transactions := NewTransactionsTable(tbl)
-
-	item := TransactionItem{
-		ID: "test-item-id",
-	}
-
-	// no error raised the first time
-	err = transactions.PutIfNotExists(item)
-	assert.NoError(err)
-
-	items, err := transactions.GetAll()
-	assert.NoError(err)
-	assert.Len(items, 1)
-	assert.Contains(items, item)
-	DeleteTable(dynamodb, testTransactionsTableName)
 }

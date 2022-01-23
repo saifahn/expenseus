@@ -37,14 +37,14 @@ type User struct {
 
 type ExpenseDetails struct {
 	Name     string `json:"name"`
-	UserID   string `json:"userID"`
+	UserID   string `json:"userId"`
 	ImageKey string `json:"imageKey,omitempty"`
 }
 
 type Expense struct {
 	ExpenseDetails
 	ID       string `json:"id"`
-	ImageURL string `json:"imageURL,omitempty"`
+	ImageURL string `json:"imageUrl,omitempty"`
 }
 
 type ExpenseusOauth interface {

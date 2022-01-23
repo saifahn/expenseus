@@ -63,7 +63,7 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, got, TestTomomiExpense)
 	})
 
-	t.Run("returns a response without an imageKey or imageURL for an expense without an image", func(t *testing.T) {
+	t.Run("returns a response without an imageKey or imageUrl for an expense without an image", func(t *testing.T) {
 		request := NewGetExpenseRequest("9281")
 		response := httptest.NewRecorder()
 
@@ -75,10 +75,10 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.NotContains(t, rawJSON, "imageKey")
-		assert.NotContains(t, rawJSON, "imageURL")
+		assert.NotContains(t, rawJSON, "imageUrl")
 	})
 
-	t.Run("returns a response with an imageURL for an expense that has an image", func(t *testing.T) {
+	t.Run("returns a response with an imageUrl for an expense that has an image", func(t *testing.T) {
 		request := NewGetExpenseRequest("134")
 		response := httptest.NewRecorder()
 
@@ -92,7 +92,7 @@ func TestGetExpenseByID(t *testing.T) {
 		// TODO somehow don't return this to the front end but we need to use it in the back end so we can't just use "-"?
 		// assert.NotContains(t, rawJSON, "imageKey")
 		assert.Len(t, images.addImageToExpenseCalls, 1)
-		assert.Contains(t, rawJSON, "imageURL")
+		assert.Contains(t, rawJSON, "imageUrl")
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {

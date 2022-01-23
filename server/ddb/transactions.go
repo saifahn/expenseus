@@ -3,6 +3,7 @@ package ddb
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
@@ -17,6 +18,7 @@ type TransactionItem struct {
 type TransactionsTable interface {
 	Get(id string) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
+	GetByUserID(userid string) ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
 	Put(item TransactionItem) error
 	Delete(id string) error
@@ -70,6 +72,40 @@ func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
 	var items []TransactionItem
 
 	for _, i := range response.Items {
+		var item TransactionItem
+		err = dynamodbattribute.UnmarshalMap(i, &item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (t *transactionsTable) GetByUserID(userid string) ([]TransactionItem, error) {
+	filt := expression.Name("userId").Equal(expression.Value(userid))
+	expr, err := expression.NewBuilder().WithFilter(filt).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	params := &dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		ProjectionExpression:      expr.Projection(),
+		TableName:                 t.table.Name,
+	}
+
+	result, err := t.table.DynamoDB.Scan(params)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []TransactionItem
+
+	for _, i := range result.Items {
 		var item TransactionItem
 		err = dynamodbattribute.UnmarshalMap(i, &item)
 		if err != nil {

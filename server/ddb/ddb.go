@@ -3,7 +3,9 @@ package ddb
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
+	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/saifahn/expenseus"
 )
 
@@ -12,8 +14,13 @@ type dynamoDB struct {
 	transactionsTable TransactionsTable
 }
 
-func New(u *UsersTable, t *TransactionsTable) *dynamoDB {
-	return &dynamoDB{usersTable: *u, transactionsTable: *t}
+func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName string) *dynamoDB {
+	uTbl := table.New(d, usersTableName)
+	usersTable := NewUsersTable(uTbl)
+	tTbl := table.New(d, transactionsTableName)
+	transactionsTable := NewTransactionsTable(tTbl)
+
+	return &dynamoDB{usersTable: usersTable, transactionsTable: transactionsTable}
 }
 
 func (d *dynamoDB) CreateUser(u expenseus.User) error {

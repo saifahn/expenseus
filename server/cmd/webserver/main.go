@@ -5,15 +5,17 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/gorilla/securecookie"
 	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/ddb"
 	"github.com/saifahn/expenseus/googleoauth"
-	"github.com/saifahn/expenseus/redis"
 	"github.com/saifahn/expenseus/s3images"
 	"github.com/saifahn/expenseus/sessions"
 )
-
-var redisAddr = os.Getenv("REDIS_ADDRESS")
 
 func main() {
 	var (
@@ -29,7 +31,15 @@ func main() {
 		useLocalAWSConfig = false
 	}
 
-	rdb := redis.New(redisAddr)
+	var dynamo *dynamodb.DynamoDB
+
+	if useLocalAWSConfig {
+		sess := session.Must(session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(os.Getenv("DYNAMODB_DEV_ID"), os.Getenv("DYNAMODB_DEV_SECRET"), ""))))
+		sess.Config.Endpoint = aws.String(os.Getenv("DYNAMODB_ENDPOINT_LOCAL"))
+		dynamo = dynamodb.New(sess)
+	}
+
+	db := ddb.New(dynamo, os.Getenv("DYNAMODB_USERS_TABLE_NAME"), os.Getenv("DYNAMODB_TRANSACTIONS_TABLE_NAME"))
 
 	googleOauth := googleoauth.New()
 
@@ -39,7 +49,7 @@ func main() {
 	sessions := sessions.New(tempHashKey, tempBlockKey)
 	images := s3images.New(useLocalAWSConfig)
 
-	wb := expenseus.NewWebService(rdb, googleOauth, sessions, frontendURL, images)
+	wb := expenseus.NewWebService(db, googleOauth, sessions, frontendURL, images)
 
 	r := expenseus.InitRouter(wb)
 

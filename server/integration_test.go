@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/saifahn/expenseus"
 	"github.com/saifahn/expenseus/ddb"
 	"github.com/stretchr/testify/assert"
@@ -27,12 +26,8 @@ func setUpDB(d dynamodbiface.DynamoDBAPI) (expenseus.ExpenseStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	uTbl := table.New(d, usersTableName)
-	usersTable := ddb.NewUsersTable(uTbl)
-	tTbl := table.New(d, transactionsTableName)
-	transactionsTable := ddb.NewTransactionsTable(tTbl)
 
-	return ddb.New(&usersTable, &transactionsTable), nil
+	return ddb.New(d, usersTableName, transactionsTableName), nil
 }
 
 func tearDownDB(d dynamodbiface.DynamoDBAPI) error {

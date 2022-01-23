@@ -2,6 +2,7 @@ package ddb
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -12,11 +13,9 @@ import (
 
 func NewDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	sess := session.Must(
-		session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials("dynamodb-testing", "test-secret", ""))),
+		session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(os.Getenv("DYNAMODB_TEST_ID"), os.Getenv("DYNAMODB_TEST_SECRET"), ""))),
 	)
-	// TODO: replace with environment variables?
-	sess.Config.Endpoint = aws.String("http://localhost:8000")
-	// sess.Config.Region = aws.String("ap-")
+	sess.Config.Endpoint = aws.String(os.Getenv("DYNAMODB_ENDPOINT_LOCAL"))
 	return dynamodb.New(sess)
 }
 

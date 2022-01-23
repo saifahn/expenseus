@@ -203,6 +203,42 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		assert.Len(expensesGot, 1)
 		assert.Equal(expensesGot[0].ExpenseDetails, wantedExpenseDetails)
 	})
+
+	t.Run("expenses can be retrieved by ID", func(t *testing.T) {
+		router, tearDownDB := setUpTestServer(t)
+		defer tearDownDB(t)
+		assert := assert.New(t)
+		createUser(t, expenseus.TestSeanUser, router)
+
+		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
+		values := map[string]io.Reader{
+			"expenseName": strings.NewReader(wantedExpenseDetails.Name),
+		}
+		request := expenseus.NewCreateExpenseRequest(values)
+		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(http.StatusAccepted, response.Code)
+
+		request = expenseus.NewGetAllExpensesRequest()
+		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+
+		var expensesGot []expenseus.Expense
+		err := json.NewDecoder(response.Body).Decode(&expensesGot)
+		if err != nil {
+			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+		}
+
+		// make sure the ID exists on the struct
+		expenseID := expensesGot[0].ID
+		assert.NotZero(expenseID)
+	})
+
+	// maybe just by user ID is better
+	t.Run("expenses can be retrieved by username", func(t *testing.T) {})
+
 }
 
 // func TestCreatingExpensesAndRetrievingThem(t *testing.T) {

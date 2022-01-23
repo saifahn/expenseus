@@ -55,6 +55,7 @@ func (d *dynamoDB) GetAllExpenses() ([]expenseus.Expense, error) {
 	var expenses []expenseus.Expense
 	for _, t := range transactions {
 		expenses = append(expenses, expenseus.Expense{
+			ID:             t.ID,
 			ExpenseDetails: t.ExpenseDetails,
 		})
 	}

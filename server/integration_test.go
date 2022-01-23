@@ -179,47 +179,49 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-	router, tearDownDB := setUpTestServer(t)
-	defer tearDownDB(t)
-	assert := assert.New(t)
+	t.Run("an expense can be added with a valid cookie and be retrieved as part of a GetAll request", func(t *testing.T) {
+		router, tearDownDB := setUpTestServer(t)
+		defer tearDownDB(t)
+		assert := assert.New(t)
 
-	// create user in the db
-	userJSON, err := json.Marshal(expenseus.TestSeanUser)
-	if err != nil {
-		t.Fatalf("failed to marshal the user JSON: %v", err)
-	}
-	response := httptest.NewRecorder()
-	request := expenseus.NewCreateUserRequest(userJSON)
-	request.AddCookie(&expenseus.ValidCookie)
-	router.ServeHTTP(response, request)
-	assert.Equal(http.StatusAccepted, response.Code)
+		// create user in the db
+		userJSON, err := json.Marshal(expenseus.TestSeanUser)
+		if err != nil {
+			t.Fatalf("failed to marshal the user JSON: %v", err)
+		}
+		response := httptest.NewRecorder()
+		request := expenseus.NewCreateUserRequest(userJSON)
+		request.AddCookie(&expenseus.ValidCookie)
+		router.ServeHTTP(response, request)
+		assert.Equal(http.StatusAccepted, response.Code)
 
-	// create a transaction and store it
-	wantedExpenseDetails := expenseus.TestSeanExpenseDetails
-	values := map[string]io.Reader{
-		"expenseName": strings.NewReader(wantedExpenseDetails.Name),
-	}
-	request = expenseus.NewCreateExpenseRequest(values)
-	request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
-	response = httptest.NewRecorder()
-	router.ServeHTTP(response, request)
-	assert.Equal(http.StatusAccepted, response.Code)
+		// create a transaction and store it
+		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
+		values := map[string]io.Reader{
+			"expenseName": strings.NewReader(wantedExpenseDetails.Name),
+		}
+		request = expenseus.NewCreateExpenseRequest(values)
+		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(http.StatusAccepted, response.Code)
 
-	// try and get it
-	request = expenseus.NewGetAllExpensesRequest()
-	request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
-	response = httptest.NewRecorder()
-	router.ServeHTTP(response, request)
+		// try and get it
+		request = expenseus.NewGetAllExpensesRequest()
+		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, request)
 
-	var expensesGot []expenseus.Expense
-	err = json.NewDecoder(response.Body).Decode(&expensesGot)
-	if err != nil {
-		t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
-	}
+		var expensesGot []expenseus.Expense
+		err = json.NewDecoder(response.Body).Decode(&expensesGot)
+		if err != nil {
+			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+		}
 
-	assert.Equal(http.StatusOK, response.Code)
-	assert.Len(expensesGot, 1)
-	assert.Equal(expensesGot[0].ExpenseDetails, wantedExpenseDetails)
+		assert.Equal(http.StatusOK, response.Code)
+		assert.Len(expensesGot, 1)
+		assert.Equal(expensesGot[0].ExpenseDetails, wantedExpenseDetails)
+	})
 }
 
 // func TestCreatingExpensesAndRetrievingThem(t *testing.T) {

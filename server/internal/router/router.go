@@ -39,7 +39,7 @@ func Init(a *app.App) *chi.Mux {
 				r.Get("/", a.GetTransactionsByUsername)
 			})
 
-			r.Route("/{expenseID}", func(r chi.Router) {
+			r.Route("/{transactionID}", func(r chi.Router) {
 				r.Use(TransactionIDCtx)
 				r.Get("/", a.GetTransaction)
 			})
@@ -68,8 +68,8 @@ func Init(a *app.App) *chi.Mux {
 // Gets the ID from the URL and adds it to the id context for the request.
 func TransactionIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		expenseID := chi.URLParam(r, "expenseID")
-		ctx := context.WithValue(r.Context(), app.CtxKeyTransactionID, expenseID)
+		transactionID := chi.URLParam(r, "transactionID")
+		ctx := context.WithValue(r.Context(), app.CtxKeyTransactionID, transactionID)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

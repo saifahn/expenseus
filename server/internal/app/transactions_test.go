@@ -18,7 +18,7 @@ import (
 func TestGetTransactionByID(t *testing.T) {
 	store := StubTransactionStore{
 		users: []User{},
-		expenses: map[string]Transaction{
+		transactions: map[string]Transaction{
 			"1":    TestSeanTransaction,
 			"9281": TestTomomiTransaction,
 			"134":  TestTransactionWithImage,
@@ -27,7 +27,7 @@ func TestGetTransactionByID(t *testing.T) {
 	images := StubImageStore{}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 
-	t.Run("get an expense by id", func(t *testing.T) {
+	t.Run("get an transaction by id", func(t *testing.T) {
 		request := NewGetTransactionRequest("1")
 		response := httptest.NewRecorder()
 
@@ -45,7 +45,7 @@ func TestGetTransactionByID(t *testing.T) {
 		assert.Equal(t, got, TestSeanTransaction)
 	})
 
-	t.Run("gets another expense by id", func(t *testing.T) {
+	t.Run("gets another transaction by id", func(t *testing.T) {
 		request := NewGetTransactionRequest("9281")
 		response := httptest.NewRecorder()
 
@@ -63,7 +63,7 @@ func TestGetTransactionByID(t *testing.T) {
 		assert.Equal(t, got, TestTomomiTransaction)
 	})
 
-	t.Run("returns a response without an imageKey or imageUrl for an expense without an image", func(t *testing.T) {
+	t.Run("returns a response without an imageKey or imageUrl for an transaction without an image", func(t *testing.T) {
 		request := NewGetTransactionRequest("9281")
 		response := httptest.NewRecorder()
 
@@ -78,7 +78,7 @@ func TestGetTransactionByID(t *testing.T) {
 		assert.NotContains(t, rawJSON, "imageUrl")
 	})
 
-	t.Run("returns a response with an imageUrl for an expense that has an image", func(t *testing.T) {
+	t.Run("returns a response with an imageUrl for an transaction that has an image", func(t *testing.T) {
 		request := NewGetTransactionRequest("134")
 		response := httptest.NewRecorder()
 
@@ -95,7 +95,7 @@ func TestGetTransactionByID(t *testing.T) {
 		assert.Contains(t, rawJSON, "imageUrl")
 	})
 
-	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
+	t.Run("returns 404 on non-existent transaction", func(t *testing.T) {
 		request := NewGetTransactionRequest("13371337")
 		response := httptest.NewRecorder()
 
@@ -118,14 +118,14 @@ func TestGetTransactionByUser(t *testing.T) {
 			TestSeanUser,
 			TestTomomiUser,
 		},
-		expenses: map[string]Transaction{
+		transactions: map[string]Transaction{
 			"1":    TestSeanTransaction,
 			"9281": TestTomomiTransaction,
 		},
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	t.Run("gets tomochi's expenses", func(t *testing.T) {
+	t.Run("gets tomochi's transactions", func(t *testing.T) {
 		request := NewGetTransactionsByUsernameRequest(TestTomomiUser.Username)
 		response := httptest.NewRecorder()
 
@@ -144,7 +144,7 @@ func TestGetTransactionByUser(t *testing.T) {
 		assert.Contains(t, got, TestTomomiTransaction)
 	})
 
-	t.Run("gets saifahn's expenses", func(t *testing.T) {
+	t.Run("gets saifahn's transactions", func(t *testing.T) {
 		request := NewGetTransactionsByUsernameRequest(TestSeanUser.Username)
 		response := httptest.NewRecorder()
 
@@ -193,9 +193,9 @@ func TestCreateTransaction(t *testing.T) {
 		}, "The code did not panic due to a lack of context")
 	})
 
-	t.Run("creates a new expense on POST", func(t *testing.T) {
+	t.Run("creates a new transaction on POST", func(t *testing.T) {
 		store := StubTransactionStore{
-			expenses: map[string]Transaction{},
+			transactions: map[string]Transaction{},
 		}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
@@ -218,18 +218,18 @@ func TestCreateTransaction(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expenseName := "Test Transaction with Image"
+		transactionName := "Test Transaction with Image"
 
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader(expenseName),
+			"expenseName": strings.NewReader(transactionName),
 			"image":       f,
 		}
-		return f, expenseName, values
+		return f, transactionName, values
 	}
 
 	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
 		store := StubTransactionStore{
-			expenses: map[string]Transaction{},
+			transactions: map[string]Transaction{},
 		}
 		images := StubInvalidImageStore{}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
@@ -249,15 +249,15 @@ func TestCreateTransaction(t *testing.T) {
 		assert.Len(t, images.uploadCalls, 0)
 	})
 
-	t.Run("if an image is provided and the image check is successful, the image is uploaded and an expense is created with an image key", func(t *testing.T) {
+	t.Run("if an image is provided and the image check is successful, the image is uploaded and an transaction is created with an image key", func(t *testing.T) {
 		store := StubTransactionStore{
-			expenses: map[string]Transaction{},
+			transactions: map[string]Transaction{},
 		}
 		images := StubImageStore{}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 		userID := TestSeanUser.ID
 
-		f, expenseName, values := prepareFileAndInfo(t)
+		f, transactionName, values := prepareFileAndInfo(t)
 		defer f.Close()
 		defer os.Remove(f.Name())
 
@@ -272,7 +272,7 @@ func TestCreateTransaction(t *testing.T) {
 		assert.Len(t, store.recordTransactionCalls, 1)
 		got := store.recordTransactionCalls[0]
 		want := TransactionDetails{
-			Name:     expenseName,
+			Name:     transactionName,
 			UserID:   userID,
 			ImageKey: testImageKey,
 		}
@@ -281,13 +281,13 @@ func TestCreateTransaction(t *testing.T) {
 }
 
 func TestGetAllTransactions(t *testing.T) {
-	t.Run("gets all expenses with one expense", func(t *testing.T) {
+	t.Run("gets all transactions with one transaction", func(t *testing.T) {
 		wantedTransactions := []Transaction{
 			TestTomomiTransaction,
 		}
 		store := StubTransactionStore{
 			users: []User{},
-			expenses: map[string]Transaction{
+			transactions: map[string]Transaction{
 				"9281": TestTomomiTransaction,
 			},
 		}
@@ -311,13 +311,13 @@ func TestGetAllTransactions(t *testing.T) {
 		assert.ElementsMatch(t, got, wantedTransactions)
 	})
 
-	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
+	t.Run("gets all transactions with more than one transaction", func(t *testing.T) {
 		wantedTransactions := []Transaction{
 			TestSeanTransaction, TestTomomiTransaction, TestTomomiTransaction2,
 		}
 		store := StubTransactionStore{
 			users: []User{},
-			expenses: map[string]Transaction{
+			transactions: map[string]Transaction{
 				"1":     TestSeanTransaction,
 				"9281":  TestTomomiTransaction,
 				"14928": TestTomomiTransaction2,

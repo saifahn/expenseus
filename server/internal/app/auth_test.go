@@ -108,7 +108,7 @@ func TestVerifyUser(t *testing.T) {
 	})
 
 	t.Run("returns a 200 response when the user is authorized, and passes the request with the user ID in the context to the appropriate route", func(t *testing.T) {
-		store := StubTransactionStore{expenses: map[string]Transaction{"1": TestSeanTransaction}}
+		store := StubTransactionStore{transactions: map[string]Transaction{"1": TestSeanTransaction}}
 		oauth := StubOauthConfig{}
 		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 

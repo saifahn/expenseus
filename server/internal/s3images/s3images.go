@@ -74,15 +74,15 @@ func (i *ImageStoreS3) Validate(file multipart.File) (bool, error) {
 	return true, nil
 }
 
-func (i *ImageStoreS3) AddImageToTransaction(expense app.Transaction) (app.Transaction, error) {
-	if expense.ImageKey == "" {
+func (i *ImageStoreS3) AddImageToTransaction(transaction app.Transaction) (app.Transaction, error) {
+	if transaction.ImageKey == "" {
 		return app.Transaction{}, errors.New("expense is missing imageKey")
 	}
 
 	svc := s3.New(i.session)
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(i.bucket),
-		Key:    aws.String(expense.ImageKey),
+		Key:    aws.String(transaction.ImageKey),
 	})
 
 	urlStr, err := req.Presign(15 * time.Minute)
@@ -90,6 +90,6 @@ func (i *ImageStoreS3) AddImageToTransaction(expense app.Transaction) (app.Trans
 		return app.Transaction{}, errors.New(fmt.Sprintf("failed to sign image URL: %v", err))
 	}
 
-	expense.ImageURL = urlStr
-	return expense, nil
+	transaction.ImageURL = urlStr
+	return transaction, nil
 }

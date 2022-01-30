@@ -51,11 +51,11 @@ func (d *dynamoDB) GetTransaction(id string) (app.Transaction, error) {
 		return app.Transaction{}, err
 	}
 
-	expense := app.Transaction{
+	transaction := app.Transaction{
 		ID:                 t.ID,
 		TransactionDetails: t.TransactionDetails,
 	}
-	return expense, nil
+	return transaction, nil
 }
 
 func (d *dynamoDB) GetTransactionsByUsername(username string) ([]app.Transaction, error) {
@@ -64,44 +64,44 @@ func (d *dynamoDB) GetTransactionsByUsername(username string) ([]app.Transaction
 	if err != nil {
 		return nil, err
 	}
-	// then look in the transactions table for expenses with that ID
+	// then look in the transactions table for transactions with that ID
 	tItems, err := d.transactionsTable.GetByUserID(u.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	expenses := []app.Transaction{}
+	transactions := []app.Transaction{}
 	for _, t := range tItems {
-		expenses = append(expenses, app.Transaction{
+		transactions = append(transactions, app.Transaction{
 			ID:                 t.ID,
 			TransactionDetails: t.TransactionDetails,
 		})
 	}
-	return expenses, nil
+	return transactions, nil
 }
 
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
-	transactions, err := d.transactionsTable.GetAll()
+	transactionItems, err := d.transactionsTable.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var expenses []app.Transaction
-	for _, t := range transactions {
-		expenses = append(expenses, app.Transaction{
+	var transactions []app.Transaction
+	for _, t := range transactionItems {
+		transactions = append(transactions, app.Transaction{
 			ID:                 t.ID,
 			TransactionDetails: t.TransactionDetails,
 		})
 	}
 
-	return expenses, nil
+	return transactions, nil
 }
 
 func (d *dynamoDB) CreateTransaction(ed app.TransactionDetails) error {
 	// generate an ID
-	expenseID := uuid.New().String()
+	transactionID := uuid.New().String()
 	item := &TransactionItem{
-		ID:                 expenseID,
+		ID:                 transactionID,
 		TransactionDetails: ed,
 	}
 	err := d.transactionsTable.PutIfNotExists(*item)

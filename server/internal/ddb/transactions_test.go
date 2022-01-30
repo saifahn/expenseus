@@ -30,7 +30,7 @@ func TestTransactionTable(t *testing.T) {
 
 	testED := &app.TransactionDetails{
 		UserID: "test-user",
-		Name:   "test-expense",
+		Name:   "test-transaction",
 	}
 
 	item := &TransactionItem{
@@ -55,13 +55,13 @@ func TestTransactionTable(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(item, got)
 
-	// get all expenses
+	// get all transactions
 	itemsGot, err := transactions.GetAll()
 	assert.NoError(err)
 	assert.Len(itemsGot, 1)
 	assert.Contains(itemsGot, *item)
 
-	// get the expenses by username
+	// get the transactions by username
 	itemsGot, err = transactions.GetByUserID(testED.UserID)
 	assert.NoError(err)
 	assert.Contains(itemsGot, *item)

@@ -167,7 +167,7 @@ func (r *Redis) GetAllUsers() ([]app.User, error) {
 }
 
 func AllTransactionsKey() string {
-	return "expenses"
+	return "transactions"
 }
 
 func UserTransactionsKey(userid string) string {
@@ -175,7 +175,7 @@ func UserTransactionsKey(userid string) string {
 }
 
 func TransactionKey(id string) string {
-	return fmt.Sprintf("expense:%v", id)
+	return fmt.Sprintf("transaction:%v", id)
 }
 
 func AllUsersKey() string {

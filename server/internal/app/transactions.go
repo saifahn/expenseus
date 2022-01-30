@@ -114,9 +114,9 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transactionName := r.FormValue("expenseName")
+	transactionName := r.FormValue("transactionName")
 	if transactionName == "" {
-		http.Error(rw, "expense name not found", http.StatusBadRequest)
+		http.Error(rw, "transaction name not found", http.StatusBadRequest)
 		return
 	}
 

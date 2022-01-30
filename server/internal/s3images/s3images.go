@@ -76,7 +76,7 @@ func (i *ImageStoreS3) Validate(file multipart.File) (bool, error) {
 
 func (i *ImageStoreS3) AddImageToTransaction(transaction app.Transaction) (app.Transaction, error) {
 	if transaction.ImageKey == "" {
-		return app.Transaction{}, errors.New("expense is missing imageKey")
+		return app.Transaction{}, errors.New("transaction is missing imageKey")
 	}
 
 	svc := s3.New(i.session)

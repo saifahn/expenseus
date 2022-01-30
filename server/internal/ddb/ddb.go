@@ -109,7 +109,7 @@ func (d *dynamoDB) CreateTransaction(ed app.TransactionDetails) error {
 		return err
 	}
 
-	fmt.Println("expense successfully created")
+	fmt.Println("transaction successfully created")
 	return nil
 }
 

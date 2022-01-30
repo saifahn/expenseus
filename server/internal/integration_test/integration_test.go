@@ -166,7 +166,7 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 	var createTestTransaction = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader(ed.Name),
+			"transactionName": strings.NewReader(ed.Name),
 		}
 		request := app.NewCreateTransactionRequest(values)
 		request.AddCookie(&http.Cookie{Name: "session", Value: userid})
@@ -204,7 +204,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert.Equal(transactionsGot[0].TransactionDetails, wantedTransactionDetails)
 	})
 
-	t.Run("expenses can be retrieved by ID", func(t *testing.T) {
+	t.Run("transactions can be retrieved by ID", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)
@@ -245,7 +245,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 	})
 
 	// maybe just by user ID is better
-	t.Run("expenses can be retrieved by username", func(t *testing.T) {
+	t.Run("transactions can be retrieved by username", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)

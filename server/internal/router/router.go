@@ -29,7 +29,7 @@ func Init(a *app.App) *chi.Mux {
 	r.Handle("/*", fs)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Route("/expenses", func(r chi.Router) {
+		r.Route("/transactions", func(r chi.Router) {
 			r.Use(a.VerifyUser)
 			r.Get("/", a.GetAllTransactions)
 			r.Post("/", a.CreateTransaction)

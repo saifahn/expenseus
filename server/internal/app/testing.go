@@ -71,7 +71,7 @@ func addUserCookieAndContext(req *http.Request, id string) *http.Request {
 // NewGetTransactionRequest creates a request to be used in tests get an transaction
 // by ID, with ID in the request context.
 func NewGetTransactionRequest(id string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/%s", id), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyTransactionID, id)
 	return req.WithContext(ctx)
 }
@@ -105,7 +105,7 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 	}
 	w.Close()
 
-	req, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions", &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req
 }
@@ -113,7 +113,7 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 // NewGetTransactionsByUsernameRequest creates a request to be used in tests to get all
 // transactions of a user, with the user in the request context.
 func NewGetTransactionsByUsernameRequest(username string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/user/%s", username), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s", username), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)
 }
@@ -121,7 +121,7 @@ func NewGetTransactionsByUsernameRequest(username string) *http.Request {
 // NewGetAllTransactionsRequest creates a request to be used in tests to get all
 // transactions.
 func NewGetAllTransactionsRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/api/v1/expenses", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/transactions", nil)
 	return req
 }
 
@@ -239,7 +239,7 @@ func (s *StubTransactionStore) GetTransaction(id string) (Transaction, error) {
 	transaction := s.transactions[id]
 	// check for empty Transaction
 	if transaction == (Transaction{}) {
-		return Transaction{}, errors.New("expense not found")
+		return Transaction{}, errors.New("transaction not found")
 	}
 	return transaction, nil
 }

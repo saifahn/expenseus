@@ -170,20 +170,20 @@ func TestCreateTransaction(t *testing.T) {
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader("Test Transaction"),
+			"transactionName": strings.NewReader("Test Transaction"),
 		}
 
 		var b bytes.Buffer
 		w := multipart.NewWriter(&b)
 		for _, reader := range values {
 			var fw io.Writer
-			fw, _ = w.CreateFormField("expenseName")
+			fw, _ = w.CreateFormField("transactionName")
 			if _, err := io.Copy(fw, reader); err != nil {
 				fmt.Println(err.Error())
 			}
 		}
 		w.Close()
-		request, _ := http.NewRequest(http.MethodPost, "/api/v1/expenses", &b)
+		request, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions", &b)
 		request.Header.Set("Content-Type", w.FormDataContentType())
 		response := httptest.NewRecorder()
 
@@ -200,7 +200,7 @@ func TestCreateTransaction(t *testing.T) {
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader("Test Transaction"),
+			"transactionName": strings.NewReader("Test Transaction"),
 		}
 		request := addUserCookieAndContext(NewCreateTransactionRequest(values), TestTomomiUser.ID)
 		response := httptest.NewRecorder()
@@ -221,8 +221,8 @@ func TestCreateTransaction(t *testing.T) {
 		transactionName := "Test Transaction with Image"
 
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader(transactionName),
-			"image":       f,
+			"transactionName": strings.NewReader(transactionName),
+			"image":           f,
 		}
 		return f, transactionName, values
 	}

@@ -164,7 +164,7 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 }
 
 func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-	var createTestExpense = func(t *testing.T, r http.Handler, ed app.ExpenseDetails, userid string) {
+	var createTestExpense = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader(ed.Name),
 		}
@@ -193,7 +193,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
-		var expensesGot []app.Expense
+		var expensesGot []app.Transaction
 		err := json.NewDecoder(response.Body).Decode(&expensesGot)
 		if err != nil {
 			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
@@ -201,7 +201,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 
 		assert.Equal(http.StatusOK, response.Code)
 		assert.Len(expensesGot, 1)
-		assert.Equal(expensesGot[0].ExpenseDetails, wantedExpenseDetails)
+		assert.Equal(expensesGot[0].TransactionDetails, wantedExpenseDetails)
 	})
 
 	t.Run("expenses can be retrieved by ID", func(t *testing.T) {
@@ -218,7 +218,7 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
-		var expensesGot []app.Expense
+		var expensesGot []app.Transaction
 		err := json.NewDecoder(response.Body).Decode(&expensesGot)
 		if err != nil {
 			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
@@ -234,13 +234,13 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
 
-		var got app.Expense
+		var got app.Transaction
 		err = json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Errorf("error parsing response from server %q into Expense struct: %v", response.Body, err)
 		}
 
-		assert.Equal(wantedExpenseDetails, got.ExpenseDetails)
+		assert.Equal(wantedExpenseDetails, got.TransactionDetails)
 		assert.Equal(expensesGot[0], got)
 	})
 
@@ -260,13 +260,13 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
 
-		var expensesGot []app.Expense
+		var expensesGot []app.Transaction
 		err := json.NewDecoder(response.Body).Decode(&expensesGot)
 		if err != nil {
 			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
 		}
 
 		assert.Len(expensesGot, 1)
-		assert.Equal(wantedExpenseDetails, expensesGot[0].ExpenseDetails)
+		assert.Equal(wantedExpenseDetails, expensesGot[0].TransactionDetails)
 	})
 }

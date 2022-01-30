@@ -45,20 +45,20 @@ func (d *dynamoDB) GetUser(id string) (app.User, error) {
 	return user, nil
 }
 
-func (d *dynamoDB) GetExpense(id string) (app.Expense, error) {
+func (d *dynamoDB) GetExpense(id string) (app.Transaction, error) {
 	t, err := d.transactionsTable.Get(id)
 	if err != nil {
-		return app.Expense{}, err
+		return app.Transaction{}, err
 	}
 
-	expense := app.Expense{
-		ID:             t.ID,
-		ExpenseDetails: t.ExpenseDetails,
+	expense := app.Transaction{
+		ID:                 t.ID,
+		TransactionDetails: t.TransactionDetails,
 	}
 	return expense, nil
 }
 
-func (d *dynamoDB) GetExpensesByUsername(username string) ([]app.Expense, error) {
+func (d *dynamoDB) GetExpensesByUsername(username string) ([]app.Transaction, error) {
 	// look up users table for user with the name
 	u, err := d.usersTable.GetByUsername(username)
 	if err != nil {
@@ -70,39 +70,39 @@ func (d *dynamoDB) GetExpensesByUsername(username string) ([]app.Expense, error)
 		return nil, err
 	}
 
-	expenses := []app.Expense{}
+	expenses := []app.Transaction{}
 	for _, t := range tItems {
-		expenses = append(expenses, app.Expense{
-			ID:             t.ID,
-			ExpenseDetails: t.ExpenseDetails,
+		expenses = append(expenses, app.Transaction{
+			ID:                 t.ID,
+			TransactionDetails: t.TransactionDetails,
 		})
 	}
 	return expenses, nil
 }
 
-func (d *dynamoDB) GetAllExpenses() ([]app.Expense, error) {
+func (d *dynamoDB) GetAllExpenses() ([]app.Transaction, error) {
 	transactions, err := d.transactionsTable.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var expenses []app.Expense
+	var expenses []app.Transaction
 	for _, t := range transactions {
-		expenses = append(expenses, app.Expense{
-			ID:             t.ID,
-			ExpenseDetails: t.ExpenseDetails,
+		expenses = append(expenses, app.Transaction{
+			ID:                 t.ID,
+			TransactionDetails: t.TransactionDetails,
 		})
 	}
 
 	return expenses, nil
 }
 
-func (d *dynamoDB) CreateExpense(ed app.ExpenseDetails) error {
+func (d *dynamoDB) CreateExpense(ed app.TransactionDetails) error {
 	// generate an ID
 	expenseID := uuid.New().String()
 	item := &TransactionItem{
-		ID:             expenseID,
-		ExpenseDetails: ed,
+		ID:                 expenseID,
+		TransactionDetails: ed,
 	}
 	err := d.transactionsTable.PutIfNotExists(*item)
 	if err != nil {

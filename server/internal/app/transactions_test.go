@@ -18,7 +18,7 @@ import (
 func TestGetExpenseByID(t *testing.T) {
 	store := StubExpenseStore{
 		users: []User{},
-		expenses: map[string]Expense{
+		expenses: map[string]Transaction{
 			"1":    TestSeanExpense,
 			"9281": TestTomomiExpense,
 			"134":  TestExpenseWithImage,
@@ -34,7 +34,7 @@ func TestGetExpenseByID(t *testing.T) {
 		handler := http.HandlerFunc(app.GetExpense)
 		handler.ServeHTTP(response, request)
 
-		var got Expense
+		var got Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
@@ -52,7 +52,7 @@ func TestGetExpenseByID(t *testing.T) {
 		handler := http.HandlerFunc(app.GetExpense)
 		handler.ServeHTTP(response, request)
 
-		var got Expense
+		var got Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
@@ -102,7 +102,7 @@ func TestGetExpenseByID(t *testing.T) {
 		handler := http.HandlerFunc(app.GetExpense)
 		handler.ServeHTTP(response, request)
 
-		var got Expense
+		var got Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
@@ -118,7 +118,7 @@ func TestGetExpenseByUser(t *testing.T) {
 			TestSeanUser,
 			TestTomomiUser,
 		},
-		expenses: map[string]Expense{
+		expenses: map[string]Transaction{
 			"1":    TestSeanExpense,
 			"9281": TestTomomiExpense,
 		},
@@ -132,7 +132,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		handler := http.HandlerFunc(app.GetExpensesByUsername)
 		handler.ServeHTTP(response, request)
 
-		var got []Expense
+		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
@@ -151,7 +151,7 @@ func TestGetExpenseByUser(t *testing.T) {
 		handler := http.HandlerFunc(app.GetExpensesByUsername)
 		handler.ServeHTTP(response, request)
 
-		var got []Expense
+		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
@@ -195,7 +195,7 @@ func TestCreateExpense(t *testing.T) {
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
 		store := StubExpenseStore{
-			expenses: map[string]Expense{},
+			expenses: map[string]Transaction{},
 		}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
@@ -229,7 +229,7 @@ func TestCreateExpense(t *testing.T) {
 
 	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
 		store := StubExpenseStore{
-			expenses: map[string]Expense{},
+			expenses: map[string]Transaction{},
 		}
 		images := StubInvalidImageStore{}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
@@ -251,7 +251,7 @@ func TestCreateExpense(t *testing.T) {
 
 	t.Run("if an image is provided and the image check is successful, the image is uploaded and an expense is created with an image key", func(t *testing.T) {
 		store := StubExpenseStore{
-			expenses: map[string]Expense{},
+			expenses: map[string]Transaction{},
 		}
 		images := StubImageStore{}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
@@ -271,7 +271,7 @@ func TestCreateExpense(t *testing.T) {
 		assert.Len(t, images.uploadCalls, 1)
 		assert.Len(t, store.recordExpenseCalls, 1)
 		got := store.recordExpenseCalls[0]
-		want := ExpenseDetails{
+		want := TransactionDetails{
 			Name:     expenseName,
 			UserID:   userID,
 			ImageKey: testImageKey,
@@ -282,12 +282,12 @@ func TestCreateExpense(t *testing.T) {
 
 func TestGetAllExpenses(t *testing.T) {
 	t.Run("gets all expenses with one expense", func(t *testing.T) {
-		wantedExpenses := []Expense{
+		wantedExpenses := []Transaction{
 			TestTomomiExpense,
 		}
 		store := StubExpenseStore{
 			users: []User{},
-			expenses: map[string]Expense{
+			expenses: map[string]Transaction{
 				"9281": TestTomomiExpense,
 			},
 		}
@@ -299,7 +299,7 @@ func TestGetAllExpenses(t *testing.T) {
 		handler := http.HandlerFunc(app.GetAllExpenses)
 		handler.ServeHTTP(response, request)
 
-		var got []Expense
+		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
@@ -312,12 +312,12 @@ func TestGetAllExpenses(t *testing.T) {
 	})
 
 	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
-		wantedExpenses := []Expense{
+		wantedExpenses := []Transaction{
 			TestSeanExpense, TestTomomiExpense, TestTomomiExpense2,
 		}
 		store := StubExpenseStore{
 			users: []User{},
-			expenses: map[string]Expense{
+			expenses: map[string]Transaction{
 				"1":     TestSeanExpense,
 				"9281":  TestTomomiExpense,
 				"14928": TestTomomiExpense2,
@@ -331,7 +331,7 @@ func TestGetAllExpenses(t *testing.T) {
 		handler := http.HandlerFunc(app.GetAllExpenses)
 		handler.ServeHTTP(response, request)
 
-		var got []Expense
+		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)

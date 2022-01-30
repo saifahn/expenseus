@@ -74,9 +74,9 @@ func (i *ImageStoreS3) Validate(file multipart.File) (bool, error) {
 	return true, nil
 }
 
-func (i *ImageStoreS3) AddImageToExpense(expense app.Expense) (app.Expense, error) {
+func (i *ImageStoreS3) AddImageToExpense(expense app.Transaction) (app.Transaction, error) {
 	if expense.ImageKey == "" {
-		return app.Expense{}, errors.New("expense is missing imageKey")
+		return app.Transaction{}, errors.New("expense is missing imageKey")
 	}
 
 	svc := s3.New(i.session)
@@ -87,7 +87,7 @@ func (i *ImageStoreS3) AddImageToExpense(expense app.Expense) (app.Expense, erro
 
 	urlStr, err := req.Presign(15 * time.Minute)
 	if err != nil {
-		return app.Expense{}, errors.New(fmt.Sprintf("failed to sign image URL: %v", err))
+		return app.Transaction{}, errors.New(fmt.Sprintf("failed to sign image URL: %v", err))
 	}
 
 	expense.ImageURL = urlStr

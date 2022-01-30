@@ -11,7 +11,7 @@ import (
 )
 
 type TransactionItem struct {
-	app.ExpenseDetails
+	app.TransactionDetails
 	ID string `json:"id"`
 }
 

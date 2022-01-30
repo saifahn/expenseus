@@ -28,14 +28,14 @@ func TestTransactionTable(t *testing.T) {
 	_, err = transactions.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	testED := &app.ExpenseDetails{
+	testED := &app.TransactionDetails{
 		UserID: "test-user",
 		Name:   "test-expense",
 	}
 
 	item := &TransactionItem{
-		ID:             "test-item-id",
-		ExpenseDetails: *testED,
+		ID:                 "test-item-id",
+		TransactionDetails: *testED,
 	}
 
 	// no error raised the first time

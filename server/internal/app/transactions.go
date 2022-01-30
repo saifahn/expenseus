@@ -6,23 +6,23 @@ import (
 	"net/http"
 )
 
-const CtxKeyExpenseID contextKey = iota
+const CtxKeyTransactionID contextKey = iota
 
-type ExpenseDetails struct {
+type TransactionDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userId"`
 	ImageKey string `json:"imageKey,omitempty"`
 }
 
-type Expense struct {
-	ExpenseDetails
+type Transaction struct {
+	TransactionDetails
 	ID       string `json:"id"`
 	ImageURL string `json:"imageUrl,omitempty"`
 }
 
 // GetExpense handles a HTTP request to get an expense by ID, returning the expense.
 func (a *App) GetExpense(rw http.ResponseWriter, r *http.Request) {
-	expenseID := r.Context().Value(CtxKeyExpenseID).(string)
+	expenseID := r.Context().Value(CtxKeyTransactionID).(string)
 
 	expense, err := a.store.GetExpense(expenseID)
 
@@ -148,7 +148,7 @@ func (a *App) CreateExpense(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = a.store.CreateExpense(ExpenseDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
+	err = a.store.CreateExpense(TransactionDetails{Name: expenseName, UserID: userID, ImageKey: imageKey})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

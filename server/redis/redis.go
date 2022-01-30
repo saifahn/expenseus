@@ -32,15 +32,15 @@ type Redis struct {
 	db redis.Client
 }
 
-func (r *Redis) CreateExpense(ed app.ExpenseDetails) error {
+func (r *Redis) CreateExpense(ed app.TransactionDetails) error {
 	// generate id for expense
 	expenseID := uuid.New().String()
 	// get the time now for the score on the sets
 	createdAt := time.Now().Unix()
 
-	e := app.Expense{
-		ExpenseDetails: ed,
-		ID:             expenseID,
+	e := app.Transaction{
+		TransactionDetails: ed,
+		ID:                 expenseID,
 	}
 
 	expenseJSON, err := json.Marshal(e)
@@ -62,10 +62,10 @@ func (r *Redis) CreateExpense(ed app.ExpenseDetails) error {
 	return nil
 }
 
-func (r *Redis) GetAllExpenses() ([]app.Expense, error) {
+func (r *Redis) GetAllExpenses() ([]app.Transaction, error) {
 	expenseIDs := r.db.ZRange(ctx, AllExpensesKey(), 0, -1).Val()
 
-	var expenses []app.Expense
+	var expenses []app.Transaction
 	for _, id := range expenseIDs {
 		e, err := r.GetExpense(id)
 		if err != nil {
@@ -78,13 +78,13 @@ func (r *Redis) GetAllExpenses() ([]app.Expense, error) {
 	return expenses, nil
 }
 
-func (r *Redis) GetExpensesByUsername(username string) ([]app.Expense, error) {
+func (r *Redis) GetExpensesByUsername(username string) ([]app.Transaction, error) {
 	// get userid from username/userid map
 	userid := r.db.HGet(ctx, UsernameIDMapKey(), username).Val()
 	// get expenseIDs from the user expenses set
 	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(userid), 0, -1).Val()
 
-	var expenses []app.Expense
+	var expenses []app.Transaction
 	for _, id := range expenseIDs {
 		e, err := r.GetExpense(id)
 		if err != nil {
@@ -97,13 +97,13 @@ func (r *Redis) GetExpensesByUsername(username string) ([]app.Expense, error) {
 	return expenses, nil
 }
 
-func (r *Redis) GetExpense(expenseID string) (app.Expense, error) {
+func (r *Redis) GetExpense(expenseID string) (app.Transaction, error) {
 	val, err := r.db.Get(ctx, ExpenseKey(expenseID)).Result()
 	if err != nil {
-		return app.Expense{}, err
+		return app.Transaction{}, err
 	}
 
-	var expense app.Expense
+	var expense app.Transaction
 	err = json.Unmarshal([]byte(val), &expense)
 	if err != nil {
 		panic(err)

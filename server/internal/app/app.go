@@ -16,10 +16,10 @@ const (
 )
 
 type Store interface {
-	GetExpense(id string) (Expense, error)
-	GetExpensesByUsername(username string) ([]Expense, error)
-	GetAllExpenses() ([]Expense, error)
-	CreateExpense(expenseDetails ExpenseDetails) error
+	GetExpense(id string) (Transaction, error)
+	GetExpensesByUsername(username string) ([]Transaction, error)
+	GetAllExpenses() ([]Transaction, error)
+	CreateExpense(expenseDetails TransactionDetails) error
 	CreateUser(user User) error
 	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
@@ -41,7 +41,7 @@ type SessionManager interface {
 type ImageStore interface {
 	Upload(file multipart.File, header multipart.FileHeader) (string, error)
 	Validate(file multipart.File) (bool, error)
-	AddImageToExpense(expense Expense) (Expense, error)
+	AddImageToExpense(expense Transaction) (Transaction, error)
 }
 
 type App struct {

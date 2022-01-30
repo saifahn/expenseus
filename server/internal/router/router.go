@@ -69,7 +69,7 @@ func Init(a *app.App) *chi.Mux {
 func ExpenseIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		expenseID := chi.URLParam(r, "expenseID")
-		ctx := context.WithValue(r.Context(), app.CtxKeyExpenseID, expenseID)
+		ctx := context.WithValue(r.Context(), app.CtxKeyTransactionID, expenseID)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

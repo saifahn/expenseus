@@ -25,36 +25,36 @@ var (
 		ID:       "tomomi_id",
 	}
 
-	TestSeanExpenseDetails = ExpenseDetails{
+	TestSeanExpenseDetails = TransactionDetails{
 		Name:   "Expense 1",
 		UserID: TestSeanUser.ID,
 	}
-	TestSeanExpense = Expense{
-		ID:             "1",
-		ExpenseDetails: TestSeanExpenseDetails,
+	TestSeanExpense = Transaction{
+		ID:                 "1",
+		TransactionDetails: TestSeanExpenseDetails,
 	}
 
-	TestTomomiExpenseDetails = ExpenseDetails{
+	TestTomomiExpenseDetails = TransactionDetails{
 		Name:   "Expense 2",
 		UserID: TestTomomiUser.ID,
 	}
-	TestTomomiExpense = Expense{
-		ID:             "2",
-		ExpenseDetails: TestTomomiExpenseDetails,
+	TestTomomiExpense = Transaction{
+		ID:                 "2",
+		TransactionDetails: TestTomomiExpenseDetails,
 	}
 
-	TestTomomiExpense2Details = ExpenseDetails{
+	TestTomomiExpense2Details = TransactionDetails{
 		Name:   "Expense 3",
 		UserID: TestTomomiUser.ID,
 	}
-	TestTomomiExpense2 = Expense{
-		ID:             "3",
-		ExpenseDetails: TestTomomiExpense2Details,
+	TestTomomiExpense2 = Transaction{
+		ID:                 "3",
+		TransactionDetails: TestTomomiExpense2Details,
 	}
 
-	TestExpenseWithImage = Expense{
+	TestExpenseWithImage = Transaction{
 		ID: "123",
-		ExpenseDetails: ExpenseDetails{
+		TransactionDetails: TransactionDetails{
 			Name:     "ExpenseWithImage",
 			UserID:   "an_ID",
 			ImageKey: "test-image-key",
@@ -72,7 +72,7 @@ func addUserCookieAndContext(req *http.Request, id string) *http.Request {
 // by ID, with ID in the request context.
 func NewGetExpenseRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/%s", id), nil)
-	ctx := context.WithValue(req.Context(), CtxKeyExpenseID, id)
+	ctx := context.WithValue(req.Context(), CtxKeyTransactionID, id)
 	return req.WithContext(ctx)
 }
 
@@ -230,21 +230,21 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 
 // #region Store
 type StubExpenseStore struct {
-	expenses           map[string]Expense
+	expenses           map[string]Transaction
 	users              []User
-	recordExpenseCalls []ExpenseDetails
+	recordExpenseCalls []TransactionDetails
 }
 
-func (s *StubExpenseStore) GetExpense(id string) (Expense, error) {
+func (s *StubExpenseStore) GetExpense(id string) (Transaction, error) {
 	expense := s.expenses[id]
 	// check for empty Expense
-	if expense == (Expense{}) {
-		return Expense{}, errors.New("expense not found")
+	if expense == (Transaction{}) {
+		return Transaction{}, errors.New("expense not found")
 	}
 	return expense, nil
 }
 
-func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, error) {
+func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Transaction, error) {
 	var targetUser User
 	for _, u := range s.users {
 		if u.Username == username {
@@ -253,7 +253,7 @@ func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, er
 		}
 	}
 
-	var expenses []Expense
+	var expenses []Transaction
 	for _, e := range s.expenses {
 		// if the user id is the same as userid, then append
 		if e.UserID == targetUser.ID {
@@ -263,21 +263,21 @@ func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Expense, er
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) CreateExpense(ed ExpenseDetails) error {
+func (s *StubExpenseStore) CreateExpense(ed TransactionDetails) error {
 	testId := fmt.Sprintf("tid-%v", ed.Name)
-	expense := Expense{
-		ExpenseDetails: ed,
-		ID:             testId,
+	expense := Transaction{
+		TransactionDetails: ed,
+		ID:                 testId,
 	}
 	s.expenses[testId] = expense
-	s.recordExpenseCalls = append(s.recordExpenseCalls, ExpenseDetails{
+	s.recordExpenseCalls = append(s.recordExpenseCalls, TransactionDetails{
 		Name: ed.Name, UserID: ed.UserID, ImageKey: ed.ImageKey,
 	})
 	return nil
 }
 
-func (s *StubExpenseStore) GetAllExpenses() ([]Expense, error) {
-	var expenses []Expense
+func (s *StubExpenseStore) GetAllExpenses() ([]Transaction, error) {
+	var expenses []Transaction
 	for _, e := range s.expenses {
 		expenses = append(expenses, e)
 	}
@@ -321,7 +321,7 @@ func (is *StubImageStore) Validate(file multipart.File) (bool, error) {
 	return true, nil
 }
 
-func (is *StubImageStore) AddImageToExpense(expense Expense) (Expense, error) {
+func (is *StubImageStore) AddImageToExpense(expense Transaction) (Transaction, error) {
 	is.addImageToExpenseCalls = append(is.addImageToExpenseCalls, "called")
 	expense.ImageURL = "test-image-url"
 	return expense, nil
@@ -342,7 +342,7 @@ func (is *StubInvalidImageStore) Validate(file multipart.File) (bool, error) {
 	return false, nil
 }
 
-func (is *StubInvalidImageStore) AddImageToExpense(expense Expense) (Expense, error) {
+func (is *StubInvalidImageStore) AddImageToExpense(expense Transaction) (Transaction, error) {
 	return expense, errors.New("image could not be added")
 }
 

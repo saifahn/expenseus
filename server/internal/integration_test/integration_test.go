@@ -1,4 +1,4 @@
-package expenseus_test
+package app_test
 
 import (
 	"encoding/json"
@@ -11,13 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/saifahn/expenseus/internal/app"
 	"github.com/saifahn/expenseus/internal/ddb"
+	"github.com/saifahn/expenseus/internal/router"
 	"github.com/stretchr/testify/assert"
 )
 
 const usersTableName = "integtest-users-table"
 const transactionsTableName = "integtest-transactions-table"
 
-func setUpDB(d dynamodbiface.DynamoDBAPI) (app.ExpenseStore, error) {
+func setUpDB(d dynamodbiface.DynamoDBAPI) (app.Store, error) {
 	err := ddb.CreateTestTable(d, usersTableName)
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func tearDownDB(d dynamodbiface.DynamoDBAPI) error {
 }
 
 // setUpTestServer sets up a server with with the real routes and a test
-// dynamodb instance, with stubs for the rest of the webservice
+// dynamodb instance, with stubs for the rest of the app
 func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 	ddbLocal := ddb.NewDynamoDBLocalAPI()
 	db, err := setUpDB(ddbLocal)
@@ -55,10 +56,10 @@ func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 	oauth := &app.StubOauthConfig{}
 	auth := &app.StubSessionManager{}
 	images := &app.StubImageStore{}
-	webservice := app.NewWebService(db, oauth, auth, "", images)
-	router := app.InitRouter(webservice)
+	a := app.New(db, oauth, auth, "", images)
+	r := router.Init(a)
 
-	return router, func(t *testing.T) {
+	return r, func(t *testing.T) {
 		err := tearDownDB(ddbLocal)
 		if err != nil {
 			t.Fatalf("could not tear down the database: %v", err)

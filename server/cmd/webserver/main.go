@@ -13,6 +13,7 @@ import (
 	"github.com/saifahn/expenseus/internal/app"
 	"github.com/saifahn/expenseus/internal/ddb"
 	"github.com/saifahn/expenseus/internal/googleoauth"
+	"github.com/saifahn/expenseus/internal/router"
 	"github.com/saifahn/expenseus/internal/s3images"
 	"github.com/saifahn/expenseus/internal/sessions"
 )
@@ -49,9 +50,9 @@ func main() {
 	sessions := sessions.New(tempHashKey, tempBlockKey)
 	images := s3images.New(useLocalAWSConfig)
 
-	wb := app.NewWebService(db, googleOauth, sessions, frontendURL, images)
+	a := app.New(db, googleOauth, sessions, frontendURL, images)
 
-	r := app.InitRouter(wb)
+	r := router.Init(a)
 
 	log.Fatal(http.ListenAndServe(":5000", r))
 }

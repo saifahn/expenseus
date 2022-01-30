@@ -1,15 +1,18 @@
-package app
+package router
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
-func InitRouter(wb *WebService) *chi.Mux {
+func Init(a *app.App) *chi.Mux {
 	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
@@ -27,36 +30,36 @@ func InitRouter(wb *WebService) *chi.Mux {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/expenses", func(r chi.Router) {
-			r.Use(wb.VerifyUser)
-			r.Get("/", wb.GetAllExpenses)
-			r.Post("/", wb.CreateExpense)
+			r.Use(a.VerifyUser)
+			r.Get("/", a.GetAllExpenses)
+			r.Post("/", a.CreateExpense)
 
 			r.Route("/user/{username}", func(r chi.Router) {
 				r.Use(UsernameCtx)
-				r.Get("/", wb.GetExpensesByUsername)
+				r.Get("/", a.GetExpensesByUsername)
 			})
 
 			r.Route("/{expenseID}", func(r chi.Router) {
 				r.Use(ExpenseIDCtx)
-				r.Get("/", wb.GetExpense)
+				r.Get("/", a.GetExpense)
 			})
 		})
 
 		r.Route("/users", func(r chi.Router) {
-			r.Use(wb.VerifyUser)
-			r.Get("/", wb.ListUsers)
-			r.Post("/", wb.CreateUser)
-			r.Get("/self", wb.GetSelf)
+			r.Use(a.VerifyUser)
+			r.Get("/", a.ListUsers)
+			r.Post("/", a.CreateUser)
+			r.Get("/self", a.GetSelf)
 
 			r.Route("/{userID}", func(r chi.Router) {
 				r.Use(UserIDCtx)
-				r.Get("/", wb.GetUser)
+				r.Get("/", a.GetUser)
 			})
 		})
 
-		r.Get("/login_google", wb.OauthLogin)
-		r.Get("/callback_google", wb.OauthCallback)
-		r.Get("/logout", wb.LogOut)
+		r.Get("/login_google", a.OauthLogin)
+		r.Get("/callback_google", a.OauthCallback)
+		r.Get("/logout", a.LogOut)
 	})
 
 	return r
@@ -66,7 +69,7 @@ func InitRouter(wb *WebService) *chi.Mux {
 func ExpenseIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		expenseID := chi.URLParam(r, "expenseID")
-		ctx := context.WithValue(r.Context(), CtxKeyExpenseID, expenseID)
+		ctx := context.WithValue(r.Context(), app.CtxKeyExpenseID, expenseID)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }
@@ -75,7 +78,7 @@ func ExpenseIDCtx(next http.Handler) http.Handler {
 func UsernameCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		username := chi.URLParam(r, "username")
-		ctx := context.WithValue(r.Context(), CtxKeyUsername, username)
+		ctx := context.WithValue(r.Context(), app.CtxKeyUsername, username)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }
@@ -84,7 +87,7 @@ func UsernameCtx(next http.Handler) http.Handler {
 func UserIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "userID")
-		ctx := context.WithValue(r.Context(), CtxKeyUserID, id)
+		ctx := context.WithValue(r.Context(), app.CtxKeyUserID, id)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

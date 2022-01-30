@@ -1,4 +1,4 @@
-import { Expense } from "components/ExpenseList";
+import { Transaction } from "components/TransactionList";
 import { User } from "components/UserList";
 import { v4 as uuidv4 } from "uuid";
 
@@ -47,18 +47,18 @@ export class UserAPI {
   }
 }
 
-export class ExpenseAPI {
-  baseURL = `${apiURL}/expenses`;
+export class TransactionAPI {
+  baseURL = `${apiURL}/transactions`;
 
-  async listExpenses() {
+  async listTransactions() {
     const res = await fetch(this.baseURL, {
       credentials: "include",
     });
-    const parsed: Expense[] = await res.json();
+    const parsed: Transaction[] = await res.json();
     return parsed;
   }
 
-  async createExpense(data: FormData) {
+  async createTransaction(data: FormData) {
     const res = await fetch(this.baseURL, {
       method: "POST",
       headers: {
@@ -69,17 +69,17 @@ export class ExpenseAPI {
     });
     if (res.ok) {
       // TODO: return the message from the server
-      return `Expense was successfully created`;
+      return `Transaction was successfully created`;
     }
     // TODO: handle this better?
     throw new Error(res.statusText);
   }
 
-  async getExpense(id: string) {
+  async getTransaction(id: string) {
     const res = await fetch(`${this.baseURL}/${id}`, {
       credentials: "include",
     });
-    const parsed: Expense = await res.json();
+    const parsed: Transaction = await res.json();
     return parsed;
   }
 }

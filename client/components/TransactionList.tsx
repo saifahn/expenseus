@@ -1,17 +1,17 @@
-import { ExpenseAPI } from "api";
+import { TransactionAPI } from "api";
 import { useState, useRef, useEffect, FormEvent } from "react";
-import ExpenseCard from "./ExpenseCard";
+import TransactionCard from "./TransactionCard";
 
-export interface Expense {
+export interface Transaction {
   name: string;
   id: string;
   userId: string;
   imageUrl?: string;
 }
 
-export default function ExpenseList() {
-  const [expenses, setExpenses] = useState<Expense[]>();
-  const [expenseName, setExpenseName] = useState("");
+export default function TransactionList() {
+  const [transactions, setTransactions] = useState<Transaction[]>();
+  const [transactionName, setTransactionName] = useState("");
   const [{ status, error }, setStatus] = useState({
     status: "idle",
     error: null,
@@ -20,22 +20,22 @@ export default function ExpenseList() {
   const cancelled = useRef(false);
   const imageInput = useRef(null);
 
-  async function fetchExpenses() {
+  async function fetchTransactions() {
     try {
-      const api = new ExpenseAPI();
-      const expenses = await api.listExpenses();
+      const api = new TransactionAPI();
+      const transactions = await api.listTransactions();
       if (!cancelled.current) {
-        setExpenses(expenses);
+        setTransactions(transactions);
       }
     } catch (err) {
       console.error(err);
     }
   }
 
-  async function createExpense(data: FormData) {
+  async function createTransaction(data: FormData) {
     try {
-      const api = new ExpenseAPI();
-      const response = await api.createExpense(data);
+      const api = new TransactionAPI();
+      const response = await api.createTransaction(data);
       setStatusMessage(response);
     } catch (err) {
       console.error(err);
@@ -47,21 +47,21 @@ export default function ExpenseList() {
     setStatus({ status: "loading", error: null });
     try {
       const data = new FormData();
-      data.append("expenseName", expenseName);
+      data.append("transactionName", transactionName);
       if (imageInput.current?.files.length) {
         data.append("image", imageInput.current.files[0]);
       }
 
-      await createExpense(data);
+      await createTransaction(data);
       setStatus({ status: "fulfilled", error: null });
-      await fetchExpenses();
+      await fetchTransactions();
     } catch (err) {
       setStatus({ status: "rejected", error: err });
     }
   }
 
   useEffect(() => {
-    fetchExpenses();
+    fetchTransactions();
     return () => {
       cancelled.current = true;
     };
@@ -69,13 +69,13 @@ export default function ExpenseList() {
 
   return (
     <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
-      <h2 className="text-2xl">Expenses</h2>
-      {expenses &&
-        expenses.map(expense => (
-          <ExpenseCard expense={expense} key={expense.id} />
+      <h2 className="text-2xl">transactions</h2>
+      {transactions &&
+        transactions.map(transaction => (
+          <TransactionCard transaction={transaction} key={transaction.id} />
         ))}
       <div className="mt-6">
-        <h2 className="text-2xl">Create a new expense</h2>
+        <h2 className="text-2xl">Create a new transaction</h2>
         <div className="mx-auto w-full max-w-xs">
           <form
             className="bg-white p-6 rounded-lg shadow-md"
@@ -89,8 +89,8 @@ export default function ExpenseList() {
                 className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
                 id="name"
                 type="text"
-                value={expenseName}
-                onChange={e => setExpenseName(e.target.value)}
+                value={transactionName}
+                onChange={e => setTransactionName(e.target.value)}
                 required
               />
             </div>
@@ -112,7 +112,7 @@ export default function ExpenseList() {
                 className="bg-indigo-500 hover:bg-indigo-700 text-white py-2 px-4 rounded focus:outline-none focus:ring"
                 type="submit"
               >
-                Create expense
+                Create transaction
               </button>
             </div>
           </form>

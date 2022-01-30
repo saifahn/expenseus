@@ -16,8 +16,8 @@ export default function Layout({ children }) {
             </Link>
           </li>
           <li className="ml-4">
-            <Link href="/expenses">
-              <a>Expenses</a>
+            <Link href="/transactions">
+              <a>transactions</a>
             </Link>
           </li>
         </ul>

@@ -1,26 +1,26 @@
 import { useRouter } from "next/router";
 import { useEffect, useState, useRef } from "react";
-import { ExpenseAPI } from "api";
-import { Expense } from "components/ExpenseList";
-import ExpenseCard from "components/ExpenseCard";
+import { TransactionAPI } from "api";
+import { Transaction } from "components/TransactionList";
+import TransactionCard from "components/TransactionCard";
 
-const SingleExpense = () => {
+const SingleTransaction = () => {
   const router = useRouter();
-  const { eid } = router.query;
-  const [expense, setExpense] = useState<Expense>();
+  const { tid } = router.query;
+  const [transaction, setTransaction] = useState<Transaction>();
   const [{ status, error }, setStatus] = useState({
     status: "idle",
     error: null,
   });
   const cancelled = useRef(false);
 
-  async function fetchExpense(id: string) {
+  async function fetchTransaction(id: string) {
     try {
       setStatus({ status: "pending", error: null });
-      const api = new ExpenseAPI();
-      const expense = await api.getExpense(id);
+      const api = new TransactionAPI();
+      const transaction = await api.getTransaction(id);
       if (!cancelled.current) {
-        setExpense(expense);
+        setTransaction(transaction);
       }
       setStatus({ status: "fulfilled", error: null });
     } catch (err) {
@@ -30,21 +30,21 @@ const SingleExpense = () => {
 
   useEffect(() => {
     if (!router.isReady) return;
-    fetchExpense(eid as string);
+    fetchTransaction(tid as string);
     return () => {
       cancelled.current = true;
     };
-  }, [eid, router.isReady]);
+  }, [tid, router.isReady]);
 
   return (
     <main className="container">
       {error ? (
         <h4>Sorry, there was an error, please try again</h4>
       ) : status === "fulfilled" ? (
-        expense ? (
-          <ExpenseCard expense={expense} />
+        transaction ? (
+          <TransactionCard transaction={transaction} />
         ) : (
-          <h4>Sorry, no expense found for ID: {eid}</h4>
+          <h4>Sorry, no transaction found for ID: {tid}</h4>
         )
       ) : (
         <h4>loading</h4>
@@ -53,4 +53,4 @@ const SingleExpense = () => {
   );
 };
 
-export default SingleExpense;
+export default SingleTransaction;

@@ -1,15 +1,15 @@
-import ExpenseList from "components/ExpenseList";
+import TransactionList from "components/TransactionList";
 import { render, screen } from "tests/test-utils";
 
-describe("ExpenseList component", () => {
-  test("has an expense name input", () => {
-    render(<ExpenseList />);
+describe("TransactionList component", () => {
+  test("has an transaction name input", () => {
+    render(<TransactionList />);
 
     expect(screen.getByLabelText("Name")).toBeInTheDocument();
   });
 
   test("has an input to upload an image", () => {
-    render(<ExpenseList />);
+    render(<TransactionList />);
 
     expect(
       screen.getByRole("button", { name: /Add picture/ })

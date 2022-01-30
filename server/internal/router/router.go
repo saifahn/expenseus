@@ -31,17 +31,17 @@ func Init(a *app.App) *chi.Mux {
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/expenses", func(r chi.Router) {
 			r.Use(a.VerifyUser)
-			r.Get("/", a.GetAllExpenses)
-			r.Post("/", a.CreateExpense)
+			r.Get("/", a.GetAllTransactions)
+			r.Post("/", a.CreateTransaction)
 
 			r.Route("/user/{username}", func(r chi.Router) {
 				r.Use(UsernameCtx)
-				r.Get("/", a.GetExpensesByUsername)
+				r.Get("/", a.GetTransactionsByUsername)
 			})
 
 			r.Route("/{expenseID}", func(r chi.Router) {
-				r.Use(ExpenseIDCtx)
-				r.Get("/", a.GetExpense)
+				r.Use(TransactionIDCtx)
+				r.Get("/", a.GetTransaction)
 			})
 		})
 
@@ -66,7 +66,7 @@ func Init(a *app.App) *chi.Mux {
 }
 
 // Gets the ID from the URL and adds it to the id context for the request.
-func ExpenseIDCtx(next http.Handler) http.Handler {
+func TransactionIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		expenseID := chi.URLParam(r, "expenseID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyTransactionID, expenseID)

@@ -45,7 +45,7 @@ func (d *dynamoDB) GetUser(id string) (app.User, error) {
 	return user, nil
 }
 
-func (d *dynamoDB) GetExpense(id string) (app.Transaction, error) {
+func (d *dynamoDB) GetTransaction(id string) (app.Transaction, error) {
 	t, err := d.transactionsTable.Get(id)
 	if err != nil {
 		return app.Transaction{}, err
@@ -58,7 +58,7 @@ func (d *dynamoDB) GetExpense(id string) (app.Transaction, error) {
 	return expense, nil
 }
 
-func (d *dynamoDB) GetExpensesByUsername(username string) ([]app.Transaction, error) {
+func (d *dynamoDB) GetTransactionsByUsername(username string) ([]app.Transaction, error) {
 	// look up users table for user with the name
 	u, err := d.usersTable.GetByUsername(username)
 	if err != nil {
@@ -80,7 +80,7 @@ func (d *dynamoDB) GetExpensesByUsername(username string) ([]app.Transaction, er
 	return expenses, nil
 }
 
-func (d *dynamoDB) GetAllExpenses() ([]app.Transaction, error) {
+func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	transactions, err := d.transactionsTable.GetAll()
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (d *dynamoDB) GetAllExpenses() ([]app.Transaction, error) {
 	return expenses, nil
 }
 
-func (d *dynamoDB) CreateExpense(ed app.TransactionDetails) error {
+func (d *dynamoDB) CreateTransaction(ed app.TransactionDetails) error {
 	// generate an ID
 	expenseID := uuid.New().String()
 	item := &TransactionItem{

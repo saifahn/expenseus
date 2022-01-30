@@ -74,7 +74,7 @@ func (i *ImageStoreS3) Validate(file multipart.File) (bool, error) {
 	return true, nil
 }
 
-func (i *ImageStoreS3) AddImageToExpense(expense app.Transaction) (app.Transaction, error) {
+func (i *ImageStoreS3) AddImageToTransaction(expense app.Transaction) (app.Transaction, error) {
 	if expense.ImageKey == "" {
 		return app.Transaction{}, errors.New("expense is missing imageKey")
 	}

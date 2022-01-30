@@ -15,59 +15,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetExpenseByID(t *testing.T) {
-	store := StubExpenseStore{
+func TestGetTransactionByID(t *testing.T) {
+	store := StubTransactionStore{
 		users: []User{},
 		expenses: map[string]Transaction{
-			"1":    TestSeanExpense,
-			"9281": TestTomomiExpense,
-			"134":  TestExpenseWithImage,
+			"1":    TestSeanTransaction,
+			"9281": TestTomomiTransaction,
+			"134":  TestTransactionWithImage,
 		},
 	}
 	images := StubImageStore{}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 
 	t.Run("get an expense by id", func(t *testing.T) {
-		request := NewGetExpenseRequest("1")
+		request := NewGetTransactionRequest("1")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpense)
+		handler := http.HandlerFunc(app.GetTransaction)
 		handler.ServeHTTP(response, request)
 
 		var got Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into Transaction, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, got, TestSeanExpense)
+		assert.Equal(t, got, TestSeanTransaction)
 	})
 
 	t.Run("gets another expense by id", func(t *testing.T) {
-		request := NewGetExpenseRequest("9281")
+		request := NewGetTransactionRequest("9281")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpense)
+		handler := http.HandlerFunc(app.GetTransaction)
 		handler.ServeHTTP(response, request)
 
 		var got Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into Transaction, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, got, TestTomomiExpense)
+		assert.Equal(t, got, TestTomomiTransaction)
 	})
 
 	t.Run("returns a response without an imageKey or imageUrl for an expense without an image", func(t *testing.T) {
-		request := NewGetExpenseRequest("9281")
+		request := NewGetTransactionRequest("9281")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpense)
+		handler := http.HandlerFunc(app.GetTransaction)
 		handler.ServeHTTP(response, request)
 
 		rawJSON := response.Body.String()
@@ -79,10 +79,10 @@ func TestGetExpenseByID(t *testing.T) {
 	})
 
 	t.Run("returns a response with an imageUrl for an expense that has an image", func(t *testing.T) {
-		request := NewGetExpenseRequest("134")
+		request := NewGetTransactionRequest("134")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpense)
+		handler := http.HandlerFunc(app.GetTransaction)
 		handler.ServeHTTP(response, request)
 
 		rawJSON := response.Body.String()
@@ -91,86 +91,86 @@ func TestGetExpenseByID(t *testing.T) {
 		assert.Equal(t, http.StatusOK, response.Code)
 		// TODO somehow don't return this to the front end but we need to use it in the back end so we can't just use "-"?
 		// assert.NotContains(t, rawJSON, "imageKey")
-		assert.Len(t, images.addImageToExpenseCalls, 1)
+		assert.Len(t, images.addImageToTransactionCalls, 1)
 		assert.Contains(t, rawJSON, "imageUrl")
 	})
 
 	t.Run("returns 404 on non-existent expense", func(t *testing.T) {
-		request := NewGetExpenseRequest("13371337")
+		request := NewGetTransactionRequest("13371337")
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpense)
+		handler := http.HandlerFunc(app.GetTransaction)
 		handler.ServeHTTP(response, request)
 
 		var got Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into Expense, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into Transaction, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 }
 
-func TestGetExpenseByUser(t *testing.T) {
-	store := StubExpenseStore{
+func TestGetTransactionByUser(t *testing.T) {
+	store := StubTransactionStore{
 		users: []User{
 			TestSeanUser,
 			TestTomomiUser,
 		},
 		expenses: map[string]Transaction{
-			"1":    TestSeanExpense,
-			"9281": TestTomomiExpense,
+			"1":    TestSeanTransaction,
+			"9281": TestTomomiTransaction,
 		},
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	t.Run("gets tomochi's expenses", func(t *testing.T) {
-		request := NewGetExpensesByUsernameRequest(TestTomomiUser.Username)
+		request := NewGetTransactionsByUsernameRequest(TestTomomiUser.Username)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpensesByUsername)
+		handler := http.HandlerFunc(app.GetTransactionsByUsername)
 		handler.ServeHTTP(response, request)
 
 		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Len(t, got, 1)
-		assert.Contains(t, got, TestTomomiExpense)
+		assert.Contains(t, got, TestTomomiTransaction)
 	})
 
 	t.Run("gets saifahn's expenses", func(t *testing.T) {
-		request := NewGetExpensesByUsernameRequest(TestSeanUser.Username)
+		request := NewGetTransactionsByUsernameRequest(TestSeanUser.Username)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetExpensesByUsername)
+		handler := http.HandlerFunc(app.GetTransactionsByUsername)
 		handler.ServeHTTP(response, request)
 
 		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
 		assert.Len(t, got, 1)
-		assert.Contains(t, got, TestSeanExpense)
+		assert.Contains(t, got, TestSeanTransaction)
 	})
 }
 
-func TestCreateExpense(t *testing.T) {
+func TestCreateTransaction(t *testing.T) {
 	t.Run("returns an error if there is no user in the context", func(t *testing.T) {
-		store := StubExpenseStore{}
+		store := StubTransactionStore{}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader("Test Expense"),
+			"expenseName": strings.NewReader("Test Transaction"),
 		}
 
 		var b bytes.Buffer
@@ -187,29 +187,29 @@ func TestCreateExpense(t *testing.T) {
 		request.Header.Set("Content-Type", w.FormDataContentType())
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.CreateExpense)
+		handler := http.HandlerFunc(app.CreateTransaction)
 		assert.Panics(t, func() {
 			handler.ServeHTTP(response, request)
 		}, "The code did not panic due to a lack of context")
 	})
 
 	t.Run("creates a new expense on POST", func(t *testing.T) {
-		store := StubExpenseStore{
+		store := StubTransactionStore{
 			expenses: map[string]Transaction{},
 		}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader("Test Expense"),
+			"expenseName": strings.NewReader("Test Transaction"),
 		}
-		request := addUserCookieAndContext(NewCreateExpenseRequest(values), TestTomomiUser.ID)
+		request := addUserCookieAndContext(NewCreateTransactionRequest(values), TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.CreateExpense)
+		handler := http.HandlerFunc(app.CreateTransaction)
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusAccepted, response.Code)
-		assert.Len(t, store.recordExpenseCalls, 1)
+		assert.Len(t, store.recordTransactionCalls, 1)
 	})
 
 	// prepares a temp file, information, and values for image upload tests
@@ -218,7 +218,7 @@ func TestCreateExpense(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expenseName := "Test Expense with Image"
+		expenseName := "Test Transaction with Image"
 
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader(expenseName),
@@ -228,7 +228,7 @@ func TestCreateExpense(t *testing.T) {
 	}
 
 	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
-		store := StubExpenseStore{
+		store := StubTransactionStore{
 			expenses: map[string]Transaction{},
 		}
 		images := StubInvalidImageStore{}
@@ -238,10 +238,10 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := addUserCookieAndContext(NewCreateExpenseRequest(values), TestSeanUser.ID)
+		request := addUserCookieAndContext(NewCreateTransactionRequest(values), TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.CreateExpense)
+		handler := http.HandlerFunc(app.CreateTransaction)
 		handler.ServeHTTP(response, request)
 
 		// the invalid image store will return this error if the image is invalid
@@ -250,7 +250,7 @@ func TestCreateExpense(t *testing.T) {
 	})
 
 	t.Run("if an image is provided and the image check is successful, the image is uploaded and an expense is created with an image key", func(t *testing.T) {
-		store := StubExpenseStore{
+		store := StubTransactionStore{
 			expenses: map[string]Transaction{},
 		}
 		images := StubImageStore{}
@@ -261,16 +261,16 @@ func TestCreateExpense(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := addUserCookieAndContext(NewCreateExpenseRequest(values), userID)
+		request := addUserCookieAndContext(NewCreateTransactionRequest(values), userID)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.CreateExpense)
+		handler := http.HandlerFunc(app.CreateTransaction)
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusAccepted, response.Code)
 		assert.Len(t, images.uploadCalls, 1)
-		assert.Len(t, store.recordExpenseCalls, 1)
-		got := store.recordExpenseCalls[0]
+		assert.Len(t, store.recordTransactionCalls, 1)
+		got := store.recordTransactionCalls[0]
 		want := TransactionDetails{
 			Name:     expenseName,
 			UserID:   userID,
@@ -280,67 +280,67 @@ func TestCreateExpense(t *testing.T) {
 	})
 }
 
-func TestGetAllExpenses(t *testing.T) {
+func TestGetAllTransactions(t *testing.T) {
 	t.Run("gets all expenses with one expense", func(t *testing.T) {
-		wantedExpenses := []Transaction{
-			TestTomomiExpense,
+		wantedTransactions := []Transaction{
+			TestTomomiTransaction,
 		}
-		store := StubExpenseStore{
+		store := StubTransactionStore{
 			users: []User{},
 			expenses: map[string]Transaction{
-				"9281": TestTomomiExpense,
+				"9281": TestTomomiTransaction,
 			},
 		}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-		request := NewGetAllExpensesRequest()
+		request := NewGetAllTransactionsRequest()
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetAllExpenses)
+		handler := http.HandlerFunc(app.GetAllTransactions)
 		handler.ServeHTTP(response, request)
 
 		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, len(wantedExpenses), len(got))
-		assert.ElementsMatch(t, got, wantedExpenses)
+		assert.Equal(t, len(wantedTransactions), len(got))
+		assert.ElementsMatch(t, got, wantedTransactions)
 	})
 
 	t.Run("gets all expenses with more than one expense", func(t *testing.T) {
-		wantedExpenses := []Transaction{
-			TestSeanExpense, TestTomomiExpense, TestTomomiExpense2,
+		wantedTransactions := []Transaction{
+			TestSeanTransaction, TestTomomiTransaction, TestTomomiTransaction2,
 		}
-		store := StubExpenseStore{
+		store := StubTransactionStore{
 			users: []User{},
 			expenses: map[string]Transaction{
-				"1":     TestSeanExpense,
-				"9281":  TestTomomiExpense,
-				"14928": TestTomomiExpense2,
+				"1":     TestSeanTransaction,
+				"9281":  TestTomomiTransaction,
+				"14928": TestTomomiTransaction2,
 			},
 		}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-		request := NewGetAllExpensesRequest()
+		request := NewGetAllTransactionsRequest()
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetAllExpenses)
+		handler := http.HandlerFunc(app.GetAllTransactions)
 		handler.ServeHTTP(response, request)
 
 		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
 		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, len(wantedExpenses), len(got))
-		assert.ElementsMatch(t, got, wantedExpenses)
+		assert.Equal(t, len(wantedTransactions), len(got))
+		assert.ElementsMatch(t, got, wantedTransactions)
 	})
 
 }

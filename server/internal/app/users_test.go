@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	store := StubExpenseStore{}
+	store := StubTransactionStore{}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	user := TestSeanUser
@@ -31,7 +31,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestListUsers(t *testing.T) {
-	store := StubExpenseStore{users: []User{TestSeanUser, TestTomomiUser}}
+	store := StubTransactionStore{users: []User{TestSeanUser, TestTomomiUser}}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	request := NewGetAllUsersRequest()
@@ -43,7 +43,7 @@ func TestListUsers(t *testing.T) {
 	var got []User
 	err := json.NewDecoder(response.Body).Decode(&got)
 	if err != nil {
-		t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+		t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 	}
 
 	assert.Equal(t, http.StatusOK, response.Code)
@@ -53,7 +53,7 @@ func TestListUsers(t *testing.T) {
 
 func TestGetUserByID(t *testing.T) {
 	t.Run("returns a users details if the user exists", func(t *testing.T) {
-		store := StubExpenseStore{users: []User{TestSeanUser}}
+		store := StubTransactionStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
@@ -77,7 +77,7 @@ func TestGetUserByID(t *testing.T) {
 
 func TestGetSelf(t *testing.T) {
 	t.Run("returns the user details from the stored session if the user exists", func(t *testing.T) {
-		store := StubExpenseStore{users: []User{TestSeanUser}}
+		store := StubTransactionStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
@@ -93,7 +93,7 @@ func TestGetSelf(t *testing.T) {
 		var got User
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 		}
 
 		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
@@ -102,7 +102,7 @@ func TestGetSelf(t *testing.T) {
 	})
 
 	t.Run("returns a 404 if the user does not exist", func(t *testing.T) {
-		store := StubExpenseStore{users: []User{TestSeanUser}}
+		store := StubTransactionStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 

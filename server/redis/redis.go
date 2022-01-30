@@ -32,7 +32,7 @@ type Redis struct {
 	db redis.Client
 }
 
-func (r *Redis) CreateExpense(ed app.TransactionDetails) error {
+func (r *Redis) CreateTransaction(ed app.TransactionDetails) error {
 	// generate id for expense
 	expenseID := uuid.New().String()
 	// get the time now for the score on the sets
@@ -50,11 +50,11 @@ func (r *Redis) CreateExpense(ed app.TransactionDetails) error {
 
 	pipe := r.db.TxPipeline()
 	// record the expenseID in the expense sorted set
-	pipe.ZAdd(ctx, AllExpensesKey(), &redis.Z{Score: float64(createdAt), Member: expenseID})
+	pipe.ZAdd(ctx, AllTransactionsKey(), &redis.Z{Score: float64(createdAt), Member: expenseID})
 	// record the expenseID in the user-expense sorted set
-	pipe.ZAdd(ctx, UserExpensesKey(ed.UserID), &redis.Z{Score: float64(createdAt), Member: expenseID})
+	pipe.ZAdd(ctx, UserTransactionsKey(ed.UserID), &redis.Z{Score: float64(createdAt), Member: expenseID})
 	// set the expense at the expense key
-	pipe.Set(ctx, ExpenseKey(expenseID), expenseJSON, 0)
+	pipe.Set(ctx, TransactionKey(expenseID), expenseJSON, 0)
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return err
@@ -62,12 +62,12 @@ func (r *Redis) CreateExpense(ed app.TransactionDetails) error {
 	return nil
 }
 
-func (r *Redis) GetAllExpenses() ([]app.Transaction, error) {
-	expenseIDs := r.db.ZRange(ctx, AllExpensesKey(), 0, -1).Val()
+func (r *Redis) GetAllTransactions() ([]app.Transaction, error) {
+	expenseIDs := r.db.ZRange(ctx, AllTransactionsKey(), 0, -1).Val()
 
 	var expenses []app.Transaction
 	for _, id := range expenseIDs {
-		e, err := r.GetExpense(id)
+		e, err := r.GetTransaction(id)
 		if err != nil {
 			return nil, err
 		}
@@ -78,15 +78,15 @@ func (r *Redis) GetAllExpenses() ([]app.Transaction, error) {
 	return expenses, nil
 }
 
-func (r *Redis) GetExpensesByUsername(username string) ([]app.Transaction, error) {
+func (r *Redis) GetTransactionsByUsername(username string) ([]app.Transaction, error) {
 	// get userid from username/userid map
 	userid := r.db.HGet(ctx, UsernameIDMapKey(), username).Val()
 	// get expenseIDs from the user expenses set
-	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(userid), 0, -1).Val()
+	expenseIDs := r.db.ZRange(ctx, UserTransactionsKey(userid), 0, -1).Val()
 
 	var expenses []app.Transaction
 	for _, id := range expenseIDs {
-		e, err := r.GetExpense(id)
+		e, err := r.GetTransaction(id)
 		if err != nil {
 			return nil, err
 		}
@@ -97,8 +97,8 @@ func (r *Redis) GetExpensesByUsername(username string) ([]app.Transaction, error
 	return expenses, nil
 }
 
-func (r *Redis) GetExpense(expenseID string) (app.Transaction, error) {
-	val, err := r.db.Get(ctx, ExpenseKey(expenseID)).Result()
+func (r *Redis) GetTransaction(expenseID string) (app.Transaction, error) {
+	val, err := r.db.Get(ctx, TransactionKey(expenseID)).Result()
 	if err != nil {
 		return app.Transaction{}, err
 	}
@@ -166,15 +166,15 @@ func (r *Redis) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
-func AllExpensesKey() string {
+func AllTransactionsKey() string {
 	return "expenses"
 }
 
-func UserExpensesKey(userid string) string {
+func UserTransactionsKey(userid string) string {
 	return fmt.Sprintf("user:%v:expenses", userid)
 }
 
-func ExpenseKey(id string) string {
+func TransactionKey(id string) string {
 	return fmt.Sprintf("expense:%v", id)
 }
 

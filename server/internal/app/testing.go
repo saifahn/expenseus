@@ -25,37 +25,37 @@ var (
 		ID:       "tomomi_id",
 	}
 
-	TestSeanExpenseDetails = TransactionDetails{
-		Name:   "Expense 1",
+	TestSeanTransactionDetails = TransactionDetails{
+		Name:   "Transaction 1",
 		UserID: TestSeanUser.ID,
 	}
-	TestSeanExpense = Transaction{
+	TestSeanTransaction = Transaction{
 		ID:                 "1",
-		TransactionDetails: TestSeanExpenseDetails,
+		TransactionDetails: TestSeanTransactionDetails,
 	}
 
-	TestTomomiExpenseDetails = TransactionDetails{
-		Name:   "Expense 2",
+	TestTomomiTransactionDetails = TransactionDetails{
+		Name:   "Transaction 2",
 		UserID: TestTomomiUser.ID,
 	}
-	TestTomomiExpense = Transaction{
+	TestTomomiTransaction = Transaction{
 		ID:                 "2",
-		TransactionDetails: TestTomomiExpenseDetails,
+		TransactionDetails: TestTomomiTransactionDetails,
 	}
 
-	TestTomomiExpense2Details = TransactionDetails{
-		Name:   "Expense 3",
+	TestTomomiTransaction2Details = TransactionDetails{
+		Name:   "Transaction 3",
 		UserID: TestTomomiUser.ID,
 	}
-	TestTomomiExpense2 = Transaction{
+	TestTomomiTransaction2 = Transaction{
 		ID:                 "3",
-		TransactionDetails: TestTomomiExpense2Details,
+		TransactionDetails: TestTomomiTransaction2Details,
 	}
 
-	TestExpenseWithImage = Transaction{
+	TestTransactionWithImage = Transaction{
 		ID: "123",
 		TransactionDetails: TransactionDetails{
-			Name:     "ExpenseWithImage",
+			Name:     "TransactionWithImage",
 			UserID:   "an_ID",
 			ImageKey: "test-image-key",
 		},
@@ -68,17 +68,17 @@ func addUserCookieAndContext(req *http.Request, id string) *http.Request {
 	return req.WithContext(ctx)
 }
 
-// NewGetExpenseRequest creates a request to be used in tests get an expense
+// NewGetTransactionRequest creates a request to be used in tests get an expense
 // by ID, with ID in the request context.
-func NewGetExpenseRequest(id string) *http.Request {
+func NewGetTransactionRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyTransactionID, id)
 	return req.WithContext(ctx)
 }
 
-// NewCreateExpenseRequest creates a request to be used in tests to create an
+// NewCreateTransactionRequest creates a request to be used in tests to create an
 // expense
-func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
+func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	for key, r := range values {
@@ -110,17 +110,17 @@ func NewCreateExpenseRequest(values map[string]io.Reader) *http.Request {
 	return req
 }
 
-// NewGetExpensesByUsernameRequest creates a request to be used in tests to get all
+// NewGetTransactionsByUsernameRequest creates a request to be used in tests to get all
 // expenses of a user, with the user in the request context.
-func NewGetExpensesByUsernameRequest(username string) *http.Request {
+func NewGetTransactionsByUsernameRequest(username string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/expenses/user/%s", username), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
 	return req.WithContext(ctx)
 }
 
-// NewGetAllExpensesRequest creates a request to be used in tests to get all
+// NewGetAllTransactionsRequest creates a request to be used in tests to get all
 // expenses.
-func NewGetAllExpensesRequest() *http.Request {
+func NewGetAllTransactionsRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/expenses", nil)
 	return req
 }
@@ -229,22 +229,22 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 // #endregion OAuth
 
 // #region Store
-type StubExpenseStore struct {
-	expenses           map[string]Transaction
-	users              []User
-	recordExpenseCalls []TransactionDetails
+type StubTransactionStore struct {
+	expenses               map[string]Transaction
+	users                  []User
+	recordTransactionCalls []TransactionDetails
 }
 
-func (s *StubExpenseStore) GetExpense(id string) (Transaction, error) {
+func (s *StubTransactionStore) GetTransaction(id string) (Transaction, error) {
 	expense := s.expenses[id]
-	// check for empty Expense
+	// check for empty Transaction
 	if expense == (Transaction{}) {
 		return Transaction{}, errors.New("expense not found")
 	}
 	return expense, nil
 }
 
-func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Transaction, error) {
+func (s *StubTransactionStore) GetTransactionsByUsername(username string) ([]Transaction, error) {
 	var targetUser User
 	for _, u := range s.users {
 		if u.Username == username {
@@ -263,20 +263,20 @@ func (s *StubExpenseStore) GetExpensesByUsername(username string) ([]Transaction
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) CreateExpense(ed TransactionDetails) error {
+func (s *StubTransactionStore) CreateTransaction(ed TransactionDetails) error {
 	testId := fmt.Sprintf("tid-%v", ed.Name)
 	expense := Transaction{
 		TransactionDetails: ed,
 		ID:                 testId,
 	}
 	s.expenses[testId] = expense
-	s.recordExpenseCalls = append(s.recordExpenseCalls, TransactionDetails{
+	s.recordTransactionCalls = append(s.recordTransactionCalls, TransactionDetails{
 		Name: ed.Name, UserID: ed.UserID, ImageKey: ed.ImageKey,
 	})
 	return nil
 }
 
-func (s *StubExpenseStore) GetAllExpenses() ([]Transaction, error) {
+func (s *StubTransactionStore) GetAllTransactions() ([]Transaction, error) {
 	var expenses []Transaction
 	for _, e := range s.expenses {
 		expenses = append(expenses, e)
@@ -284,7 +284,7 @@ func (s *StubExpenseStore) GetAllExpenses() ([]Transaction, error) {
 	return expenses, nil
 }
 
-func (s *StubExpenseStore) GetUser(id string) (User, error) {
+func (s *StubTransactionStore) GetUser(id string) (User, error) {
 	for _, u := range s.users {
 		if u.ID == id {
 			return u, nil
@@ -293,12 +293,12 @@ func (s *StubExpenseStore) GetUser(id string) (User, error) {
 	return User{}, errors.New("user not found")
 }
 
-func (s *StubExpenseStore) CreateUser(u User) error {
+func (s *StubTransactionStore) CreateUser(u User) error {
 	s.users = append(s.users, u)
 	return nil
 }
 
-func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
+func (s *StubTransactionStore) GetAllUsers() ([]User, error) {
 	return s.users, nil
 }
 
@@ -308,8 +308,8 @@ func (s *StubExpenseStore) GetAllUsers() ([]User, error) {
 const testImageKey = "TEST_IMAGE_KEY"
 
 type StubImageStore struct {
-	uploadCalls            []string
-	addImageToExpenseCalls []string
+	uploadCalls                []string
+	addImageToTransactionCalls []string
 }
 
 func (is *StubImageStore) Upload(file multipart.File, header multipart.FileHeader) (string, error) {
@@ -321,8 +321,8 @@ func (is *StubImageStore) Validate(file multipart.File) (bool, error) {
 	return true, nil
 }
 
-func (is *StubImageStore) AddImageToExpense(expense Transaction) (Transaction, error) {
-	is.addImageToExpenseCalls = append(is.addImageToExpenseCalls, "called")
+func (is *StubImageStore) AddImageToTransaction(expense Transaction) (Transaction, error) {
+	is.addImageToTransactionCalls = append(is.addImageToTransactionCalls, "called")
 	expense.ImageURL = "test-image-url"
 	return expense, nil
 }
@@ -342,7 +342,7 @@ func (is *StubInvalidImageStore) Validate(file multipart.File) (bool, error) {
 	return false, nil
 }
 
-func (is *StubInvalidImageStore) AddImageToExpense(expense Transaction) (Transaction, error) {
+func (is *StubInvalidImageStore) AddImageToTransaction(expense Transaction) (Transaction, error) {
 	return expense, errors.New("image could not be added")
 }
 

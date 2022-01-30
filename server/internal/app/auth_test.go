@@ -11,7 +11,7 @@ import (
 )
 
 func TestOauthLogin(t *testing.T) {
-	store := StubExpenseStore{}
+	store := StubTransactionStore{}
 	oauth := StubOauthConfig{}
 	app := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
@@ -34,7 +34,7 @@ func TestOauthLogin(t *testing.T) {
 
 func TestOauthCallback(t *testing.T) {
 	t.Run("creates a user when user doesn't exist yet and creates a new session with the user", func(t *testing.T) {
-		store := StubExpenseStore{users: []User{}}
+		store := StubTransactionStore{users: []User{}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
 		frontend := "http://a.test"
@@ -63,7 +63,7 @@ func TestOauthCallback(t *testing.T) {
 	})
 
 	t.Run("doesn't create a new user when the user already exists, and saves the session with the user in the context", func(t *testing.T) {
-		store := StubExpenseStore{users: []User{TestSeanUser}}
+		store := StubTransactionStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
 		frontend := "http://another.test"
@@ -94,30 +94,30 @@ func TestOauthCallback(t *testing.T) {
 
 func TestVerifyUser(t *testing.T) {
 	t.Run("returns a 401 response when the user is not authorized", func(t *testing.T) {
-		store := StubExpenseStore{}
+		store := StubTransactionStore{}
 		oauth := StubOauthConfig{}
 		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
-		request := NewGetAllExpensesRequest()
+		request := NewGetAllTransactionsRequest()
 		response := httptest.NewRecorder()
 
-		handler := a.VerifyUser(http.HandlerFunc(a.GetAllExpenses))
+		handler := a.VerifyUser(http.HandlerFunc(a.GetAllTransactions))
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusUnauthorized, response.Code)
 	})
 
 	t.Run("returns a 200 response when the user is authorized, and passes the request with the user ID in the context to the appropriate route", func(t *testing.T) {
-		store := StubExpenseStore{expenses: map[string]Transaction{"1": TestSeanExpense}}
+		store := StubTransactionStore{expenses: map[string]Transaction{"1": TestSeanTransaction}}
 		oauth := StubOauthConfig{}
 		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
 
-		request := NewGetAllExpensesRequest()
+		request := NewGetAllTransactionsRequest()
 		// simulate a cookie session storage here
 		request.AddCookie(&ValidCookie)
 		response := httptest.NewRecorder()
 
-		handler := a.VerifyUser(http.HandlerFunc(a.GetAllExpenses))
+		handler := a.VerifyUser(http.HandlerFunc(a.GetAllTransactions))
 		handler.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusOK, response.Code)
@@ -125,16 +125,16 @@ func TestVerifyUser(t *testing.T) {
 		var got []Transaction
 		err := json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Expenses, '%v'", response.Body, err)
+			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
 		}
 
-		assert.ElementsMatch(t, got, []Transaction{TestSeanExpense})
+		assert.ElementsMatch(t, got, []Transaction{TestSeanTransaction})
 	})
 }
 
 func TestLogOut(t *testing.T) {
 	t.Run("session manager calls remove", func(t *testing.T) {
-		store := StubExpenseStore{users: []User{TestSeanUser}}
+		store := StubTransactionStore{users: []User{TestSeanUser}}
 		oauth := StubOauthConfig{}
 		sessions := StubSessionManager{}
 		frontend := "http://test.base"

@@ -163,12 +163,12 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	})
 }
 
-func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-	var createTestExpense = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
+func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
+	var createTestTransaction = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
 		values := map[string]io.Reader{
 			"expenseName": strings.NewReader(ed.Name),
 		}
-		request := app.NewCreateExpenseRequest(values)
+		request := app.NewCreateTransactionRequest(values)
 		request.AddCookie(&http.Cookie{Name: "session", Value: userid})
 		response := httptest.NewRecorder()
 		r.ServeHTTP(response, request)
@@ -184,24 +184,24 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		createUser(t, app.TestSeanUser, router)
 
 		// create a transaction and store it
-		wantedExpenseDetails := app.TestSeanExpenseDetails
-		createTestExpense(t, router, wantedExpenseDetails, wantedExpenseDetails.UserID)
+		wantedTransactionDetails := app.TestSeanTransactionDetails
+		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
 		// try and get it
-		request := app.NewGetAllExpensesRequest()
-		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		request := app.NewGetAllTransactionsRequest()
+		request.AddCookie(&http.Cookie{Name: "session", Value: wantedTransactionDetails.UserID})
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
 		var expensesGot []app.Transaction
 		err := json.NewDecoder(response.Body).Decode(&expensesGot)
 		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
 		}
 
 		assert.Equal(http.StatusOK, response.Code)
 		assert.Len(expensesGot, 1)
-		assert.Equal(expensesGot[0].TransactionDetails, wantedExpenseDetails)
+		assert.Equal(expensesGot[0].TransactionDetails, wantedTransactionDetails)
 	})
 
 	t.Run("expenses can be retrieved by ID", func(t *testing.T) {
@@ -210,10 +210,10 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		assert := assert.New(t)
 		createUser(t, app.TestSeanUser, router)
 
-		wantedExpenseDetails := app.TestSeanExpenseDetails
-		createTestExpense(t, router, wantedExpenseDetails, wantedExpenseDetails.UserID)
+		wantedTransactionDetails := app.TestSeanTransactionDetails
+		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
-		request := app.NewGetAllExpensesRequest()
+		request := app.NewGetAllTransactionsRequest()
 		request.AddCookie(&app.ValidCookie)
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -221,14 +221,14 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		var expensesGot []app.Transaction
 		err := json.NewDecoder(response.Body).Decode(&expensesGot)
 		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
 		}
 
 		// make sure the ID exists on the struct
 		expenseID := expensesGot[0].ID
 		assert.NotZero(expenseID)
 
-		request = app.NewGetExpenseRequest(expenseID)
+		request = app.NewGetTransactionRequest(expenseID)
 		request.AddCookie(&app.ValidCookie)
 		response = httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -237,10 +237,10 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		var got app.Transaction
 		err = json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Errorf("error parsing response from server %q into Expense struct: %v", response.Body, err)
+			t.Errorf("error parsing response from server %q into Transaction struct: %v", response.Body, err)
 		}
 
-		assert.Equal(wantedExpenseDetails, got.TransactionDetails)
+		assert.Equal(wantedTransactionDetails, got.TransactionDetails)
 		assert.Equal(expensesGot[0], got)
 	})
 
@@ -251,10 +251,10 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		assert := assert.New(t)
 		createUser(t, app.TestSeanUser, router)
 
-		wantedExpenseDetails := app.TestSeanExpenseDetails
-		createTestExpense(t, router, wantedExpenseDetails, app.TestSeanUser.ID)
+		wantedTransactionDetails := app.TestSeanTransactionDetails
+		createTestTransaction(t, router, wantedTransactionDetails, app.TestSeanUser.ID)
 
-		request := app.NewGetExpensesByUsernameRequest(app.TestSeanUser.Username)
+		request := app.NewGetTransactionsByUsernameRequest(app.TestSeanUser.Username)
 		request.AddCookie(&app.ValidCookie)
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -263,10 +263,10 @@ func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
 		var expensesGot []app.Transaction
 		err := json.NewDecoder(response.Body).Decode(&expensesGot)
 		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
 		}
 
 		assert.Len(expensesGot, 1)
-		assert.Equal(wantedExpenseDetails, expensesGot[0].TransactionDetails)
+		assert.Equal(wantedTransactionDetails, expensesGot[0].TransactionDetails)
 	})
 }

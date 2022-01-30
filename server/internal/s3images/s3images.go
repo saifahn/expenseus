@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 type ImageStoreS3 struct {
@@ -74,22 +74,22 @@ func (i *ImageStoreS3) Validate(file multipart.File) (bool, error) {
 	return true, nil
 }
 
-func (i *ImageStoreS3) AddImageToExpense(expense expenseus.Expense) (expenseus.Expense, error) {
-	if expense.ImageKey == "" {
-		return expenseus.Expense{}, errors.New("expense is missing imageKey")
+func (i *ImageStoreS3) AddImageToTransaction(transaction app.Transaction) (app.Transaction, error) {
+	if transaction.ImageKey == "" {
+		return app.Transaction{}, errors.New("transaction is missing imageKey")
 	}
 
 	svc := s3.New(i.session)
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(i.bucket),
-		Key:    aws.String(expense.ImageKey),
+		Key:    aws.String(transaction.ImageKey),
 	})
 
 	urlStr, err := req.Presign(15 * time.Minute)
 	if err != nil {
-		return expenseus.Expense{}, errors.New(fmt.Sprintf("failed to sign image URL: %v", err))
+		return app.Transaction{}, errors.New(fmt.Sprintf("failed to sign image URL: %v", err))
 	}
 
-	expense.ImageURL = urlStr
-	return expense, nil
+	transaction.ImageURL = urlStr
+	return transaction, nil
 }

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,14 +28,14 @@ func TestTransactionTable(t *testing.T) {
 	_, err = transactions.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	testED := &expenseus.ExpenseDetails{
+	testED := &app.TransactionDetails{
 		UserID: "test-user",
-		Name:   "test-expense",
+		Name:   "test-transaction",
 	}
 
 	item := &TransactionItem{
-		ID:             "test-item-id",
-		ExpenseDetails: *testED,
+		ID:                 "test-item-id",
+		TransactionDetails: *testED,
 	}
 
 	// no error raised the first time
@@ -55,13 +55,13 @@ func TestTransactionTable(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(item, got)
 
-	// get all expenses
+	// get all transactions
 	itemsGot, err := transactions.GetAll()
 	assert.NoError(err)
 	assert.Len(itemsGot, 1)
 	assert.Contains(itemsGot, *item)
 
-	// get the expenses by username
+	// get the transactions by username
 	itemsGot, err = transactions.GetByUserID(testED.UserID)
 	assert.NoError(err)
 	assert.Contains(itemsGot, *item)

@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 type dynamoDB struct {
@@ -23,7 +23,7 @@ func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName stri
 	return &dynamoDB{usersTable: usersTable, transactionsTable: transactionsTable}
 }
 
-func (d *dynamoDB) CreateUser(u expenseus.User) error {
+func (d *dynamoDB) CreateUser(u app.User) error {
 	item := &UserItem{
 		User: u,
 	}
@@ -35,91 +35,91 @@ func (d *dynamoDB) CreateUser(u expenseus.User) error {
 	return nil
 }
 
-func (d *dynamoDB) GetUser(id string) (expenseus.User, error) {
+func (d *dynamoDB) GetUser(id string) (app.User, error) {
 	u, err := d.usersTable.Get(id)
 	if err != nil {
-		return expenseus.User{}, err
+		return app.User{}, err
 	}
 	user := u.User
 
 	return user, nil
 }
 
-func (d *dynamoDB) GetExpense(id string) (expenseus.Expense, error) {
+func (d *dynamoDB) GetTransaction(id string) (app.Transaction, error) {
 	t, err := d.transactionsTable.Get(id)
 	if err != nil {
-		return expenseus.Expense{}, err
+		return app.Transaction{}, err
 	}
 
-	expense := expenseus.Expense{
-		ID:             t.ID,
-		ExpenseDetails: t.ExpenseDetails,
+	transaction := app.Transaction{
+		ID:                 t.ID,
+		TransactionDetails: t.TransactionDetails,
 	}
-	return expense, nil
+	return transaction, nil
 }
 
-func (d *dynamoDB) GetExpensesByUsername(username string) ([]expenseus.Expense, error) {
+func (d *dynamoDB) GetTransactionsByUsername(username string) ([]app.Transaction, error) {
 	// look up users table for user with the name
 	u, err := d.usersTable.GetByUsername(username)
 	if err != nil {
 		return nil, err
 	}
-	// then look in the transactions table for expenses with that ID
+	// then look in the transactions table for transactions with that ID
 	tItems, err := d.transactionsTable.GetByUserID(u.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	expenses := []expenseus.Expense{}
+	transactions := []app.Transaction{}
 	for _, t := range tItems {
-		expenses = append(expenses, expenseus.Expense{
-			ID:             t.ID,
-			ExpenseDetails: t.ExpenseDetails,
+		transactions = append(transactions, app.Transaction{
+			ID:                 t.ID,
+			TransactionDetails: t.TransactionDetails,
 		})
 	}
-	return expenses, nil
+	return transactions, nil
 }
 
-func (d *dynamoDB) GetAllExpenses() ([]expenseus.Expense, error) {
-	transactions, err := d.transactionsTable.GetAll()
+func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
+	transactionItems, err := d.transactionsTable.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var expenses []expenseus.Expense
-	for _, t := range transactions {
-		expenses = append(expenses, expenseus.Expense{
-			ID:             t.ID,
-			ExpenseDetails: t.ExpenseDetails,
+	var transactions []app.Transaction
+	for _, t := range transactionItems {
+		transactions = append(transactions, app.Transaction{
+			ID:                 t.ID,
+			TransactionDetails: t.TransactionDetails,
 		})
 	}
 
-	return expenses, nil
+	return transactions, nil
 }
 
-func (d *dynamoDB) CreateExpense(ed expenseus.ExpenseDetails) error {
+func (d *dynamoDB) CreateTransaction(ed app.TransactionDetails) error {
 	// generate an ID
-	expenseID := uuid.New().String()
+	transactionID := uuid.New().String()
 	item := &TransactionItem{
-		ID:             expenseID,
-		ExpenseDetails: ed,
+		ID:                 transactionID,
+		TransactionDetails: ed,
 	}
 	err := d.transactionsTable.PutIfNotExists(*item)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("expense successfully created")
+	fmt.Println("transaction successfully created")
 	return nil
 }
 
-func (d *dynamoDB) GetAllUsers() ([]expenseus.User, error) {
+func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	userItems, err := d.usersTable.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var users []expenseus.User
+	var users []app.User
 	for _, u := range userItems {
 		users = append(users, u.User)
 	}

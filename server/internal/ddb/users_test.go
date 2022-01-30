@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +28,7 @@ func TestUsersTable(t *testing.T) {
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	user := UserItem{
-		User: expenseus.User{
+		User: app.User{
 			ID:       "test-user",
 			Name:     "Testman",
 			Username: "testman-23",

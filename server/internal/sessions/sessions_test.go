@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/securecookie"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,14 @@ func TestValidate(t *testing.T) {
 		altHashKey := securecookie.GenerateRandomKey(64)
 		altBlockKey := securecookie.GenerateRandomKey(32)
 		s := securecookie.New(altHashKey, altBlockKey)
-		encoded, err := s.Encode(expenseus.SessionCookieKey, testSessionValue)
+		encoded, err := s.Encode(app.SessionCookieKey, testSessionValue)
 		if err != nil {
 			t.Errorf("cookie could not be encoded: %v", err)
 			return
 		}
 
 		cookie := &http.Cookie{
-			Name:     expenseus.SessionCookieKey,
+			Name:     app.SessionCookieKey,
 			Value:    encoded,
 			Secure:   true,
 			HttpOnly: true,
@@ -54,7 +54,7 @@ func TestValidate(t *testing.T) {
 
 	t.Run("returns false if the cookie value is not encoded", func(t *testing.T) {
 		cookie := &http.Cookie{
-			Name:     expenseus.SessionCookieKey,
+			Name:     app.SessionCookieKey,
 			Value:    testSessionValue,
 			Secure:   true,
 			HttpOnly: true,
@@ -69,14 +69,14 @@ func TestValidate(t *testing.T) {
 
 	t.Run("returns true with a stored user id", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-		encoded, err := sessions.cookies.Encode(expenseus.SessionCookieKey, testSessionValue)
+		encoded, err := sessions.cookies.Encode(app.SessionCookieKey, testSessionValue)
 		if err != nil {
 			t.Errorf("cookie could not be encoded: %v", err)
 			return
 		}
 
 		cookie := &http.Cookie{
-			Name:     expenseus.SessionCookieKey,
+			Name:     app.SessionCookieKey,
 			Value:    encoded,
 			Secure:   true,
 			HttpOnly: true,
@@ -95,7 +95,7 @@ func TestSave(t *testing.T) {
 
 		expectedUserID := testSessionValue
 		req, _ := http.NewRequest(http.MethodGet, "/test", nil)
-		ctx := context.WithValue(req.Context(), expenseus.CtxKeyUserID, expectedUserID)
+		ctx := context.WithValue(req.Context(), app.CtxKeyUserID, expectedUserID)
 		req = req.WithContext(ctx)
 
 		rw := httptest.NewRecorder()
@@ -103,7 +103,7 @@ func TestSave(t *testing.T) {
 
 		cookies := rw.Result().Cookies()
 		for _, c := range cookies {
-			if c.Name == expenseus.SessionCookieKey {
+			if c.Name == app.SessionCookieKey {
 				var userid string
 				err := sessions.cookies.Decode(c.Name, c.Value, &userid)
 				if err != nil {
@@ -113,6 +113,6 @@ func TestSave(t *testing.T) {
 				return
 			}
 		}
-		t.Fatalf("cookie with the expected name %q was not found", expenseus.SessionCookieKey)
+		t.Fatalf("cookie with the expected name %q was not found", app.SessionCookieKey)
 	})
 }

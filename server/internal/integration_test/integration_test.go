@@ -1,4 +1,4 @@
-package expenseus_test
+package app_test
 
 import (
 	"encoding/json"
@@ -9,15 +9,16 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/saifahn/expenseus"
-	"github.com/saifahn/expenseus/ddb"
+	"github.com/saifahn/expenseus/internal/app"
+	"github.com/saifahn/expenseus/internal/ddb"
+	"github.com/saifahn/expenseus/internal/router"
 	"github.com/stretchr/testify/assert"
 )
 
 const usersTableName = "integtest-users-table"
 const transactionsTableName = "integtest-transactions-table"
 
-func setUpDB(d dynamodbiface.DynamoDBAPI) (expenseus.ExpenseStore, error) {
+func setUpDB(d dynamodbiface.DynamoDBAPI) (app.Store, error) {
 	err := ddb.CreateTestTable(d, usersTableName)
 	if err != nil {
 		return nil, err
@@ -44,7 +45,7 @@ func tearDownDB(d dynamodbiface.DynamoDBAPI) error {
 }
 
 // setUpTestServer sets up a server with with the real routes and a test
-// dynamodb instance, with stubs for the rest of the webservice
+// dynamodb instance, with stubs for the rest of the app
 func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 	ddbLocal := ddb.NewDynamoDBLocalAPI()
 	db, err := setUpDB(ddbLocal)
@@ -52,13 +53,13 @@ func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 		t.Fatalf("could not set up the database: %v", err)
 	}
 
-	oauth := &expenseus.StubOauthConfig{}
-	auth := &expenseus.StubSessionManager{}
-	images := &expenseus.StubImageStore{}
-	webservice := expenseus.NewWebService(db, oauth, auth, "", images)
-	router := expenseus.InitRouter(webservice)
+	oauth := &app.StubOauthConfig{}
+	auth := &app.StubSessionManager{}
+	images := &app.StubImageStore{}
+	a := app.New(db, oauth, auth, "", images)
+	r := router.Init(a)
 
-	return router, func(t *testing.T) {
+	return r, func(t *testing.T) {
 		err := tearDownDB(ddbLocal)
 		if err != nil {
 			t.Fatalf("could not tear down the database: %v", err)
@@ -66,14 +67,14 @@ func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 	}
 }
 
-func createUser(t *testing.T, user expenseus.User, r http.Handler) {
+func createUser(t *testing.T, user app.User, r http.Handler) {
 	userJSON, err := json.Marshal(user)
 	if err != nil {
 		t.Fatalf("failed to marshal the user JSON: %v", err)
 	}
 	response := httptest.NewRecorder()
-	request := expenseus.NewCreateUserRequest(userJSON)
-	request.AddCookie(&expenseus.ValidCookie)
+	request := app.NewCreateUserRequest(userJSON)
+	request.AddCookie(&app.ValidCookie)
 	r.ServeHTTP(response, request)
 	assert.Equal(t, http.StatusAccepted, response.Code)
 }
@@ -85,22 +86,22 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 		assert := assert.New(t)
 
 		// TRY to create a user WITHOUT a valid cookie
-		userJSON, err := json.Marshal(expenseus.TestSeanUser)
+		userJSON, err := json.Marshal(app.TestSeanUser)
 		if err != nil {
 			t.Fatalf("failed to marshal the user JSON: %v", err)
 		}
 		response := httptest.NewRecorder()
-		request := expenseus.NewCreateUserRequest(userJSON)
+		request := app.NewCreateUserRequest(userJSON)
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusUnauthorized, response.Code)
 
 		// use a VALID cookie
-		createUser(t, expenseus.TestSeanUser, router)
+		createUser(t, app.TestSeanUser, router)
 
 		// TRY GetSelf with different ID in the cookie
 		// should not work as the userID from the cookie does not exist
 		response = httptest.NewRecorder()
-		request = expenseus.NewGetSelfRequest()
+		request = app.NewGetSelfRequest()
 		request.AddCookie(&http.Cookie{
 			Name:  "session",
 			Value: "not-real-id",
@@ -110,22 +111,22 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 
 		// use a cookie with the SAME ID
 		response = httptest.NewRecorder()
-		request = expenseus.NewGetSelfRequest()
-		request.AddCookie(&expenseus.ValidCookie)
+		request = app.NewGetSelfRequest()
+		request.AddCookie(&app.ValidCookie)
 		router.ServeHTTP(response, request)
 
-		var userGot expenseus.User
+		var userGot app.User
 		err = json.NewDecoder(response.Body).Decode(&userGot)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
 		}
 		assert.Equal(http.StatusOK, response.Code)
-		assert.Equal(expenseus.TestSeanUser, userGot)
+		assert.Equal(app.TestSeanUser, userGot)
 
 		// GET the specifically created user from the db by ID
 		response = httptest.NewRecorder()
-		request = expenseus.NewGetUserRequest(expenseus.TestSeanUser.ID)
-		request.AddCookie(&expenseus.ValidCookie)
+		request = app.NewGetUserRequest(app.TestSeanUser.ID)
+		request.AddCookie(&app.ValidCookie)
 		router.ServeHTTP(response, request)
 
 		err = json.NewDecoder(response.Body).Decode(&userGot)
@@ -133,7 +134,7 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 			t.Fatalf("error parsing response from server %q into User struct, '%v'", response.Body, err)
 		}
 		assert.Equal(http.StatusOK, response.Code)
-		assert.Equal(expenseus.TestSeanUser, userGot)
+		assert.Equal(app.TestSeanUser, userGot)
 	})
 
 	t.Run("multiple users can be created and retrieved with a request to the GetAllUsers route", func(t *testing.T) {
@@ -142,130 +143,130 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 		assert := assert.New(t)
 
 		// create TWO users
-		createUser(t, expenseus.TestSeanUser, router)
-		createUser(t, expenseus.TestTomomiUser, router)
+		createUser(t, app.TestSeanUser, router)
+		createUser(t, app.TestTomomiUser, router)
 
 		// GET all users
 		response := httptest.NewRecorder()
-		request := expenseus.NewGetAllUsersRequest()
-		request.AddCookie(&expenseus.ValidCookie)
+		request := app.NewGetAllUsersRequest()
+		request.AddCookie(&app.ValidCookie)
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
 
 		// ensure that they contain the two users
-		var usersGot []expenseus.User
+		var usersGot []app.User
 		err := json.NewDecoder(response.Body).Decode(&usersGot)
 		if err != nil {
 			t.Fatalf("error parsing response from server %q into slice of Users: %v", response.Body, err)
 		}
-		assert.ElementsMatch(usersGot, []expenseus.User{expenseus.TestSeanUser, expenseus.TestTomomiUser})
+		assert.ElementsMatch(usersGot, []app.User{app.TestSeanUser, app.TestTomomiUser})
 	})
 }
 
-func TestCreatingExpensesAndRetrievingThem(t *testing.T) {
-	var createTestExpense = func(t *testing.T, r http.Handler, ed expenseus.ExpenseDetails, userid string) {
+func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
+	var createTestTransaction = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
 		values := map[string]io.Reader{
-			"expenseName": strings.NewReader(ed.Name),
+			"transactionName": strings.NewReader(ed.Name),
 		}
-		request := expenseus.NewCreateExpenseRequest(values)
+		request := app.NewCreateTransactionRequest(values)
 		request.AddCookie(&http.Cookie{Name: "session", Value: userid})
 		response := httptest.NewRecorder()
 		r.ServeHTTP(response, request)
 		assert.Equal(t, http.StatusAccepted, response.Code)
 	}
 
-	t.Run("an expense can be added with a valid cookie and be retrieved as part of a GetAll request", func(t *testing.T) {
+	t.Run("an transaction can be added with a valid cookie and be retrieved as part of a GetAll request", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)
 
 		// create user in the db
-		createUser(t, expenseus.TestSeanUser, router)
+		createUser(t, app.TestSeanUser, router)
 
 		// create a transaction and store it
-		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
-		createTestExpense(t, router, wantedExpenseDetails, wantedExpenseDetails.UserID)
+		wantedTransactionDetails := app.TestSeanTransactionDetails
+		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
 		// try and get it
-		request := expenseus.NewGetAllExpensesRequest()
-		request.AddCookie(&http.Cookie{Name: "session", Value: wantedExpenseDetails.UserID})
+		request := app.NewGetAllTransactionsRequest()
+		request.AddCookie(&http.Cookie{Name: "session", Value: wantedTransactionDetails.UserID})
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
-		var expensesGot []expenseus.Expense
-		err := json.NewDecoder(response.Body).Decode(&expensesGot)
+		var transactionsGot []app.Transaction
+		err := json.NewDecoder(response.Body).Decode(&transactionsGot)
 		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
 		}
 
 		assert.Equal(http.StatusOK, response.Code)
-		assert.Len(expensesGot, 1)
-		assert.Equal(expensesGot[0].ExpenseDetails, wantedExpenseDetails)
+		assert.Len(transactionsGot, 1)
+		assert.Equal(transactionsGot[0].TransactionDetails, wantedTransactionDetails)
 	})
 
-	t.Run("expenses can be retrieved by ID", func(t *testing.T) {
+	t.Run("transactions can be retrieved by ID", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)
-		createUser(t, expenseus.TestSeanUser, router)
+		createUser(t, app.TestSeanUser, router)
 
-		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
-		createTestExpense(t, router, wantedExpenseDetails, wantedExpenseDetails.UserID)
+		wantedTransactionDetails := app.TestSeanTransactionDetails
+		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
-		request := expenseus.NewGetAllExpensesRequest()
-		request.AddCookie(&expenseus.ValidCookie)
+		request := app.NewGetAllTransactionsRequest()
+		request.AddCookie(&app.ValidCookie)
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
-		var expensesGot []expenseus.Expense
-		err := json.NewDecoder(response.Body).Decode(&expensesGot)
+		var transactionsGot []app.Transaction
+		err := json.NewDecoder(response.Body).Decode(&transactionsGot)
 		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
 		}
 
 		// make sure the ID exists on the struct
-		expenseID := expensesGot[0].ID
-		assert.NotZero(expenseID)
+		transactionID := transactionsGot[0].ID
+		assert.NotZero(transactionID)
 
-		request = expenseus.NewGetExpenseRequest(expenseID)
-		request.AddCookie(&expenseus.ValidCookie)
+		request = app.NewGetTransactionRequest(transactionID)
+		request.AddCookie(&app.ValidCookie)
 		response = httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
 
-		var got expenseus.Expense
+		var got app.Transaction
 		err = json.NewDecoder(response.Body).Decode(&got)
 		if err != nil {
-			t.Errorf("error parsing response from server %q into Expense struct: %v", response.Body, err)
+			t.Errorf("error parsing response from server %q into Transaction struct: %v", response.Body, err)
 		}
 
-		assert.Equal(wantedExpenseDetails, got.ExpenseDetails)
-		assert.Equal(expensesGot[0], got)
+		assert.Equal(wantedTransactionDetails, got.TransactionDetails)
+		assert.Equal(transactionsGot[0], got)
 	})
 
 	// maybe just by user ID is better
-	t.Run("expenses can be retrieved by username", func(t *testing.T) {
+	t.Run("transactions can be retrieved by username", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)
-		createUser(t, expenseus.TestSeanUser, router)
+		createUser(t, app.TestSeanUser, router)
 
-		wantedExpenseDetails := expenseus.TestSeanExpenseDetails
-		createTestExpense(t, router, wantedExpenseDetails, expenseus.TestSeanUser.ID)
+		wantedTransactionDetails := app.TestSeanTransactionDetails
+		createTestTransaction(t, router, wantedTransactionDetails, app.TestSeanUser.ID)
 
-		request := expenseus.NewGetExpensesByUsernameRequest(expenseus.TestSeanUser.Username)
-		request.AddCookie(&expenseus.ValidCookie)
+		request := app.NewGetTransactionsByUsernameRequest(app.TestSeanUser.Username)
+		request.AddCookie(&app.ValidCookie)
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
 
-		var expensesGot []expenseus.Expense
-		err := json.NewDecoder(response.Body).Decode(&expensesGot)
+		var transactionsGot []app.Transaction
+		err := json.NewDecoder(response.Body).Decode(&transactionsGot)
 		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Expenses: %v", response.Body, err)
+			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
 		}
 
-		assert.Len(expensesGot, 1)
-		assert.Equal(wantedExpenseDetails, expensesGot[0].ExpenseDetails)
+		assert.Len(transactionsGot, 1)
+		assert.Equal(wantedTransactionDetails, transactionsGot[0].TransactionDetails)
 	})
 }

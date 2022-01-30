@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -53,26 +53,26 @@ func (g *GoogleOauthConfig) Exchange(ctx context.Context, code string, opts ...o
 	return token, nil
 }
 
-func (g *GoogleOauthConfig) GetInfoAndGenerateUser(state string, code string) (expenseus.User, error) {
+func (g *GoogleOauthConfig) GetInfoAndGenerateUser(state string, code string) (app.User, error) {
 	// TODO: use pointer to User so I can return nil instead of empty struct literal
 	if state != oauthStateString {
-		return expenseus.User{}, fmt.Errorf("invalid oauth state")
+		return app.User{}, fmt.Errorf("invalid oauth state")
 	}
 
 	token, err := g.Exchange(context.Background(), code)
 	if err != nil {
-		return expenseus.User{}, fmt.Errorf("code exchange failed: %s", err.Error())
+		return app.User{}, fmt.Errorf("code exchange failed: %s", err.Error())
 	}
 
 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
-		return expenseus.User{}, fmt.Errorf("failed getting user info: %s", err.Error())
+		return app.User{}, fmt.Errorf("failed getting user info: %s", err.Error())
 	}
 	defer response.Body.Close()
 
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return expenseus.User{}, fmt.Errorf("failed reading response body: %s", err.Error())
+		return app.User{}, fmt.Errorf("failed reading response body: %s", err.Error())
 	}
 
 	// convert the contents into a google user struct
@@ -84,10 +84,10 @@ func (g *GoogleOauthConfig) GetInfoAndGenerateUser(state string, code string) (e
 
 	if !googleUser.Verified {
 		// TODO: define an error type
-		return expenseus.User{}, fmt.Errorf("user is not verified")
+		return app.User{}, fmt.Errorf("user is not verified")
 	}
-	// use that information to create an expenseus.User
-	return expenseus.User{
+	// use that information to create an app.User
+	return app.User{
 		ID:       googleUser.ID,
 		Name:     googleUser.Name,
 		Username: googleUser.Email,

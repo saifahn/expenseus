@@ -9,11 +9,11 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 type UserItem struct {
-	expenseus.User
+	app.User
 }
 
 type UsersTable interface {

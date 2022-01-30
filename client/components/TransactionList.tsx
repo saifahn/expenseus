@@ -69,7 +69,7 @@ export default function TransactionList() {
 
   return (
     <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
-      <h2 className="text-2xl">transactions</h2>
+      <h2 className="text-2xl">Transactions</h2>
       {transactions &&
         transactions.map(transaction => (
           <TransactionCard transaction={transaction} key={transaction.id} />

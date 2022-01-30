@@ -1,5 +1,5 @@
 import TransactionList from "components/TransactionList";
 
-export default function transactions() {
+export default function Transactions() {
   return <TransactionList />;
 }

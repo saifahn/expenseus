@@ -10,11 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/gorilla/securecookie"
-	"github.com/saifahn/expenseus"
-	"github.com/saifahn/expenseus/ddb"
-	"github.com/saifahn/expenseus/googleoauth"
-	"github.com/saifahn/expenseus/s3images"
-	"github.com/saifahn/expenseus/sessions"
+	"github.com/saifahn/expenseus/internal/app"
+	"github.com/saifahn/expenseus/internal/ddb"
+	"github.com/saifahn/expenseus/internal/googleoauth"
+	"github.com/saifahn/expenseus/internal/s3images"
+	"github.com/saifahn/expenseus/internal/sessions"
 )
 
 func main() {
@@ -49,9 +49,9 @@ func main() {
 	sessions := sessions.New(tempHashKey, tempBlockKey)
 	images := s3images.New(useLocalAWSConfig)
 
-	wb := expenseus.NewWebService(db, googleOauth, sessions, frontendURL, images)
+	wb := app.NewWebService(db, googleOauth, sessions, frontendURL, images)
 
-	r := expenseus.InitRouter(wb)
+	r := app.InitRouter(wb)
 
 	log.Fatal(http.ListenAndServe(":5000", r))
 }

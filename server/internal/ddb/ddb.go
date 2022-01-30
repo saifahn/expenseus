@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 type dynamoDB struct {
@@ -23,7 +23,7 @@ func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName stri
 	return &dynamoDB{usersTable: usersTable, transactionsTable: transactionsTable}
 }
 
-func (d *dynamoDB) CreateUser(u expenseus.User) error {
+func (d *dynamoDB) CreateUser(u app.User) error {
 	item := &UserItem{
 		User: u,
 	}
@@ -35,30 +35,30 @@ func (d *dynamoDB) CreateUser(u expenseus.User) error {
 	return nil
 }
 
-func (d *dynamoDB) GetUser(id string) (expenseus.User, error) {
+func (d *dynamoDB) GetUser(id string) (app.User, error) {
 	u, err := d.usersTable.Get(id)
 	if err != nil {
-		return expenseus.User{}, err
+		return app.User{}, err
 	}
 	user := u.User
 
 	return user, nil
 }
 
-func (d *dynamoDB) GetExpense(id string) (expenseus.Expense, error) {
+func (d *dynamoDB) GetExpense(id string) (app.Expense, error) {
 	t, err := d.transactionsTable.Get(id)
 	if err != nil {
-		return expenseus.Expense{}, err
+		return app.Expense{}, err
 	}
 
-	expense := expenseus.Expense{
+	expense := app.Expense{
 		ID:             t.ID,
 		ExpenseDetails: t.ExpenseDetails,
 	}
 	return expense, nil
 }
 
-func (d *dynamoDB) GetExpensesByUsername(username string) ([]expenseus.Expense, error) {
+func (d *dynamoDB) GetExpensesByUsername(username string) ([]app.Expense, error) {
 	// look up users table for user with the name
 	u, err := d.usersTable.GetByUsername(username)
 	if err != nil {
@@ -70,9 +70,9 @@ func (d *dynamoDB) GetExpensesByUsername(username string) ([]expenseus.Expense, 
 		return nil, err
 	}
 
-	expenses := []expenseus.Expense{}
+	expenses := []app.Expense{}
 	for _, t := range tItems {
-		expenses = append(expenses, expenseus.Expense{
+		expenses = append(expenses, app.Expense{
 			ID:             t.ID,
 			ExpenseDetails: t.ExpenseDetails,
 		})
@@ -80,15 +80,15 @@ func (d *dynamoDB) GetExpensesByUsername(username string) ([]expenseus.Expense, 
 	return expenses, nil
 }
 
-func (d *dynamoDB) GetAllExpenses() ([]expenseus.Expense, error) {
+func (d *dynamoDB) GetAllExpenses() ([]app.Expense, error) {
 	transactions, err := d.transactionsTable.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var expenses []expenseus.Expense
+	var expenses []app.Expense
 	for _, t := range transactions {
-		expenses = append(expenses, expenseus.Expense{
+		expenses = append(expenses, app.Expense{
 			ID:             t.ID,
 			ExpenseDetails: t.ExpenseDetails,
 		})
@@ -97,7 +97,7 @@ func (d *dynamoDB) GetAllExpenses() ([]expenseus.Expense, error) {
 	return expenses, nil
 }
 
-func (d *dynamoDB) CreateExpense(ed expenseus.ExpenseDetails) error {
+func (d *dynamoDB) CreateExpense(ed app.ExpenseDetails) error {
 	// generate an ID
 	expenseID := uuid.New().String()
 	item := &TransactionItem{
@@ -113,13 +113,13 @@ func (d *dynamoDB) CreateExpense(ed expenseus.ExpenseDetails) error {
 	return nil
 }
 
-func (d *dynamoDB) GetAllUsers() ([]expenseus.User, error) {
+func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	userItems, err := d.usersTable.GetAll()
 	if err != nil {
 		return nil, err
 	}
 
-	var users []expenseus.User
+	var users []app.User
 	for _, u := range userItems {
 		users = append(users, u.User)
 	}

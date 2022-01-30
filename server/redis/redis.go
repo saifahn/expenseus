@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 var ctx = context.Background()
@@ -32,13 +32,13 @@ type Redis struct {
 	db redis.Client
 }
 
-func (r *Redis) CreateExpense(ed expenseus.ExpenseDetails) error {
+func (r *Redis) CreateExpense(ed app.ExpenseDetails) error {
 	// generate id for expense
 	expenseID := uuid.New().String()
 	// get the time now for the score on the sets
 	createdAt := time.Now().Unix()
 
-	e := expenseus.Expense{
+	e := app.Expense{
 		ExpenseDetails: ed,
 		ID:             expenseID,
 	}
@@ -62,10 +62,10 @@ func (r *Redis) CreateExpense(ed expenseus.ExpenseDetails) error {
 	return nil
 }
 
-func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
+func (r *Redis) GetAllExpenses() ([]app.Expense, error) {
 	expenseIDs := r.db.ZRange(ctx, AllExpensesKey(), 0, -1).Val()
 
-	var expenses []expenseus.Expense
+	var expenses []app.Expense
 	for _, id := range expenseIDs {
 		e, err := r.GetExpense(id)
 		if err != nil {
@@ -78,13 +78,13 @@ func (r *Redis) GetAllExpenses() ([]expenseus.Expense, error) {
 	return expenses, nil
 }
 
-func (r *Redis) GetExpensesByUsername(username string) ([]expenseus.Expense, error) {
+func (r *Redis) GetExpensesByUsername(username string) ([]app.Expense, error) {
 	// get userid from username/userid map
 	userid := r.db.HGet(ctx, UsernameIDMapKey(), username).Val()
 	// get expenseIDs from the user expenses set
 	expenseIDs := r.db.ZRange(ctx, UserExpensesKey(userid), 0, -1).Val()
 
-	var expenses []expenseus.Expense
+	var expenses []app.Expense
 	for _, id := range expenseIDs {
 		e, err := r.GetExpense(id)
 		if err != nil {
@@ -97,13 +97,13 @@ func (r *Redis) GetExpensesByUsername(username string) ([]expenseus.Expense, err
 	return expenses, nil
 }
 
-func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {
+func (r *Redis) GetExpense(expenseID string) (app.Expense, error) {
 	val, err := r.db.Get(ctx, ExpenseKey(expenseID)).Result()
 	if err != nil {
-		return expenseus.Expense{}, err
+		return app.Expense{}, err
 	}
 
-	var expense expenseus.Expense
+	var expense app.Expense
 	err = json.Unmarshal([]byte(val), &expense)
 	if err != nil {
 		panic(err)
@@ -112,7 +112,7 @@ func (r *Redis) GetExpense(expenseID string) (expenseus.Expense, error) {
 	return expense, nil
 }
 
-func (r *Redis) CreateUser(u expenseus.User) error {
+func (r *Redis) CreateUser(u app.User) error {
 	// get time now
 	createdAt := time.Now().Unix()
 	userJSON, err := json.Marshal(u)
@@ -134,15 +134,15 @@ func (r *Redis) CreateUser(u expenseus.User) error {
 	return nil
 }
 
-func (r *Redis) GetUser(id string) (expenseus.User, error) {
+func (r *Redis) GetUser(id string) (app.User, error) {
 	// get the user data at the user:id key
 	val, err := r.db.Get(ctx, UserKey(id)).Result()
 	if err != nil {
-		return expenseus.User{}, err
+		return app.User{}, err
 	}
 
 	// convert the user into a User struct
-	var user expenseus.User
+	var user app.User
 	err = json.Unmarshal([]byte(val), &user)
 	if err != nil {
 		panic(err)
@@ -150,15 +150,15 @@ func (r *Redis) GetUser(id string) (expenseus.User, error) {
 	return user, nil
 }
 
-func (r *Redis) GetAllUsers() ([]expenseus.User, error) {
+func (r *Redis) GetAllUsers() ([]app.User, error) {
 	// get the ids from users sorted set
 	userIDs := r.db.ZRange(ctx, AllUsersKey(), 0, -1).Val()
 
-	var users []expenseus.User
+	var users []app.User
 	for _, id := range userIDs {
 		user, err := r.GetUser(id)
 		if err != nil {
-			return []expenseus.User{}, err
+			return []app.User{}, err
 		}
 
 		users = append(users, user)

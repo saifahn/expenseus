@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +28,7 @@ func TestTransactionTable(t *testing.T) {
 	_, err = transactions.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	testED := &expenseus.ExpenseDetails{
+	testED := &app.ExpenseDetails{
 		UserID: "test-user",
 		Name:   "test-expense",
 	}

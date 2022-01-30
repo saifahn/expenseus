@@ -7,11 +7,11 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
-	"github.com/saifahn/expenseus"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 type TransactionItem struct {
-	expenseus.ExpenseDetails
+	app.ExpenseDetails
 	ID string `json:"id"`
 }
 

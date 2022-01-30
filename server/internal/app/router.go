@@ -1,4 +1,4 @@
-package expenseus
+package app
 
 import (
 	"context"

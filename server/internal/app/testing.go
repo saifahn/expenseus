@@ -9,6 +9,8 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"golang.org/x/oauth2"
 )
@@ -28,6 +30,7 @@ var (
 	TestSeanTransactionDetails = TransactionDetails{
 		Name:   "Transaction 1",
 		UserID: TestSeanUser.ID,
+		Amount: 123,
 	}
 	TestSeanTransaction = Transaction{
 		ID:                 "1",
@@ -37,6 +40,7 @@ var (
 	TestTomomiTransactionDetails = TransactionDetails{
 		Name:   "Transaction 2",
 		UserID: TestTomomiUser.ID,
+		Amount: 456,
 	}
 	TestTomomiTransaction = Transaction{
 		ID:                 "2",
@@ -46,6 +50,7 @@ var (
 	TestTomomiTransaction2Details = TransactionDetails{
 		Name:   "Transaction 3",
 		UserID: TestTomomiUser.ID,
+		Amount: 789,
 	}
 	TestTomomiTransaction2 = Transaction{
 		ID:                 "3",
@@ -62,10 +67,21 @@ var (
 	}
 )
 
+// addUserCookieContext adds a cookie and a user context to simulate a user
+// being logged in.
 func addUserCookieAndContext(req *http.Request, id string) *http.Request {
 	req.AddCookie(&http.Cookie{Name: "session", Value: id})
 	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
 	return req.WithContext(ctx)
+}
+
+// MakeCreateTransactionRequestPayload generates the payload to be given to
+// CreateTransactionRequest
+func MakeCreateTransactionRequestPayload(td TransactionDetails) map[string]io.Reader {
+	return map[string]io.Reader{
+		"transactionName": strings.NewReader(td.Name),
+		"amount":          strings.NewReader(strconv.FormatInt(td.Amount, 10)),
+	}
 }
 
 // NewGetTransactionRequest creates a request to be used in tests get an transaction
@@ -270,9 +286,7 @@ func (s *StubTransactionStore) CreateTransaction(ed TransactionDetails) error {
 		ID:                 testId,
 	}
 	s.transactions[testId] = transaction
-	s.recordTransactionCalls = append(s.recordTransactionCalls, TransactionDetails{
-		Name: ed.Name, UserID: ed.UserID, ImageKey: ed.ImageKey,
-	})
+	s.recordTransactionCalls = append(s.recordTransactionCalls, ed)
 	return nil
 }
 

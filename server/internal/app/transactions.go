@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 )
 
 const CtxKeyTransactionID contextKey = iota
@@ -11,6 +12,7 @@ const CtxKeyTransactionID contextKey = iota
 type TransactionDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userId"`
+	Amount   int64  `json:"amount"`
 	ImageKey string `json:"imageKey,omitempty"`
 }
 
@@ -98,7 +100,6 @@ func (a *App) GetAllTransactions(rw http.ResponseWriter, r *http.Request) {
 
 // CreateTransaction handles a HTTP request to create a new transaction.
 func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
-	// get the userID from the context
 	userID, ok := r.Context().Value(CtxKeyUserID).(string)
 	if !ok {
 		http.Error(rw, "user id not found in context", http.StatusUnauthorized)
@@ -118,6 +119,17 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	if transactionName == "" {
 		http.Error(rw, "transaction name not found", http.StatusBadRequest)
 		return
+	}
+
+	amount := r.FormValue("amount")
+	if amount == "" {
+		http.Error(rw, "amount not present", http.StatusBadGateway)
+		return
+	}
+
+	amountParsed, err := strconv.ParseInt(amount, 10, 64)
+	if err != nil {
+		http.Error(rw, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
 	}
 
 	file, header, err := r.FormFile("image")
@@ -148,7 +160,12 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = a.store.CreateTransaction(TransactionDetails{Name: transactionName, UserID: userID, ImageKey: imageKey})
+	err = a.store.CreateTransaction(TransactionDetails{
+		Name:     transactionName,
+		UserID:   userID,
+		ImageKey: imageKey,
+		Amount:   amountParsed,
+	})
 
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)

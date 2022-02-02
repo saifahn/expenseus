@@ -2,10 +2,8 @@ package app_test
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -165,10 +163,8 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 
 func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 	var createTestTransaction = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
-		values := map[string]io.Reader{
-			"transactionName": strings.NewReader(ed.Name),
-		}
-		request := app.NewCreateTransactionRequest(values)
+		payload := app.MakeCreateTransactionRequestPayload(ed)
+		request := app.NewCreateTransactionRequest(payload)
 		request.AddCookie(&http.Cookie{Name: "session", Value: userid})
 		response := httptest.NewRecorder()
 		r.ServeHTTP(response, request)

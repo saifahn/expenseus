@@ -123,7 +123,7 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 
 	amount := r.FormValue("amount")
 	if amount == "" {
-		http.Error(rw, "amount not present", http.StatusBadGateway)
+		http.Error(rw, "amount not present", http.StatusBadRequest)
 		return
 	}
 

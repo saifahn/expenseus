@@ -6,12 +6,14 @@ export interface Transaction {
   name: string;
   id: string;
   userId: string;
+  amount: number;
   imageUrl?: string;
 }
 
 export default function TransactionList() {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [transactionName, setTransactionName] = useState("");
+  const [amount, setAmount] = useState("");
   const [{ status, error }, setStatus] = useState({
     status: "idle",
     error: null,
@@ -48,6 +50,7 @@ export default function TransactionList() {
     try {
       const data = new FormData();
       data.append("transactionName", transactionName);
+      data.append("amount", amount);
       if (imageInput.current?.files.length) {
         data.append("image", imageInput.current.files[0]);
       }
@@ -91,6 +94,19 @@ export default function TransactionList() {
                 type="text"
                 value={transactionName}
                 onChange={e => setTransactionName(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mt-6" htmlFor="amount">
+                Amount
+              </label>
+              <input
+                className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
+                id="amount"
+                type="text"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
                 required
               />
             </div>

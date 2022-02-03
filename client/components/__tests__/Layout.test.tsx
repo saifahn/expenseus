@@ -8,7 +8,7 @@ describe("Layout component", () => {
     expect(screen.getByRole("link", { name: /Home/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Users/ })).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /transactions/ })
+      screen.getByRole("link", { name: /Transactions/ })
     ).toBeInTheDocument();
   });
 });

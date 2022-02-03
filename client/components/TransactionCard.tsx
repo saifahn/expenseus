@@ -11,8 +11,8 @@ export default function TransactionCard({
       key={transaction.id}
     >
       <h3 className="text-xl">{transaction.name}</h3>
+      <p>¥{transaction.amount}</p>
       <p>{transaction.userId}</p>
-      <p>{transaction.id}</p>
       {transaction.imageUrl && (
         <img
           src={transaction.imageUrl}

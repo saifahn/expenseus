@@ -14,6 +14,7 @@ export default function TransactionList() {
   const [transactions, setTransactions] = useState<Transaction[]>();
   const [transactionName, setTransactionName] = useState("");
   const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [{ status, error }, setStatus] = useState({
     status: "idle",
     error: null,
@@ -51,6 +52,7 @@ export default function TransactionList() {
       const data = new FormData();
       data.append("transactionName", transactionName);
       data.append("amount", amount);
+      data.append("date", Date.parse(date).toString());
       if (imageInput.current?.files.length) {
         data.append("image", imageInput.current.files[0]);
       }
@@ -107,6 +109,19 @@ export default function TransactionList() {
                 type="number"
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mt-6" htmlFor="date">
+                Date
+              </label>
+              <input
+                className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
+                id="amount"
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
                 required
               />
             </div>

@@ -197,7 +197,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 		assert.Equal(http.StatusOK, response.Code)
 		assert.Len(transactionsGot, 1)
-		assert.Equal(transactionsGot[0].TransactionDetails, wantedTransactionDetails)
+		assert.Equal(wantedTransactionDetails, transactionsGot[0].TransactionDetails)
 	})
 
 	t.Run("transactions can be retrieved by ID", func(t *testing.T) {

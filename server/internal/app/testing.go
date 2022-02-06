@@ -31,6 +31,7 @@ var (
 		Name:   "Transaction 1",
 		UserID: TestSeanUser.ID,
 		Amount: 123,
+		Date:   1644085875,
 	}
 	TestSeanTransaction = Transaction{
 		ID:                 "1",
@@ -41,6 +42,7 @@ var (
 		Name:   "Transaction 2",
 		UserID: TestTomomiUser.ID,
 		Amount: 456,
+		Date:   1644085876,
 	}
 	TestTomomiTransaction = Transaction{
 		ID:                 "2",
@@ -51,6 +53,7 @@ var (
 		Name:   "Transaction 3",
 		UserID: TestTomomiUser.ID,
 		Amount: 789,
+		Date:   1644085877,
 	}
 	TestTomomiTransaction2 = Transaction{
 		ID:                 "3",
@@ -75,21 +78,22 @@ func addUserCookieAndContext(req *http.Request, id string) *http.Request {
 	return req.WithContext(ctx)
 }
 
-// MakeCreateTransactionRequestPayload generates the payload to be given to
-// CreateTransactionRequest
-func MakeCreateTransactionRequestPayload(td TransactionDetails) map[string]io.Reader {
-	return map[string]io.Reader{
-		"transactionName": strings.NewReader(td.Name),
-		"amount":          strings.NewReader(strconv.FormatInt(td.Amount, 10)),
-	}
-}
-
 // NewGetTransactionRequest creates a request to be used in tests get an transaction
 // by ID, with ID in the request context.
 func NewGetTransactionRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/%s", id), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyTransactionID, id)
 	return req.WithContext(ctx)
+}
+
+// MakeCreateTransactionRequestPayload generates the payload to be given to
+// CreateTransactionRequest
+func MakeCreateTransactionRequestPayload(td TransactionDetails) map[string]io.Reader {
+	return map[string]io.Reader{
+		"transactionName": strings.NewReader(td.Name),
+		"amount":          strings.NewReader(strconv.FormatInt(td.Amount, 10)),
+		"date":            strings.NewReader(strconv.FormatInt(td.Date, 10)),
+	}
 }
 
 // NewCreateTransactionRequest creates a request to be used in tests to create an

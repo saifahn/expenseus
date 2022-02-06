@@ -200,6 +200,7 @@ func TestCreateTransaction(t *testing.T) {
 		expectedDetails := TransactionDetails{
 			Name:   "Test Transaction",
 			Amount: 123,
+			Date:   1644085875,
 			UserID: TestTomomiUser.ID,
 		}
 		payload := MakeCreateTransactionRequestPayload(expectedDetails)
@@ -217,6 +218,8 @@ func TestCreateTransaction(t *testing.T) {
 	// prepares a temp file, information, and values for image upload tests
 	var testAmount = "918"
 	var testAmountInt64 = int64(918)
+	var testDate = "1644085875"
+	var testDateInt64 = int64(1644085875)
 	prepareFileAndInfo := func(t *testing.T) (*os.File, string, map[string]io.Reader) {
 		f, err := os.CreateTemp("", "example-file")
 		if err != nil {
@@ -227,6 +230,7 @@ func TestCreateTransaction(t *testing.T) {
 		values := map[string]io.Reader{
 			"transactionName": strings.NewReader(transactionName),
 			"amount":          strings.NewReader(testAmount),
+			"date":            strings.NewReader(testDate),
 			"image":           f,
 		}
 		return f, transactionName, values
@@ -281,6 +285,7 @@ func TestCreateTransaction(t *testing.T) {
 			UserID:   userID,
 			ImageKey: testImageKey,
 			Amount:   testAmountInt64,
+			Date:     testDateInt64,
 		}
 		assert.Equal(t, want, got)
 	})

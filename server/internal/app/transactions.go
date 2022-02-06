@@ -13,6 +13,7 @@ type TransactionDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userId"`
 	Amount   int64  `json:"amount"`
+	Date     int64  `json:"date"`
 	ImageKey string `json:"imageKey,omitempty"`
 }
 
@@ -132,6 +133,17 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
 	}
 
+	date := r.FormValue("date")
+	if date == "" {
+		http.Error(rw, "date not present", http.StatusBadRequest)
+		return
+	}
+
+	dateParsed, err := strconv.ParseInt(date, 10, 64)
+	if err != nil {
+		http.Error(rw, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
+	}
+
 	file, header, err := r.FormFile("image")
 	// don't error on missing file - it's ok not to have an image
 	if err != nil && err != http.ErrMissingFile {
@@ -165,6 +177,7 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 		UserID:   userID,
 		ImageKey: imageKey,
 		Amount:   amountParsed,
+		Date:     dateParsed,
 	})
 
 	if err != nil {

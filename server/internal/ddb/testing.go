@@ -19,6 +19,42 @@ func NewDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	return dynamodb.New(sess)
 }
 
+func CreateExpenseusTable(d dynamodbiface.DynamoDBAPI, name string) error {
+	_, err := d.CreateTable(&dynamodb.CreateTableInput{
+		AttributeDefinitions: []*dynamodb.AttributeDefinition{
+			{
+				AttributeName: aws.String("PK"),
+				AttributeType: aws.String("S"),
+			},
+			{
+				AttributeName: aws.String("SK"),
+				AttributeType: aws.String("S"),
+			},
+		},
+		KeySchema: []*dynamodb.KeySchemaElement{
+			{
+				AttributeName: aws.String("PK"),
+				KeyType:       aws.String("HASH"),
+			},
+			{
+				AttributeName: aws.String("SK"),
+				KeyType:       aws.String("RANGE"),
+			},
+		},
+		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(1),
+			WriteCapacityUnits: aws.Int64(1),
+		},
+		TableName: aws.String(name),
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("successfully created the table", name)
+	return nil
+}
+
 func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	input := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{

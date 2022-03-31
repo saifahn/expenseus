@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +13,7 @@ func TestUsersTable(t *testing.T) {
 	assert := assert.New(t)
 	dynamodb := NewDynamoDBLocalAPI()
 
-	err := CreateTestTable(dynamodb, testUsersTableName)
+	err := CreateExpenseusTable(dynamodb, testUsersTableName)
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}
@@ -28,11 +27,10 @@ func TestUsersTable(t *testing.T) {
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	user := UserItem{
-		User: app.User{
-			ID:       "test-user",
-			Name:     "Testman",
-			Username: "testman-23",
-		},
+		PK:         "user#test",
+		SK:         "user#test",
+		EntityType: "user",
+		ID:         "test",
 	}
 
 	err = users.PutIfNotExists(user)
@@ -44,17 +42,6 @@ func TestUsersTable(t *testing.T) {
 
 	// the user can be retrieved
 	got, err := users.Get(user.ID)
-	assert.NoError(err)
-	assert.Equal(user, got)
-
-	// retrieve all users
-	usersGot, err := users.GetAll()
-	assert.NoError(err)
-	assert.Len(usersGot, 1)
-	assert.Contains(usersGot, user)
-
-	// get a user by username
-	got, err = users.GetByUsername(user.Username)
 	assert.NoError(err)
 	assert.Equal(user, got)
 

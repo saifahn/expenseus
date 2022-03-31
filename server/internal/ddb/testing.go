@@ -19,7 +19,7 @@ func NewDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	return dynamodb.New(sess)
 }
 
-func CreateExpenseusTable(d dynamodbiface.DynamoDBAPI, name string) error {
+func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	_, err := d.CreateTable(&dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
@@ -47,35 +47,6 @@ func CreateExpenseusTable(d dynamodbiface.DynamoDBAPI, name string) error {
 		},
 		TableName: aws.String(name),
 	})
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("successfully created the table", name)
-	return nil
-}
-
-func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
-	input := &dynamodb.CreateTableInput{
-		AttributeDefinitions: []*dynamodb.AttributeDefinition{
-			{
-				AttributeName: aws.String("id"),
-				AttributeType: aws.String("S"),
-			},
-		},
-		KeySchema: []*dynamodb.KeySchemaElement{
-			{
-				AttributeName: aws.String("id"),
-				KeyType:       aws.String("HASH"),
-			},
-		},
-		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(1),
-			WriteCapacityUnits: aws.Int64(1),
-		},
-		TableName: aws.String(name),
-	}
-	_, err := d.CreateTable(input)
 	if err != nil {
 		return err
 	}

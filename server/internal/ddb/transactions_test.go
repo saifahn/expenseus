@@ -14,7 +14,7 @@ func TestTransactionTable(t *testing.T) {
 	dynamodb := NewDynamoDBLocalAPI()
 
 	// create the table in the local test database
-	err := CreateExpenseusTable(dynamodb, testTransactionsTableName)
+	err := CreateTestTable(dynamodb, testTransactionsTableName)
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}

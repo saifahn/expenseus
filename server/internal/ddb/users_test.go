@@ -13,7 +13,7 @@ func TestUsersTable(t *testing.T) {
 	assert := assert.New(t)
 	dynamodb := NewDynamoDBLocalAPI()
 
-	err := CreateExpenseusTable(dynamodb, testUsersTableName)
+	err := CreateTestTable(dynamodb, testUsersTableName)
 	if err != nil {
 		t.Logf("table could not be created: %v", err)
 	}

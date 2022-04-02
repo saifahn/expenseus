@@ -30,11 +30,13 @@ type users struct {
 }
 
 const (
-	HashKey       = "PK"
-	RangeKey      = "SK"
-	UserKeyPrefix = "user"
-	UsersKey      = "users"
-	GSI1PK        = "GSI1PK"
+	HashKey        = "PK"
+	RangeKey       = "SK"
+	UserKeyPrefix  = "user"
+	usersKey       = "users"
+	UserEntityType = "user"
+	allUsersKey    = "users"
+	GSI1PK         = "GSI1PK"
 )
 
 func NewUsersTable(t *table.Table) UsersTable {
@@ -57,7 +59,7 @@ func (u *users) GetAll() ([]UserItem, error) {
 	options := []option.QueryInput{
 		option.Index("GSI1"),
 		option.QueryExpressionAttributeName(GSI1PK, "#GSI1PK"),
-		option.QueryExpressionAttributeValue(":usersKey", attributes.String(UsersKey)),
+		option.QueryExpressionAttributeValue(":usersKey", attributes.String(usersKey)),
 		option.QueryKeyConditionExpression("#GSI1PK = :usersKey"),
 	}
 

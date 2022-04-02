@@ -24,8 +24,14 @@ func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName stri
 }
 
 func (d *dynamoDB) CreateUser(u app.User) error {
+	userIDKey := fmt.Sprintf("%s#%s", UserKeyPrefix, u.ID)
 	item := &UserItem{
-		User: u,
+		PK:         userIDKey,
+		SK:         userIDKey,
+		EntityType: UserEntityType,
+		ID:         u.ID,
+		GSI1PK:     allUsersKey,
+		GSI1SK:     userIDKey,
 	}
 	err := d.usersTable.PutIfNotExists(*item)
 	if err != nil {

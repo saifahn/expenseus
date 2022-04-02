@@ -31,6 +31,8 @@ func TestUsersTable(t *testing.T) {
 		SK:         "user#test",
 		EntityType: "user",
 		ID:         "test",
+		GSI1PK:     "users",
+		GSI1SK:     "user#test",
 	}
 
 	err = users.PutIfNotExists(user)
@@ -44,6 +46,12 @@ func TestUsersTable(t *testing.T) {
 	got, err := users.Get(user.ID)
 	assert.NoError(err)
 	assert.Equal(user, got)
+
+	// retrieve all users
+	usersGot, err := users.GetAll()
+	assert.NoError(err)
+	assert.Len(usersGot, 1)
+	assert.Contains(usersGot, user)
 
 	err = users.Delete(user.ID)
 	assert.NoError(err)

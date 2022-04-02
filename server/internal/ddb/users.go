@@ -14,11 +14,13 @@ type UserItem struct {
 	SK         string `json:"SK"`
 	EntityType string `json:"EntityType"`
 	ID         string `json:"ID"`
+	GSI1PK     string `json:"GSI1PK"`
+	GSI1SK     string `json:"GSI1SK"`
 }
 
 type UsersTable interface {
 	Get(id string) (UserItem, error)
-	// GetAll() ([]UserItem, error)
+	GetAll() ([]UserItem, error)
 	PutIfNotExists(item UserItem) error
 	Delete(id string) error
 }
@@ -31,6 +33,8 @@ const (
 	HashKey       = "PK"
 	RangeKey      = "SK"
 	UserKeyPrefix = "user"
+	UsersKey      = "users"
+	GSI1PK        = "GSI1PK"
 )
 
 func NewUsersTable(t *table.Table) UsersTable {
@@ -49,24 +53,24 @@ func (u *users) Get(id string) (UserItem, error) {
 	return *item, nil
 }
 
-// func (u *users) GetAll() ([]UserItem, error) {
-// 	response, err := u.table.DynamoDB.Scan(&dynamodb.ScanInput{TableName: u.table.Name})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var items []UserItem
+func (u *users) GetAll() ([]UserItem, error) {
+	options := []option.QueryInput{
+		option.Index("GSI1"),
+		option.QueryExpressionAttributeName(GSI1PK, "#GSI1PK"),
+		option.QueryExpressionAttributeValue(":usersKey", attributes.String(UsersKey)),
+		option.QueryKeyConditionExpression("#GSI1PK = :usersKey"),
+	}
 
-// 	for _, i := range response.Items {
-// 		var item UserItem
-// 		err = dynamodbattribute.UnmarshalMap(i, &item)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		items = append(items, item)
-// 	}
+	var items []UserItem
 
-// 	return items, nil
-// }
+	_, err := u.table.Query(&items, options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
 
 func (u *users) PutIfNotExists(item UserItem) error {
 	err := u.table.PutItem(item, option.PutCondition("attribute_not_exists(SK)"))

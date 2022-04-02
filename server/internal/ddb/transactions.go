@@ -15,13 +15,15 @@ type TransactionItem struct {
 	ID         string `json:"ID"`
 	UserID     string `json:"UserID"`
 	EntityType string `json:"EntityType"`
+	GSI1PK     string `json:"GSI1PK"`
+	GSI1SK     string `json:"GSI1SK"`
 }
 
 const TransactionKeyPrefix = "txn"
 
 type TransactionsTable interface {
 	Get(userID, transactionID string) (*TransactionItem, error)
-	// GetAll() ([]TransactionItem, error)
+	GetAll() ([]TransactionItem, error)
 	GetByUserID(userID string) ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
 	Put(item TransactionItem) error
@@ -71,24 +73,26 @@ func (t *transactionsTable) Delete(userID, txnID string) error {
 	return t.table.DeleteItem(attributes.String(userKey), attributes.String(txnKey))
 }
 
-// func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
-// 	response, err := t.table.DynamoDB.Scan(&dynamodb.ScanInput{TableName: t.table.Name})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	var items []TransactionItem
+const allTxnKey = "transactions"
 
-// 	for _, i := range response.Items {
-// 		var item TransactionItem
-// 		err = dynamodbattribute.UnmarshalMap(i, &item)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		items = append(items, item)
-// 	}
+func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
+	options := []option.QueryInput{
+		option.Index("GSI1"),
+		option.QueryExpressionAttributeName(GSI1PK, "#GSI1PK"),
+		option.QueryExpressionAttributeValue(":allTransactionsKey", attributes.String(allTxnKey)),
+		option.QueryKeyConditionExpression("#GSI1PK = :allTransactionsKey"),
+	}
 
-// 	return items, nil
-// }
+	var items []TransactionItem
+
+	_, err := t.table.Query(&items, options...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
 
 func (t *transactionsTable) GetByUserID(userID string) ([]TransactionItem, error) {
 	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, userID)

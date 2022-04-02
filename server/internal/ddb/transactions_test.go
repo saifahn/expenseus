@@ -33,6 +33,8 @@ func TestTransactionTable(t *testing.T) {
 		ID:         "test-txn-id",
 		UserID:     "test-user-id",
 		EntityType: "transaction",
+		GSI1PK:     "transactions",
+		GSI1SK:     "txn#test-txn-id",
 	}
 
 	// no error raised the first time
@@ -53,13 +55,13 @@ func TestTransactionTable(t *testing.T) {
 	assert.Equal(item, got)
 
 	// get all transactions
-	// itemsGot, err := transactions.GetAll()
-	// assert.NoError(err)
-	// assert.Len(itemsGot, 1)
-	// assert.Contains(itemsGot, *item)
+	itemsGot, err := transactions.GetAll()
+	assert.NoError(err)
+	assert.Len(itemsGot, 1)
+	assert.Contains(itemsGot, *item)
 
 	// get the transactions by username
-	itemsGot, err := transactions.GetByUserID(item.UserID)
+	itemsGot, err = transactions.GetByUserID(item.UserID)
 	assert.NoError(err)
 	assert.Contains(itemsGot, *item)
 

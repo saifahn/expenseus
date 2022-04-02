@@ -59,9 +59,9 @@ func TestTransactionTable(t *testing.T) {
 	// assert.Contains(itemsGot, *item)
 
 	// get the transactions by username
-	// itemsGot, err := transactions.GetByUserID(testED.UserID)
-	// assert.NoError(err)
-	// assert.Contains(itemsGot, *item)
+	itemsGot, err := transactions.GetByUserID(item.UserID)
+	assert.NoError(err)
+	assert.Contains(itemsGot, *item)
 
 	// the item is successfully deleted
 	err = transactions.Delete(item.UserID, item.ID)

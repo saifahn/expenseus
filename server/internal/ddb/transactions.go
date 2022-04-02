@@ -22,7 +22,7 @@ const TransactionKeyPrefix = "txn"
 type TransactionsTable interface {
 	Get(userID, transactionID string) (*TransactionItem, error)
 	// GetAll() ([]TransactionItem, error)
-	// GetByUserID(userID string) ([]TransactionItem, error)
+	GetByUserID(userID string) ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
 	Put(item TransactionItem) error
 	Delete(userID, transactionID string) error
@@ -90,36 +90,25 @@ func (t *transactionsTable) Delete(userID, txnID string) error {
 // 	return items, nil
 // }
 
-// func (t *transactionsTable) GetByUserID(userid string) ([]TransactionItem, error) {
-// 	filt := expression.Name("userId").Equal(expression.Value(userid))
-// 	expr, err := expression.NewBuilder().WithFilter(filt).Build()
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (t *transactionsTable) GetByUserID(userID string) ([]TransactionItem, error) {
+	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, userID)
+	txnKeyWithoutID := fmt.Sprintf("%s#", TransactionKeyPrefix)
 
-// 	params := &dynamodb.ScanInput{
-// 		ExpressionAttributeNames:  expr.Names(),
-// 		ExpressionAttributeValues: expr.Values(),
-// 		FilterExpression:          expr.Filter(),
-// 		ProjectionExpression:      expr.Projection(),
-// 		TableName:                 t.table.Name,
-// 	}
+	options := []option.QueryInput{
+		option.QueryExpressionAttributeName(HashKey, "#PK"),
+		option.QueryExpressionAttributeName(RangeKey, "#SK"),
+		option.QueryExpressionAttributeValue(":userKey", attributes.String(userKey)),
+		option.QueryExpressionAttributeValue(":allTxnPrefix", attributes.String(txnKeyWithoutID)),
+		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTxnPrefix)"),
+	}
 
-// 	result, err := t.table.DynamoDB.Scan(params)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	var items []TransactionItem
 
-// 	var items []TransactionItem
+	_, err := t.table.Query(&items, options...)
 
-// 	for _, i := range result.Items {
-// 		var item TransactionItem
-// 		err = dynamodbattribute.UnmarshalMap(i, &item)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		items = append(items, item)
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-// 	return items, nil
-// }
+	return items, nil
+}

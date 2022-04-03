@@ -11,17 +11,15 @@ import (
 )
 
 type dynamoDB struct {
-	usersTable        UsersTable
-	transactionsTable TransactionsTable
+	users        UserRepository
+	transactions TxnRepository
 }
 
-func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName string) *dynamoDB {
-	uTbl := table.New(d, usersTableName)
-	usersTable := NewUsersTable(uTbl)
-	tTbl := table.New(d, transactionsTableName)
-	transactionsTable := NewTransactionsTable(tTbl)
+func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
+	users := NewUserRepository(table.New(d, tableName))
+	transactions := NewTxnRepository(table.New(d, tableName))
 
-	return &dynamoDB{usersTable: usersTable, transactionsTable: transactionsTable}
+	return &dynamoDB{users: users, transactions: transactions}
 }
 
 func userToUserItem(u app.User) UserItem {
@@ -37,7 +35,7 @@ func userToUserItem(u app.User) UserItem {
 }
 
 func (d *dynamoDB) CreateUser(u app.User) error {
-	err := d.usersTable.PutIfNotExists(userToUserItem(u))
+	err := d.users.PutIfNotExists(userToUserItem(u))
 	if err != nil {
 		return err
 	}
@@ -52,7 +50,7 @@ func userItemToUser(ui UserItem) app.User {
 }
 
 func (d *dynamoDB) GetUser(id string) (app.User, error) {
-	ui, err := d.usersTable.Get(id)
+	ui, err := d.users.Get(id)
 	if err != nil {
 		return app.User{}, err
 	}
@@ -61,7 +59,7 @@ func (d *dynamoDB) GetUser(id string) (app.User, error) {
 }
 
 func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
-	userItems, err := d.usersTable.GetAll()
+	userItems, err := d.users.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +86,7 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
 	}
-	err := d.transactionsTable.PutIfNotExists(*item)
+	err := d.transactions.PutIfNotExists(*item)
 	if err != nil {
 		return err
 	}
@@ -107,7 +105,7 @@ func transactionItemToTransaction(ti TransactionItem) app.Transaction {
 }
 
 func (d *dynamoDB) GetTransaction(userID, transactionID string) (app.Transaction, error) {
-	ti, err := d.transactionsTable.Get(userID, transactionID)
+	ti, err := d.transactions.Get(userID, transactionID)
 	if err != nil {
 		return app.Transaction{}, err
 	}
@@ -116,7 +114,7 @@ func (d *dynamoDB) GetTransaction(userID, transactionID string) (app.Transaction
 }
 
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
-	transactionItems, err := d.transactionsTable.GetAll()
+	transactionItems, err := d.transactions.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +128,7 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 }
 
 func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
-	items, err := d.transactionsTable.GetByUserID(userID)
+	items, err := d.transactions.GetByUserID(userID)
 	if err != nil {
 		return nil, err
 	}

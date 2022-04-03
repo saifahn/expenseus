@@ -20,7 +20,7 @@ func TestUsersTable(t *testing.T) {
 	defer DeleteTable(dynamodb, testUsersTableName)
 
 	tbl := table.New(dynamodb, testUsersTableName)
-	users := NewUsersTable(tbl)
+	users := NewUserRepository(tbl)
 
 	// retrieving a non-existent user will give an error
 	_, err = users.Get("non-existent-user")

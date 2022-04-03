@@ -21,7 +21,7 @@ func TestTransactionTable(t *testing.T) {
 	defer DeleteTable(dynamodb, testTransactionsTableName)
 	tbl := table.New(dynamodb, testTransactionsTableName)
 	// create the transactions table instance
-	transactions := NewTransactionsTable(tbl)
+	transactions := NewTxnRepository(tbl)
 
 	// retrieving a non-existent item will give an error
 	_, err = transactions.Get("non-existent-user", "non-existent-item")

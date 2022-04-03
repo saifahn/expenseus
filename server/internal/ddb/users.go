@@ -18,14 +18,14 @@ type UserItem struct {
 	GSI1SK     string `json:"GSI1SK"`
 }
 
-type UsersTable interface {
+type UserRepository interface {
 	Get(id string) (UserItem, error)
 	GetAll() ([]UserItem, error)
 	PutIfNotExists(item UserItem) error
 	Delete(id string) error
 }
 
-type users struct {
+type userRepo struct {
 	table *table.Table
 }
 
@@ -35,13 +35,13 @@ const (
 	allUsersKey    = "users"
 )
 
-func NewUsersTable(t *table.Table) UsersTable {
+func NewUserRepository(t *table.Table) UserRepository {
 	t.WithHashKey(tablePrimaryKey, dynamodb.ScalarAttributeTypeS)
 	t.WithRangeKey(tableSortKey, dynamodb.ScalarAttributeTypeS)
-	return &users{table: t}
+	return &userRepo{table: t}
 }
 
-func (u *users) Get(id string) (UserItem, error) {
+func (u *userRepo) Get(id string) (UserItem, error) {
 	key := makeUserIDKey(id)
 	item := &UserItem{}
 	err := u.table.GetItem(attributes.String(key), attributes.String(key), item)
@@ -51,7 +51,7 @@ func (u *users) Get(id string) (UserItem, error) {
 	return *item, nil
 }
 
-func (u *users) GetAll() ([]UserItem, error) {
+func (u *userRepo) GetAll() ([]UserItem, error) {
 	options := []option.QueryInput{
 		option.Index("GSI1"),
 		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
@@ -70,7 +70,7 @@ func (u *users) GetAll() ([]UserItem, error) {
 	return items, nil
 }
 
-func (u *users) PutIfNotExists(item UserItem) error {
+func (u *userRepo) PutIfNotExists(item UserItem) error {
 	err := u.table.PutItem(item, option.PutCondition("attribute_not_exists(SK)"))
 	if err != nil {
 		return conflictOrErr(err)
@@ -79,7 +79,7 @@ func (u *users) PutIfNotExists(item UserItem) error {
 	return nil
 }
 
-func (u *users) Delete(id string) error {
+func (u *userRepo) Delete(id string) error {
 	key := makeUserIDKey(id)
 	return u.table.DeleteItem(attributes.String(key), attributes.String(key))
 }

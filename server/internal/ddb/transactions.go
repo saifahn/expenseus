@@ -25,7 +25,7 @@ const (
 	allTxnKey     = "transactions"
 )
 
-type TransactionsTable interface {
+type TxnRepository interface {
 	Get(userID, transactionID string) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
 	GetByUserID(userID string) ([]TransactionItem, error)
@@ -34,17 +34,17 @@ type TransactionsTable interface {
 	Delete(userID, transactionID string) error
 }
 
-type transactionsTable struct {
+type txnRepo struct {
 	table *table.Table
 }
 
-func NewTransactionsTable(t *table.Table) TransactionsTable {
+func NewTxnRepository(t *table.Table) TxnRepository {
 	t.WithHashKey(tablePrimaryKey, dynamodb.ScalarAttributeTypeS)
 	t.WithRangeKey(tableSortKey, dynamodb.ScalarAttributeTypeS)
-	return &transactionsTable{table: t}
+	return &txnRepo{table: t}
 }
 
-func (t *transactionsTable) Get(userID, txnID string) (*TransactionItem, error) {
+func (t *txnRepo) Get(userID, txnID string) (*TransactionItem, error) {
 	userIDKey := makeUserIDKey(userID)
 	txnIDKey := makeTxnIDKey(txnID)
 	item := &TransactionItem{}
@@ -55,7 +55,7 @@ func (t *transactionsTable) Get(userID, txnID string) (*TransactionItem, error) 
 	return item, nil
 }
 
-func (t *transactionsTable) PutIfNotExists(item TransactionItem) error {
+func (t *txnRepo) PutIfNotExists(item TransactionItem) error {
 	err := t.table.PutItem(
 		item,
 		option.PutCondition("attribute_not_exists(SK)"),
@@ -67,17 +67,17 @@ func (t *transactionsTable) PutIfNotExists(item TransactionItem) error {
 	return nil
 }
 
-func (t *transactionsTable) Put(item TransactionItem) error {
+func (t *txnRepo) Put(item TransactionItem) error {
 	return t.table.PutItem(item)
 }
 
-func (t *transactionsTable) Delete(userID, txnID string) error {
+func (t *txnRepo) Delete(userID, txnID string) error {
 	userIDKey := makeUserIDKey(userID)
 	txnIDKey := makeTxnIDKey(txnID)
 	return t.table.DeleteItem(attributes.String(userIDKey), attributes.String(txnIDKey))
 }
 
-func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
+func (t *txnRepo) GetAll() ([]TransactionItem, error) {
 	options := []option.QueryInput{
 		option.Index("GSI1"),
 		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
@@ -96,7 +96,7 @@ func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
 	return items, nil
 }
 
-func (t *transactionsTable) GetByUserID(userID string) ([]TransactionItem, error) {
+func (t *txnRepo) GetByUserID(userID string) ([]TransactionItem, error) {
 	userIDKey := makeUserIDKey(userID)
 	// to match all transactions
 	txnKeyWithoutID := fmt.Sprintf("%s#", txnKeyPrefix)

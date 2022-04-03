@@ -1,7 +1,7 @@
 package ddb
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 )
 
+// NewDynamoDBLocalAPI creates a new session with DynamoDB for local testing.
 func NewDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	sess := session.Must(
 		session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(os.Getenv("DYNAMODB_TEST_ID"), os.Getenv("DYNAMODB_TEST_SECRET"), ""))),
@@ -19,6 +20,7 @@ func NewDynamoDBLocalAPI() dynamodbiface.DynamoDBAPI {
 	return dynamodb.New(sess)
 }
 
+// CreateTestTable creates a table for testing.
 func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	_, err := d.CreateTable(&dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
@@ -77,16 +79,17 @@ func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 		return err
 	}
 
-	fmt.Println("successfully created the table", name)
+	log.Println("successfully created the table", name)
 	return nil
 }
 
+// DeleteTable deletes a table. It should only be used in testing.
 func DeleteTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	_, err := d.DeleteTable(&dynamodb.DeleteTableInput{TableName: aws.String(name)})
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("successfully deleted the table", name)
+	log.Println("successfully deleted the table", name)
 	return nil
 }

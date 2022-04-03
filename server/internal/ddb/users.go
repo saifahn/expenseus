@@ -14,6 +14,8 @@ type UserItem struct {
 	SK         string `json:"SK"`
 	EntityType string `json:"EntityType"`
 	ID         string `json:"ID"`
+	Username   string `json:"Username"`
+	Name       string `json:"Name"`
 	GSI1PK     string `json:"GSI1PK"`
 	GSI1SK     string `json:"GSI1SK"`
 }

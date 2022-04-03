@@ -29,6 +29,8 @@ func userToUserItem(u app.User) UserItem {
 		SK:         userIDKey,
 		EntityType: userEntityType,
 		ID:         u.ID,
+		Username:   u.Username,
+		Name:       u.Name,
 		GSI1PK:     allUsersKey,
 		GSI1SK:     userIDKey,
 	}
@@ -45,7 +47,9 @@ func (d *dynamoDB) CreateUser(u app.User) error {
 
 func userItemToUser(ui UserItem) app.User {
 	return app.User{
-		ID: ui.ID,
+		ID:       ui.ID,
+		Username: ui.Username,
+		Name:     ui.Name,
 	}
 }
 
@@ -83,6 +87,9 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 		EntityType: txnEntityType,
 		ID:         transactionID,
 		UserID:     td.UserID,
+		Name:       td.Name,
+		Amount:     td.Amount,
+		Date:       td.Date,
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
 	}
@@ -95,22 +102,25 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 	return nil
 }
 
-func transactionItemToTransaction(ti TransactionItem) app.Transaction {
+func txnItemToTxn(ti TransactionItem) app.Transaction {
 	return app.Transaction{
 		ID: ti.ID,
 		TransactionDetails: app.TransactionDetails{
 			UserID: ti.UserID,
+			Name:   ti.Name,
+			Amount: ti.Amount,
+			Date:   ti.Date,
 		},
 	}
 }
 
 func (d *dynamoDB) GetTransaction(userID, transactionID string) (app.Transaction, error) {
-	ti, err := d.transactions.Get(userID, transactionID)
+	ti, err := d.transactions.Get(transactionID)
 	if err != nil {
 		return app.Transaction{}, err
 	}
 
-	return transactionItemToTransaction(*ti), nil
+	return txnItemToTxn(*ti), nil
 }
 
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
@@ -121,7 +131,7 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 
 	var transactions []app.Transaction
 	for _, ti := range transactionItems {
-		transactions = append(transactions, transactionItemToTransaction(ti))
+		transactions = append(transactions, txnItemToTxn(ti))
 	}
 
 	return transactions, nil
@@ -135,7 +145,7 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 
 	transactions := []app.Transaction{}
 	for _, ti := range items {
-		transactions = append(transactions, transactionItemToTransaction(ti))
+		transactions = append(transactions, txnItemToTxn(ti))
 	}
 	return transactions, nil
 }

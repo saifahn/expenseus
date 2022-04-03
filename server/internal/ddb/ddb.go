@@ -23,9 +23,9 @@ func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName stri
 	return &dynamoDB{usersTable: usersTable, transactionsTable: transactionsTable}
 }
 
-func (d *dynamoDB) CreateUser(u app.User) error {
+func userToUserItem(u app.User) UserItem {
 	userIDKey := fmt.Sprintf("%s#%s", UserKeyPrefix, u.ID)
-	item := &UserItem{
+	return UserItem{
 		PK:         userIDKey,
 		SK:         userIDKey,
 		EntityType: UserEntityType,
@@ -33,7 +33,10 @@ func (d *dynamoDB) CreateUser(u app.User) error {
 		GSI1PK:     allUsersKey,
 		GSI1SK:     userIDKey,
 	}
-	err := d.usersTable.PutIfNotExists(*item)
+}
+
+func (d *dynamoDB) CreateUser(u app.User) error {
+	err := d.usersTable.PutIfNotExists(userToUserItem(u))
 	if err != nil {
 		return err
 	}
@@ -41,12 +44,20 @@ func (d *dynamoDB) CreateUser(u app.User) error {
 	return nil
 }
 
+func userItemToUser(ui UserItem) app.User {
+	return app.User{
+		ID: ui.ID,
+	}
+}
+
 func (d *dynamoDB) GetUser(id string) (app.User, error) {
-	u, err := d.usersTable.Get(id)
+	ui, err := d.usersTable.Get(id)
 	if err != nil {
 		return app.User{}, err
 	}
-	user := u.User
+
+	return userItemToUser(ui), nil
+}
 
 	return user, nil
 }

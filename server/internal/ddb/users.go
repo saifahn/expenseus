@@ -33,7 +33,6 @@ const (
 	HashKey        = "PK"
 	RangeKey       = "SK"
 	UserKeyPrefix  = "user"
-	usersKey       = "users"
 	UserEntityType = "user"
 	allUsersKey    = "users"
 	GSI1PK         = "GSI1PK"

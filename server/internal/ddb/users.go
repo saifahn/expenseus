@@ -42,9 +42,9 @@ func NewUsersTable(t *table.Table) UsersTable {
 }
 
 func (u *users) Get(id string) (UserItem, error) {
-	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, id)
+	key := makeUserIDKey(id)
 	item := &UserItem{}
-	err := u.table.GetItem(attributes.String(userKey), attributes.String(userKey), item)
+	err := u.table.GetItem(attributes.String(key), attributes.String(key), item)
 	if err != nil {
 		return UserItem{}, err
 	}
@@ -80,6 +80,10 @@ func (u *users) PutIfNotExists(item UserItem) error {
 }
 
 func (u *users) Delete(id string) error {
-	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, id)
-	return u.table.DeleteItem(attributes.String(userKey), attributes.String(userKey))
+	key := makeUserIDKey(id)
+	return u.table.DeleteItem(attributes.String(key), attributes.String(key))
+}
+
+func makeUserIDKey(id string) string {
+	return fmt.Sprintf("%s#%s", userKeyPrefix, id)
 }

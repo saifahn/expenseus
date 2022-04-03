@@ -45,10 +45,10 @@ func NewTransactionsTable(t *table.Table) TransactionsTable {
 }
 
 func (t *transactionsTable) Get(userID, txnID string) (*TransactionItem, error) {
-	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, userID)
-	txnKey := fmt.Sprintf("%s#%s", txnKeyPrefix, txnID)
+	userIDKey := makeUserIDKey(userID)
+	txnIDKey := makeTxnIDKey(txnID)
 	item := &TransactionItem{}
-	err := t.table.GetItem(attributes.String(userKey), attributes.String(txnKey), item, option.ConsistentRead())
+	err := t.table.GetItem(attributes.String(userIDKey), attributes.String(txnIDKey), item, option.ConsistentRead())
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +72,9 @@ func (t *transactionsTable) Put(item TransactionItem) error {
 }
 
 func (t *transactionsTable) Delete(userID, txnID string) error {
-	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, userID)
-	txnKey := fmt.Sprintf("%s#%s", txnKeyPrefix, txnID)
-	return t.table.DeleteItem(attributes.String(userKey), attributes.String(txnKey))
+	userIDKey := makeUserIDKey(userID)
+	txnIDKey := makeTxnIDKey(txnID)
+	return t.table.DeleteItem(attributes.String(userIDKey), attributes.String(txnIDKey))
 }
 
 func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
@@ -97,13 +97,14 @@ func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
 }
 
 func (t *transactionsTable) GetByUserID(userID string) ([]TransactionItem, error) {
-	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, userID)
+	userIDKey := makeUserIDKey(userID)
+	// to match all transactions
 	txnKeyWithoutID := fmt.Sprintf("%s#", txnKeyPrefix)
 
 	options := []option.QueryInput{
 		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
 		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
-		option.QueryExpressionAttributeValue(":userKey", attributes.String(userKey)),
+		option.QueryExpressionAttributeValue(":userKey", attributes.String(userIDKey)),
 		option.QueryExpressionAttributeValue(":allTxnPrefix", attributes.String(txnKeyWithoutID)),
 		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTxnPrefix)"),
 	}
@@ -117,4 +118,8 @@ func (t *transactionsTable) GetByUserID(userID string) ([]TransactionItem, error
 	}
 
 	return items, nil
+}
+
+func makeTxnIDKey(id string) string {
+	return fmt.Sprintf("%s#%s", txnKeyPrefix, id)
 }

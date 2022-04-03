@@ -131,6 +131,15 @@ func (d *dynamoDB) GetTransactionsByUsername(username string) ([]app.Transaction
 	return transactions, nil
 }
 
+func transactionItemToTransaction(ti TransactionItem) app.Transaction {
+	return app.Transaction{
+		ID: ti.ID,
+		TransactionDetails: app.TransactionDetails{
+			UserID: ti.UserID,
+		},
+	}
+}
+
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	transactionItems, err := d.transactionsTable.GetAll()
 	if err != nil {
@@ -138,11 +147,8 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	}
 
 	var transactions []app.Transaction
-	for _, t := range transactionItems {
-		transactions = append(transactions, app.Transaction{
-			ID:                 t.ID,
-			TransactionDetails: t.TransactionDetails,
-		})
+	for _, ti := range transactionItems {
+		transactions = append(transactions, transactionItemToTransaction(ti))
 	}
 
 	return transactions, nil

@@ -96,41 +96,6 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 	return nil
 }
 
-func (d *dynamoDB) GetTransaction(id string) (app.Transaction, error) {
-	t, err := d.transactionsTable.Get(id)
-	if err != nil {
-		return app.Transaction{}, err
-	}
-
-	transaction := app.Transaction{
-		ID:                 t.ID,
-		TransactionDetails: t.TransactionDetails,
-	}
-	return transaction, nil
-}
-
-func (d *dynamoDB) GetTransactionsByUsername(username string) ([]app.Transaction, error) {
-	// look up users table for user with the name
-	u, err := d.usersTable.GetByUsername(username)
-	if err != nil {
-		return nil, err
-	}
-	// then look in the transactions table for transactions with that ID
-	tItems, err := d.transactionsTable.GetByUserID(u.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	transactions := []app.Transaction{}
-	for _, t := range tItems {
-		transactions = append(transactions, app.Transaction{
-			ID:                 t.ID,
-			TransactionDetails: t.TransactionDetails,
-		})
-	}
-	return transactions, nil
-}
-
 func transactionItemToTransaction(ti TransactionItem) app.Transaction {
 	return app.Transaction{
 		ID: ti.ID,
@@ -138,6 +103,15 @@ func transactionItemToTransaction(ti TransactionItem) app.Transaction {
 			UserID: ti.UserID,
 		},
 	}
+}
+
+func (d *dynamoDB) GetTransaction(userID, transactionID string) (app.Transaction, error) {
+	ti, err := d.transactionsTable.Get(userID, transactionID)
+	if err != nil {
+		return app.Transaction{}, err
+	}
+
+	return transactionItemToTransaction(*ti), nil
 }
 
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
@@ -151,5 +125,18 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 		transactions = append(transactions, transactionItemToTransaction(ti))
 	}
 
+	return transactions, nil
+}
+
+func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
+	items, err := d.transactionsTable.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := []app.Transaction{}
+	for _, ti := range items {
+		transactions = append(transactions, transactionItemToTransaction(ti))
+	}
 	return transactions, nil
 }

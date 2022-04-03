@@ -2,6 +2,7 @@ package ddb
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
@@ -92,7 +93,7 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 		return err
 	}
 
-	fmt.Println("transaction successfully created")
+	log.Println("transaction successfully created")
 	return nil
 }
 

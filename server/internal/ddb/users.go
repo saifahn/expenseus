@@ -58,7 +58,7 @@ func (u *users) GetAll() ([]UserItem, error) {
 	options := []option.QueryInput{
 		option.Index("GSI1"),
 		option.QueryExpressionAttributeName(GSI1PK, "#GSI1PK"),
-		option.QueryExpressionAttributeValue(":usersKey", attributes.String(usersKey)),
+		option.QueryExpressionAttributeValue(":usersKey", attributes.String(allUsersKey)),
 		option.QueryKeyConditionExpression("#GSI1PK = :usersKey"),
 	}
 

@@ -30,22 +30,19 @@ type users struct {
 }
 
 const (
-	HashKey        = "PK"
-	RangeKey       = "SK"
-	UserKeyPrefix  = "user"
-	UserEntityType = "user"
+	userKeyPrefix  = "user"
+	userEntityType = "user"
 	allUsersKey    = "users"
-	GSI1PK         = "GSI1PK"
 )
 
 func NewUsersTable(t *table.Table) UsersTable {
-	t.WithHashKey(HashKey, dynamodb.ScalarAttributeTypeS)
-	t.WithRangeKey(RangeKey, dynamodb.ScalarAttributeTypeS)
+	t.WithHashKey(tablePrimaryKey, dynamodb.ScalarAttributeTypeS)
+	t.WithRangeKey(tableSortKey, dynamodb.ScalarAttributeTypeS)
 	return &users{table: t}
 }
 
 func (u *users) Get(id string) (UserItem, error) {
-	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, id)
+	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, id)
 	item := &UserItem{}
 	err := u.table.GetItem(attributes.String(userKey), attributes.String(userKey), item)
 	if err != nil {
@@ -57,7 +54,7 @@ func (u *users) Get(id string) (UserItem, error) {
 func (u *users) GetAll() ([]UserItem, error) {
 	options := []option.QueryInput{
 		option.Index("GSI1"),
-		option.QueryExpressionAttributeName(GSI1PK, "#GSI1PK"),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
 		option.QueryExpressionAttributeValue(":usersKey", attributes.String(allUsersKey)),
 		option.QueryKeyConditionExpression("#GSI1PK = :usersKey"),
 	}
@@ -83,6 +80,6 @@ func (u *users) PutIfNotExists(item UserItem) error {
 }
 
 func (u *users) Delete(id string) error {
-	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, id)
+	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, id)
 	return u.table.DeleteItem(attributes.String(userKey), attributes.String(userKey))
 }

@@ -20,9 +20,9 @@ type TransactionItem struct {
 }
 
 const (
-	TransactionKeyPrefix  = "txn"
-	transactionEntityType = "transaction"
-	allTxnKey             = "transactions"
+	txnKeyPrefix  = "txn"
+	txnEntityType = "transaction"
+	allTxnKey     = "transactions"
 )
 
 type TransactionsTable interface {
@@ -39,14 +39,14 @@ type transactionsTable struct {
 }
 
 func NewTransactionsTable(t *table.Table) TransactionsTable {
-	t.WithHashKey(HashKey, dynamodb.ScalarAttributeTypeS)
-	t.WithRangeKey(RangeKey, dynamodb.ScalarAttributeTypeS)
+	t.WithHashKey(tablePrimaryKey, dynamodb.ScalarAttributeTypeS)
+	t.WithRangeKey(tableSortKey, dynamodb.ScalarAttributeTypeS)
 	return &transactionsTable{table: t}
 }
 
 func (t *transactionsTable) Get(userID, txnID string) (*TransactionItem, error) {
-	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, userID)
-	txnKey := fmt.Sprintf("%s#%s", TransactionKeyPrefix, txnID)
+	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, userID)
+	txnKey := fmt.Sprintf("%s#%s", txnKeyPrefix, txnID)
 	item := &TransactionItem{}
 	err := t.table.GetItem(attributes.String(userKey), attributes.String(txnKey), item, option.ConsistentRead())
 	if err != nil {
@@ -72,15 +72,15 @@ func (t *transactionsTable) Put(item TransactionItem) error {
 }
 
 func (t *transactionsTable) Delete(userID, txnID string) error {
-	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, userID)
-	txnKey := fmt.Sprintf("%s#%s", TransactionKeyPrefix, txnID)
+	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, userID)
+	txnKey := fmt.Sprintf("%s#%s", txnKeyPrefix, txnID)
 	return t.table.DeleteItem(attributes.String(userKey), attributes.String(txnKey))
 }
 
 func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
 	options := []option.QueryInput{
 		option.Index("GSI1"),
-		option.QueryExpressionAttributeName(GSI1PK, "#GSI1PK"),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
 		option.QueryExpressionAttributeValue(":allTransactionsKey", attributes.String(allTxnKey)),
 		option.QueryKeyConditionExpression("#GSI1PK = :allTransactionsKey"),
 	}
@@ -97,12 +97,12 @@ func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
 }
 
 func (t *transactionsTable) GetByUserID(userID string) ([]TransactionItem, error) {
-	userKey := fmt.Sprintf("%s#%s", UserKeyPrefix, userID)
-	txnKeyWithoutID := fmt.Sprintf("%s#", TransactionKeyPrefix)
+	userKey := fmt.Sprintf("%s#%s", userKeyPrefix, userID)
+	txnKeyWithoutID := fmt.Sprintf("%s#", txnKeyPrefix)
 
 	options := []option.QueryInput{
-		option.QueryExpressionAttributeName(HashKey, "#PK"),
-		option.QueryExpressionAttributeName(RangeKey, "#SK"),
+		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
+		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
 		option.QueryExpressionAttributeValue(":userKey", attributes.String(userKey)),
 		option.QueryExpressionAttributeValue(":allTxnPrefix", attributes.String(txnKeyWithoutID)),
 		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTxnPrefix)"),

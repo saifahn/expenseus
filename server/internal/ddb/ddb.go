@@ -25,11 +25,11 @@ func New(d dynamodbiface.DynamoDBAPI, usersTableName, transactionsTableName stri
 }
 
 func userToUserItem(u app.User) UserItem {
-	userIDKey := fmt.Sprintf("%s#%s", UserKeyPrefix, u.ID)
+	userIDKey := fmt.Sprintf("%s#%s", userKeyPrefix, u.ID)
 	return UserItem{
 		PK:         userIDKey,
 		SK:         userIDKey,
-		EntityType: UserEntityType,
+		EntityType: userEntityType,
 		ID:         u.ID,
 		GSI1PK:     allUsersKey,
 		GSI1SK:     userIDKey,
@@ -76,13 +76,13 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 	// generate an ID
 	transactionID := uuid.New().String()
-	userIDKey := fmt.Sprintf("%s#%s", UserKeyPrefix, td.UserID)
-	transactionIDKey := fmt.Sprintf("%s#%s", TransactionKeyPrefix, transactionID)
+	userIDKey := fmt.Sprintf("%s#%s", userKeyPrefix, td.UserID)
+	transactionIDKey := fmt.Sprintf("%s#%s", txnKeyPrefix, transactionID)
 
 	item := &TransactionItem{
 		PK:         userIDKey,
 		SK:         transactionIDKey,
-		EntityType: transactionEntityType,
+		EntityType: txnEntityType,
 		ID:         transactionID,
 		UserID:     td.UserID,
 		GSI1PK:     allTxnKey,

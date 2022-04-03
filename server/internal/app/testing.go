@@ -134,7 +134,7 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 // transactions of a user, with the user in the request context.
 func NewGetTransactionsByUserRequest(userID string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s", userID), nil)
-	ctx := context.WithValue(req.Context(), CtxKeyUsername, userID)
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
 	return req.WithContext(ctx)
 }
 

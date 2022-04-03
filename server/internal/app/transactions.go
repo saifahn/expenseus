@@ -53,9 +53,9 @@ func (a *App) GetTransaction(rw http.ResponseWriter, r *http.Request) {
 // GetTransactionsByUser handles a HTTP request to get all transactions of a user,
 // returning a list of transactions.
 func (a *App) GetTransactionsByUser(rw http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CtxKeyUsername).(string)
+	userID := r.Context().Value(CtxKeyUserID).(string)
 
-	transactions, err := a.store.GetTransactionsByUser(username)
+	transactions, err := a.store.GetTransactionsByUser(userID)
 
 	// TODO: account for different errors
 	if err != nil {

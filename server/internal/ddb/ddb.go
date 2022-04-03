@@ -72,6 +72,30 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
+func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
+	// generate an ID
+	transactionID := uuid.New().String()
+	userIDKey := fmt.Sprintf("%s#%s", UserKeyPrefix, td.UserID)
+	transactionIDKey := fmt.Sprintf("%s#%s", TransactionKeyPrefix, transactionID)
+
+	item := &TransactionItem{
+		PK:         userIDKey,
+		SK:         transactionIDKey,
+		EntityType: transactionEntityType,
+		ID:         transactionID,
+		UserID:     td.UserID,
+		GSI1PK:     allTxnKey,
+		GSI1SK:     transactionIDKey,
+	}
+	err := d.transactionsTable.PutIfNotExists(*item)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("transaction successfully created")
+	return nil
+}
+
 func (d *dynamoDB) GetTransaction(id string) (app.Transaction, error) {
 	t, err := d.transactionsTable.Get(id)
 	if err != nil {
@@ -122,20 +146,4 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	}
 
 	return transactions, nil
-}
-
-func (d *dynamoDB) CreateTransaction(ed app.TransactionDetails) error {
-	// generate an ID
-	transactionID := uuid.New().String()
-	item := &TransactionItem{
-		ID:                 transactionID,
-		TransactionDetails: ed,
-	}
-	err := d.transactionsTable.PutIfNotExists(*item)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("transaction successfully created")
-	return nil
 }

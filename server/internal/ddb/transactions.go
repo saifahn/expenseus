@@ -12,14 +12,18 @@ import (
 type TransactionItem struct {
 	PK         string `json:"PK"`
 	SK         string `json:"SK"`
+	EntityType string `json:"EntityType"`
 	ID         string `json:"ID"`
 	UserID     string `json:"UserID"`
-	EntityType string `json:"EntityType"`
 	GSI1PK     string `json:"GSI1PK"`
 	GSI1SK     string `json:"GSI1SK"`
 }
 
-const TransactionKeyPrefix = "txn"
+const (
+	TransactionKeyPrefix  = "txn"
+	transactionEntityType = "transaction"
+	allTxnKey             = "transactions"
+)
 
 type TransactionsTable interface {
 	Get(userID, transactionID string) (*TransactionItem, error)
@@ -72,8 +76,6 @@ func (t *transactionsTable) Delete(userID, txnID string) error {
 	txnKey := fmt.Sprintf("%s#%s", TransactionKeyPrefix, txnID)
 	return t.table.DeleteItem(attributes.String(userKey), attributes.String(txnKey))
 }
-
-const allTxnKey = "transactions"
 
 func (t *transactionsTable) GetAll() ([]TransactionItem, error) {
 	options := []option.QueryInput{

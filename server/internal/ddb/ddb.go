@@ -59,7 +59,17 @@ func (d *dynamoDB) GetUser(id string) (app.User, error) {
 	return userItemToUser(ui), nil
 }
 
-	return user, nil
+func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
+	userItems, err := d.usersTable.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	var users []app.User
+	for _, ui := range userItems {
+		users = append(users, userItemToUser(ui))
+	}
+	return users, nil
 }
 
 func (d *dynamoDB) GetTransaction(id string) (app.Transaction, error) {
@@ -128,17 +138,4 @@ func (d *dynamoDB) CreateTransaction(ed app.TransactionDetails) error {
 
 	fmt.Println("transaction successfully created")
 	return nil
-}
-
-func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
-	userItems, err := d.usersTable.GetAll()
-	if err != nil {
-		return nil, err
-	}
-
-	var users []app.User
-	for _, u := range userItems {
-		users = append(users, u.User)
-	}
-	return users, nil
 }

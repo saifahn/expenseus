@@ -27,7 +27,7 @@ type Transaction struct {
 func (a *App) GetTransaction(rw http.ResponseWriter, r *http.Request) {
 	transactionID := r.Context().Value(CtxKeyTransactionID).(string)
 
-	transaction, err := a.store.GetTransaction(transactionID, transactionID)
+	transaction, err := a.store.GetTransaction(transactionID)
 
 	// TODO: should account for different kinds of errors
 	if err != nil {

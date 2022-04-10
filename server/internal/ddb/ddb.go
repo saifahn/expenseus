@@ -113,7 +113,7 @@ func txnItemToTxn(ti TransactionItem) app.Transaction {
 	}
 }
 
-func (d *dynamoDB) GetTransaction(userID, transactionID string) (app.Transaction, error) {
+func (d *dynamoDB) GetTransaction(transactionID string) (app.Transaction, error) {
 	ti, err := d.transactions.Get(transactionID)
 	if err != nil {
 		return app.Transaction{}, err

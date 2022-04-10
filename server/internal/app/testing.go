@@ -255,7 +255,7 @@ type StubTransactionStore struct {
 	recordTransactionCalls []TransactionDetails
 }
 
-func (s *StubTransactionStore) GetTransaction(userID, transactionID string) (Transaction, error) {
+func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
 	transaction := s.transactions[transactionID]
 	// check for empty Transaction
 	if transaction == (Transaction{}) {

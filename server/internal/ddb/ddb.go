@@ -15,8 +15,9 @@ type dynamoDB struct {
 }
 
 func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
-	users := NewUserRepository(table.New(d, tableName))
-	transactions := NewTxnRepository(table.New(d, tableName))
+	tbl := table.New(d, tableName)
+	users := NewUserRepository(tbl)
+	transactions := NewTxnRepository(tbl)
 
 	return &dynamoDB{users: users, transactions: transactions}
 }

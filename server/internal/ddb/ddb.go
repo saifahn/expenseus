@@ -1,7 +1,6 @@
 package ddb
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
@@ -23,7 +22,7 @@ func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
 }
 
 func userToUserItem(u app.User) UserItem {
-	userIDKey := fmt.Sprintf("%s#%s", userKeyPrefix, u.ID)
+	userIDKey := makeUserIDKey(u.ID)
 	return UserItem{
 		PK:         userIDKey,
 		SK:         userIDKey,
@@ -76,10 +75,10 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 }
 
 func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
-	// generate an ID
+	userIDKey := makeUserIDKey(td.UserID)
+	// generate an ID for the transaction
 	transactionID := uuid.New().String()
-	userIDKey := fmt.Sprintf("%s#%s", userKeyPrefix, td.UserID)
-	transactionIDKey := fmt.Sprintf("%s#%s", txnKeyPrefix, transactionID)
+	transactionIDKey := makeTxnIDKey(transactionID)
 
 	item := &TransactionItem{
 		PK:         userIDKey,

@@ -5,7 +5,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrConflict = errors.New("dynamodb: conflict")
+var (
+	ErrConflict   = errors.New("dynamodb: conflict")
+	ErrUnexpected = errors.New("dynamodb: something unexpected occurred")
+)
 
 func conflictOrErr(err error) error {
 	dynamoErr, ok := errors.Cause(err).(awserr.Error)

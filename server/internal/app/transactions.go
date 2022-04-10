@@ -50,12 +50,12 @@ func (a *App) GetTransaction(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetTransactionsByUsername handles a HTTP request to get all transactions of a user,
+// GetTransactionsByUser handles a HTTP request to get all transactions of a user,
 // returning a list of transactions.
-func (a *App) GetTransactionsByUsername(rw http.ResponseWriter, r *http.Request) {
-	username := r.Context().Value(CtxKeyUsername).(string)
+func (a *App) GetTransactionsByUser(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
 
-	transactions, err := a.store.GetTransactionsByUsername(username)
+	transactions, err := a.store.GetTransactionsByUser(userID)
 
 	// TODO: account for different errors
 	if err != nil {

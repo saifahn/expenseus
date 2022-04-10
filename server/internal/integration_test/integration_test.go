@@ -13,28 +13,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const usersTableName = "integtest-users-table"
-const transactionsTableName = "integtest-transactions-table"
+const testTableName = "expenseus-integ-test"
 
 func setUpDB(d dynamodbiface.DynamoDBAPI) (app.Store, error) {
-	err := ddb.CreateTestTable(d, usersTableName)
-	if err != nil {
-		return nil, err
-	}
-	err = ddb.CreateTestTable(d, transactionsTableName)
+	err := ddb.CreateTestTable(d, testTableName)
 	if err != nil {
 		return nil, err
 	}
 
-	return ddb.New(d, usersTableName, transactionsTableName), nil
+	return ddb.New(d, testTableName), nil
 }
 
 func tearDownDB(d dynamodbiface.DynamoDBAPI) error {
-	err := ddb.DeleteTable(d, usersTableName)
-	if err != nil {
-		return err
-	}
-	err = ddb.DeleteTable(d, transactionsTableName)
+	err := ddb.DeleteTable(d, testTableName)
 	if err != nil {
 		return err
 	}
@@ -240,8 +231,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert.Equal(transactionsGot[0], got)
 	})
 
-	// maybe just by user ID is better
-	t.Run("transactions can be retrieved by username", func(t *testing.T) {
+	t.Run("transactions can be retrieved by user ID", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)
@@ -250,7 +240,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		wantedTransactionDetails := app.TestSeanTransactionDetails
 		createTestTransaction(t, router, wantedTransactionDetails, app.TestSeanUser.ID)
 
-		request := app.NewGetTransactionsByUsernameRequest(app.TestSeanUser.Username)
+		request := app.NewGetTransactionsByUserRequest(app.TestSeanUser.ID)
 		request.AddCookie(&app.ValidCookie)
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)

@@ -130,11 +130,11 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 	return req
 }
 
-// NewGetTransactionsByUsernameRequest creates a request to be used in tests to get all
+// NewGetTransactionsByUserRequest creates a request to be used in tests to get all
 // transactions of a user, with the user in the request context.
-func NewGetTransactionsByUsernameRequest(username string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s", username), nil)
-	ctx := context.WithValue(req.Context(), CtxKeyUsername, username)
+func NewGetTransactionsByUserRequest(userID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s", userID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
 	return req.WithContext(ctx)
 }
 
@@ -255,8 +255,8 @@ type StubTransactionStore struct {
 	recordTransactionCalls []TransactionDetails
 }
 
-func (s *StubTransactionStore) GetTransaction(id string) (Transaction, error) {
-	transaction := s.transactions[id]
+func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
+	transaction := s.transactions[transactionID]
 	// check for empty Transaction
 	if transaction == (Transaction{}) {
 		return Transaction{}, errors.New("transaction not found")
@@ -264,10 +264,10 @@ func (s *StubTransactionStore) GetTransaction(id string) (Transaction, error) {
 	return transaction, nil
 }
 
-func (s *StubTransactionStore) GetTransactionsByUsername(username string) ([]Transaction, error) {
+func (s *StubTransactionStore) GetTransactionsByUser(id string) ([]Transaction, error) {
 	var targetUser User
 	for _, u := range s.users {
-		if u.Username == username {
+		if u.ID == id {
 			targetUser = u
 			break
 		}

@@ -34,13 +34,13 @@ func Init(a *app.App) *chi.Mux {
 			r.Get("/", a.GetAllTransactions)
 			r.Post("/", a.CreateTransaction)
 
-			r.Route("/user/{username}", func(r chi.Router) {
-				r.Use(UsernameCtx)
-				r.Get("/", a.GetTransactionsByUsername)
+			r.Route("/user/{userID}", func(r chi.Router) {
+				r.Use(userIDCtx)
+				r.Get("/", a.GetTransactionsByUser)
 			})
 
 			r.Route("/{transactionID}", func(r chi.Router) {
-				r.Use(TransactionIDCtx)
+				r.Use(transactionIDCtx)
 				r.Get("/", a.GetTransaction)
 			})
 		})
@@ -52,7 +52,7 @@ func Init(a *app.App) *chi.Mux {
 			r.Get("/self", a.GetSelf)
 
 			r.Route("/{userID}", func(r chi.Router) {
-				r.Use(UserIDCtx)
+				r.Use(userIDCtx)
 				r.Get("/", a.GetUser)
 			})
 		})
@@ -66,7 +66,7 @@ func Init(a *app.App) *chi.Mux {
 }
 
 // Gets the ID from the URL and adds it to the id context for the request.
-func TransactionIDCtx(next http.Handler) http.Handler {
+func transactionIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		transactionID := chi.URLParam(r, "transactionID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyTransactionID, transactionID)
@@ -74,17 +74,8 @@ func TransactionIDCtx(next http.Handler) http.Handler {
 	})
 }
 
-// Gets the username from the URL and adds it to the user context for the request.
-func UsernameCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		username := chi.URLParam(r, "username")
-		ctx := context.WithValue(r.Context(), app.CtxKeyUsername, username)
-		next.ServeHTTP(rw, r.WithContext(ctx))
-	})
-}
-
 // Gets the UserID from the URL and adds it to the UserID context for the request.
-func UserIDCtx(next http.Handler) http.Handler {
+func userIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "userID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyUserID, id)

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,18 +20,19 @@ func TestUsersTable(t *testing.T) {
 	defer DeleteTable(dynamodb, testUsersTableName)
 
 	tbl := table.New(dynamodb, testUsersTableName)
-	users := NewUsersTable(tbl)
+	users := NewUserRepository(tbl)
 
 	// retrieving a non-existent user will give an error
 	_, err = users.Get("non-existent-user")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	user := UserItem{
-		User: app.User{
-			ID:       "test-user",
-			Name:     "Testman",
-			Username: "testman-23",
-		},
+		PK:         "user#test",
+		SK:         "user#test",
+		EntityType: "user",
+		ID:         "test",
+		GSI1PK:     "users",
+		GSI1SK:     "user#test",
 	}
 
 	err = users.PutIfNotExists(user)
@@ -52,11 +52,6 @@ func TestUsersTable(t *testing.T) {
 	assert.NoError(err)
 	assert.Len(usersGot, 1)
 	assert.Contains(usersGot, user)
-
-	// get a user by username
-	got, err = users.GetByUsername(user.Username)
-	assert.NoError(err)
-	assert.Equal(user, got)
 
 	err = users.Delete(user.ID)
 	assert.NoError(err)

@@ -123,10 +123,10 @@ func TestGetTransactionByUser(t *testing.T) {
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 	t.Run("gets tomochi's transactions", func(t *testing.T) {
-		request := NewGetTransactionsByUsernameRequest(TestTomomiUser.Username)
+		request := NewGetTransactionsByUserRequest(TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetTransactionsByUsername)
+		handler := http.HandlerFunc(app.GetTransactionsByUser)
 		handler.ServeHTTP(response, request)
 
 		var got []Transaction
@@ -142,10 +142,10 @@ func TestGetTransactionByUser(t *testing.T) {
 	})
 
 	t.Run("gets saifahn's transactions", func(t *testing.T) {
-		request := NewGetTransactionsByUsernameRequest(TestSeanUser.Username)
+		request := NewGetTransactionsByUserRequest(TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(app.GetTransactionsByUsername)
+		handler := http.HandlerFunc(app.GetTransactionsByUser)
 		handler.ServeHTTP(response, request)
 
 		var got []Transaction

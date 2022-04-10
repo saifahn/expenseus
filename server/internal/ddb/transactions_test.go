@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
-	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,20 +21,20 @@ func TestTransactionTable(t *testing.T) {
 	defer DeleteTable(dynamodb, testTransactionsTableName)
 	tbl := table.New(dynamodb, testTransactionsTableName)
 	// create the transactions table instance
-	transactions := NewTransactionsTable(tbl)
+	transactions := NewTxnRepository(tbl)
 
 	// retrieving a non-existent item will give an error
 	_, err = transactions.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	testED := &app.TransactionDetails{
-		UserID: "test-user",
-		Name:   "test-transaction",
-	}
-
 	item := &TransactionItem{
-		ID:                 "test-item-id",
-		TransactionDetails: *testED,
+		PK:         "user#test-user-id",
+		SK:         "txn#test-txn-id",
+		ID:         "test-txn-id",
+		UserID:     "test-user-id",
+		EntityType: "transaction",
+		GSI1PK:     "transactions",
+		GSI1SK:     "txn#test-txn-id",
 	}
 
 	// no error raised the first time
@@ -62,12 +61,12 @@ func TestTransactionTable(t *testing.T) {
 	assert.Contains(itemsGot, *item)
 
 	// get the transactions by username
-	itemsGot, err = transactions.GetByUserID(testED.UserID)
+	itemsGot, err = transactions.GetByUserID(item.UserID)
 	assert.NoError(err)
 	assert.Contains(itemsGot, *item)
 
 	// the item is successfully deleted
-	err = transactions.Delete(item.ID)
+	err = transactions.Delete(item.UserID, item.ID)
 	assert.NoError(err)
 	_, err = transactions.Get(item.ID)
 	assert.EqualError(err, table.ErrItemNotFound.Error())

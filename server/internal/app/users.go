@@ -6,8 +6,7 @@ import (
 )
 
 const (
-	CtxKeyUsername contextKey = iota
-	CtxKeyUserID   contextKey = iota
+	CtxKeyUserID contextKey = iota
 )
 
 type User struct {

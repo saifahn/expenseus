@@ -16,8 +16,8 @@ const (
 )
 
 type Store interface {
-	GetTransaction(id string) (Transaction, error)
-	GetTransactionsByUsername(username string) ([]Transaction, error)
+	GetTransaction(txnID string) (Transaction, error)
+	GetTransactionsByUser(userID string) ([]Transaction, error)
 	GetAllTransactions() ([]Transaction, error)
 	CreateTransaction(transactionDetails TransactionDetails) error
 	CreateUser(user User) error

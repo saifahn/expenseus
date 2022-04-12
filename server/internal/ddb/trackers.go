@@ -9,16 +9,20 @@ import (
 )
 
 const (
-	trackerKeyPrefix = "tracker"
+	trackerKeyPrefix  = "tracker"
+	trackerEntityType = "tracker"
 )
 
 type TrackerItem struct {
-	PK string `json:"PK"`
-	SK string `json:"SK"`
+	PK         string `json:"PK"`
+	SK         string `json:"SK"`
+	EntityType string `json:"EntityType"`
+	ID         string `json:"id"`
 }
 
 type TrackersRepository interface {
-	Get(id string) (TrackerItem, error)
+	Get(id string) (*TrackerItem, error)
+	Put(item TrackerItem) error
 }
 
 type trackersRepo struct {
@@ -31,13 +35,17 @@ func NewTrackersRepository(t *table.Table) TrackersRepository {
 	return &trackersRepo{t}
 }
 
-func (t *trackersRepo) Get(id string) (TrackerItem, error) {
+func (t *trackersRepo) Get(id string) (*TrackerItem, error) {
 	// make the id
 	trackerIDKey := fmt.Sprintf("%s#%s", trackerKeyPrefix, id)
 	item := &TrackerItem{}
 	err := t.table.GetItem(attributes.String(trackerIDKey), attributes.String(trackerIDKey), item)
 	if err != nil {
-		return TrackerItem{}, err
+		return nil, err
 	}
-	return *item, nil
+	return item, nil
+}
+
+func (t *trackersRepo) Put(item TrackerItem) error {
+	return t.table.PutItem(item)
 }

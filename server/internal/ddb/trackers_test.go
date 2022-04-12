@@ -23,4 +23,18 @@ func TestTrackersRepo(t *testing.T) {
 
 	_, err = trackers.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
+
+	item := &TrackerItem{
+		PK:         "tracker#test-tracker-id",
+		SK:         "tracker#test-tracker-id",
+		EntityType: trackerEntityType,
+		ID:         "test-tracker-id",
+	}
+
+	err = trackers.Put(*item)
+	assert.NoError(err)
+
+	got, err := trackers.Get(item.ID)
+	assert.NoError(err)
+	assert.Equal(item, got)
 }

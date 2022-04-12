@@ -14,15 +14,24 @@ const (
 )
 
 type TrackerItem struct {
-	PK         string `json:"PK"`
-	SK         string `json:"SK"`
-	EntityType string `json:"EntityType"`
-	ID         string `json:"id"`
+	PK         string   `json:"PK"`
+	SK         string   `json:"SK"`
+	EntityType string   `json:"EntityType"`
+	ID         string   `json:"ID"`
+	Name       string   `json:"Name"`
+	Users      []string `json:"Users"`
+}
+
+type CreateTrackerInput struct {
+	ID    string
+	Name  string
+	Users []string
 }
 
 type TrackersRepository interface {
 	Get(id string) (*TrackerItem, error)
 	Put(item TrackerItem) error
+	Create(input CreateTrackerInput) error
 }
 
 type trackersRepo struct {
@@ -48,4 +57,17 @@ func (t *trackersRepo) Get(id string) (*TrackerItem, error) {
 
 func (t *trackersRepo) Put(item TrackerItem) error {
 	return t.table.PutItem(item)
+}
+
+func (t *trackersRepo) Create(input CreateTrackerInput) error {
+	trackerIDKey := fmt.Sprintf("%s#%s", trackerKeyPrefix, input.ID)
+
+	return t.table.PutItem(TrackerItem{
+		PK:         trackerIDKey,
+		SK:         trackerIDKey,
+		EntityType: trackerEntityType,
+		ID:         input.ID,
+		Name:       input.Name,
+		Users:      input.Users,
+	})
 }

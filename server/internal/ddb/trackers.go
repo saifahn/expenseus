@@ -6,11 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
+	"github.com/nabeken/aws-go-dynamodb/table/option"
 )
 
 const (
 	trackerKeyPrefix  = "tracker"
 	trackerEntityType = "tracker"
+	allTrackersKey    = "trackers"
 )
 
 type TrackerItem struct {
@@ -20,6 +22,8 @@ type TrackerItem struct {
 	ID         string   `json:"ID"`
 	Name       string   `json:"Name"`
 	Users      []string `json:"Users"`
+	GSI1PK     string   `json:"GSI1PK"`
+	GSI1SK     string   `json:"GSI1SK"`
 }
 
 type CreateTrackerInput struct {
@@ -30,6 +34,7 @@ type CreateTrackerInput struct {
 
 type TrackersRepository interface {
 	Get(id string) (*TrackerItem, error)
+	GetAll() ([]TrackerItem, error)
 	Put(item TrackerItem) error
 	Create(input CreateTrackerInput) error
 }
@@ -69,5 +74,25 @@ func (t *trackersRepo) Create(input CreateTrackerInput) error {
 		ID:         input.ID,
 		Name:       input.Name,
 		Users:      input.Users,
+		GSI1PK:     allTrackersKey,
+		GSI1SK:     trackerIDKey,
 	})
+}
+
+func (t *trackersRepo) GetAll() ([]TrackerItem, error) {
+	options := []option.QueryInput{
+		option.Index("GSI1"),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
+		option.QueryExpressionAttributeValue(":allTrackersKey", attributes.String(allTrackersKey)),
+		option.QueryKeyConditionExpression("#GSI1PK = :allTrackersKey"),
+	}
+
+	var items []TrackerItem
+
+	_, err := t.table.Query(&items, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }

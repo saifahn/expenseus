@@ -133,7 +133,6 @@ func (t *txnRepo) GetByUserID(userID string) ([]TransactionItem, error) {
 	var items []TransactionItem
 
 	_, err := t.table.Query(&items, options...)
-
 	if err != nil {
 		return nil, err
 	}

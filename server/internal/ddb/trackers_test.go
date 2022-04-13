@@ -29,6 +29,8 @@ func TestTrackersRepo(t *testing.T) {
 		SK:         "tracker#test-tracker-id",
 		EntityType: trackerEntityType,
 		ID:         "test-tracker-id",
+		GSI1PK:     allTrackersKey,
+		GSI1SK:     "tracker#test-tracker-id",
 	}
 
 	err = trackers.Put(*item)
@@ -71,6 +73,14 @@ func TestCreateTrackerWithUsers(t *testing.T) {
 		ID:         "test-tracker-id",
 		Name:       "The Test Tracker",
 		Users:      testUserIDs,
+		GSI1PK:     allTrackersKey,
+		GSI1SK:     "tracker#test-tracker-id",
 	}
 	assert.Equal(expected, got)
+
+	allGot, err := trackers.GetAll()
+	assert.NoError(err)
+
+	allExpected := []TrackerItem{*expected}
+	assert.Equal(allExpected, allGot)
 }

@@ -65,7 +65,7 @@ func (t *trackersRepo) Put(item TrackerItem) error {
 }
 
 func (t *trackersRepo) Create(input CreateTrackerInput) error {
-	trackerIDKey := fmt.Sprintf("%s#%s", trackerKeyPrefix, input.ID)
+	trackerIDKey := makeTrackerIDKey(input.ID)
 
 	return t.table.PutItem(TrackerItem{
 		PK:         trackerIDKey,
@@ -95,4 +95,8 @@ func (t *trackersRepo) GetAll() ([]TrackerItem, error) {
 	}
 
 	return items, nil
+}
+
+func makeTrackerIDKey(id string) string {
+	return fmt.Sprintf("%s#%s", trackerKeyPrefix, id)
 }

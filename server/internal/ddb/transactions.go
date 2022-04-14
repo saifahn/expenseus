@@ -31,7 +31,7 @@ const (
 type TxnRepository interface {
 	Get(transactionID string) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
-	GetByUserID(userID string) ([]TransactionItem, error)
+	GetByUserID(id string) ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
 	Put(item TransactionItem) error
 	Delete(userID, transactionID string) error
@@ -117,16 +117,15 @@ func (t *txnRepo) GetAll() ([]TransactionItem, error) {
 	return items, nil
 }
 
-func (t *txnRepo) GetByUserID(userID string) ([]TransactionItem, error) {
-	userIDKey := makeUserIDKey(userID)
-	// to match all transactions
-	txnKeyWithoutID := fmt.Sprintf("%s#", txnKeyPrefix)
+func (t *txnRepo) GetByUserID(id string) ([]TransactionItem, error) {
+	userIDKey := makeUserIDKey(id)
+	allTxnPrefix := fmt.Sprintf("%s#", txnKeyPrefix)
 
 	options := []option.QueryInput{
 		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
 		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
 		option.QueryExpressionAttributeValue(":userKey", attributes.String(userIDKey)),
-		option.QueryExpressionAttributeValue(":allTxnPrefix", attributes.String(txnKeyWithoutID)),
+		option.QueryExpressionAttributeValue(":allTxnPrefix", attributes.String(allTxnPrefix)),
 		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTxnPrefix)"),
 	}
 

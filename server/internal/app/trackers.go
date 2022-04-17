@@ -3,7 +3,6 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
@@ -37,7 +36,6 @@ func (a *App) CreateTracker(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if !hasUser {
-		log.Print(hasUser)
 		http.Error(rw, "you cannot create a tracker that doesn't involve you", http.StatusForbidden)
 		return
 	}

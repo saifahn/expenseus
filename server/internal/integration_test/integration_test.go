@@ -259,8 +259,6 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 func TestCreatingTrackers(t *testing.T) {
 	t.Run("can't create without a valid cookie", func(t *testing.T) {
-		// create the tracker
-		// the user needs to be one of the users in the trackers¡
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
 		assert := assert.New(t)
@@ -271,8 +269,21 @@ func TestCreatingTrackers(t *testing.T) {
 		assert.Equal(http.StatusUnauthorized, response.Code)
 
 		// table driven test
-		// without valid cookie
-		// valid cookie, but without the user in the Users section
 		// with the user in the Users section
+	})
+
+	t.Run("can't create if the user is not present in the tracker's user section", func(t *testing.T) {
+		router, tearDownDB := setUpTestServer(t)
+		defer tearDownDB(t)
+		assert := assert.New(t)
+
+		request := app.NewCreateTrackerRequest(t, app.TestTracker)
+		request.AddCookie(&http.Cookie{
+			Name:  "session",
+			Value: "not the user in the tracker",
+		})
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		assert.Equal(http.StatusForbidden, response.Code)
 	})
 }

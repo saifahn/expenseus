@@ -57,6 +57,11 @@ func Init(a *app.App) *chi.Mux {
 			})
 		})
 
+		r.Group(func(r chi.Router) {
+			r.Use(a.VerifyUser)
+			r.Post("/trackers", a.CreateTracker)
+		})
+
 		r.Get("/login_google", a.OauthLogin)
 		r.Get("/callback_google", a.OauthCallback)
 		r.Get("/logout", a.LogOut)

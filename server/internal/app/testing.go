@@ -336,6 +336,18 @@ func (s *StubTransactionStore) GetTracker(id string) (Tracker, error) {
 	return Tracker{}, errors.New("tracker not found")
 }
 
+func (s *StubTransactionStore) GetTrackersByUser(userID string) ([]Tracker, error) {
+	var trackers []Tracker
+	for _, t := range s.trackers {
+		for _, uid := range t.Users {
+			if uid == userID {
+				trackers = append(trackers, t)
+			}
+		}
+	}
+	return trackers, nil
+}
+
 // #endregion Store
 
 // #region ImageStore

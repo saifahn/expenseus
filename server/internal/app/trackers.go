@@ -56,3 +56,20 @@ func (a *App) GetTrackerByID(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (a *App) GetTrackersByUser(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
+
+	trackers, err := a.store.GetTrackersByUser(userID)
+
+	if err != nil {
+		http.Error(rw, fmt.Sprintf("something went wrong getting trackers by user: %v", err.Error()), http.StatusInternalServerError)
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(trackers)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}

@@ -25,6 +25,7 @@ type Store interface {
 	GetAllUsers() ([]User, error)
 	CreateTracker(tracker Tracker) error
 	GetTracker(trackerID string) (Tracker, error)
+	GetTrackersByUser(userID string) ([]Tracker, error)
 }
 
 type Auth interface {

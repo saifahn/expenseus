@@ -252,6 +252,7 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 type StubTransactionStore struct {
 	transactions           map[string]Transaction
 	users                  []User
+	trackers               []Tracker
 	recordTransactionCalls []TransactionDetails
 }
 
@@ -318,6 +319,11 @@ func (s *StubTransactionStore) CreateUser(u User) error {
 
 func (s *StubTransactionStore) GetAllUsers() ([]User, error) {
 	return s.users, nil
+}
+
+func (s *StubTransactionStore) CreateTracker(t Tracker) error {
+	s.trackers = append(s.trackers, t)
+	return nil
 }
 
 // #endregion Store

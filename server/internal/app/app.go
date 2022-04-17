@@ -23,6 +23,7 @@ type Store interface {
 	CreateUser(user User) error
 	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
+	CreateTracker(tracker Tracker) error
 }
 
 type Auth interface {

@@ -2,8 +2,13 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/nabeken/aws-go-dynamodb/table"
 )
+
+const CtxKeyTrackerID contextKey = iota
 
 type Tracker struct {
 	Name  string   `json:"name"`
@@ -28,4 +33,26 @@ func (a *App) CreateTracker(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusAccepted)
+}
+
+func (a *App) GetTrackerByID(rw http.ResponseWriter, r *http.Request) {
+	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
+
+	tracker, err := a.store.GetTracker(trackerID)
+
+	if err != nil {
+		if err == table.ErrItemNotFound {
+			http.Error(rw, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(rw, fmt.Sprintf("something went wrong getting tracker: %v", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	rw.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(rw).Encode(tracker)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }

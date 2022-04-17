@@ -327,6 +327,15 @@ func (s *StubTransactionStore) CreateTracker(t Tracker) error {
 	return nil
 }
 
+func (s *StubTransactionStore) GetTracker(id string) (Tracker, error) {
+	for _, t := range s.trackers {
+		if t.ID == id {
+			return t, nil
+		}
+	}
+	return Tracker{}, errors.New("tracker not found")
+}
+
 // #endregion Store
 
 // #region ImageStore

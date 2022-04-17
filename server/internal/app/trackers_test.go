@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -32,4 +33,34 @@ func TestCreateTracker(t *testing.T) {
 
 	assert.Equal(http.StatusAccepted, response.Code)
 	assert.Len(store.trackers, 1)
+}
+
+func TestGetTrackerByID(t *testing.T) {
+	assert := assert.New(t)
+	testTracker := Tracker{
+		Name:  "Test Tracker",
+		Users: []string{TestSeanUser.ID},
+		ID:    "test-id",
+	}
+	store := StubTransactionStore{
+		trackers: []Tracker{testTracker},
+	}
+	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+
+	request, _ := http.NewRequest(http.MethodGet, "/api/v1/trackers", nil)
+	request = request.WithContext(context.WithValue(request.Context(), CtxKeyTrackerID, testTracker.ID))
+	response := httptest.NewRecorder()
+
+	handler := http.HandlerFunc(app.GetTrackerByID)
+	handler.ServeHTTP(response, request)
+
+	var got Tracker
+	err := json.NewDecoder(response.Body).Decode(&got)
+	if err != nil {
+		t.Fatalf("error parsing response from server %q into Tracker, '%v'", response.Body, err)
+	}
+
+	assert.Equal(jsonContentType, response.Result().Header.Get("content-type"))
+	assert.Equal(http.StatusOK, response.Code)
+	assert.Equal(testTracker, got)
 }

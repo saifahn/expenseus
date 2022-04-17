@@ -2,9 +2,12 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"strconv"
+
+	"github.com/nabeken/aws-go-dynamodb/table"
 )
 
 const CtxKeyTransactionID contextKey = iota
@@ -29,9 +32,14 @@ func (a *App) GetTransaction(rw http.ResponseWriter, r *http.Request) {
 
 	transaction, err := a.store.GetTransaction(transactionID)
 
-	// TODO: should account for different kinds of errors
 	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
+		// NOTE: should potentially actually use a type defined in the app?
+		if err == table.ErrItemNotFound {
+			http.Error(rw, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(rw, fmt.Sprintf("something went wrong getting transaction: %v", err.Error()), http.StatusInternalServerError)
+		return
 	}
 
 	if transaction.ImageKey != "" {

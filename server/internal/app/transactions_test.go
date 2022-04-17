@@ -99,12 +99,6 @@ func TestGetTransactionByID(t *testing.T) {
 		handler := http.HandlerFunc(app.GetTransaction)
 		handler.ServeHTTP(response, request)
 
-		var got Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into Transaction, '%v'", response.Body, err)
-		}
-
 		assert.Equal(t, http.StatusNotFound, response.Code)
 	})
 }

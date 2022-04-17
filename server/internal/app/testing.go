@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nabeken/aws-go-dynamodb/table"
 	"golang.org/x/oauth2"
 )
 
@@ -260,7 +261,7 @@ func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction
 	transaction := s.transactions[transactionID]
 	// check for empty Transaction
 	if transaction == (Transaction{}) {
-		return Transaction{}, errors.New("transaction not found")
+		return Transaction{}, table.ErrItemNotFound
 	}
 	return transaction, nil
 }
@@ -285,12 +286,12 @@ func (s *StubTransactionStore) GetTransactionsByUser(id string) ([]Transaction, 
 }
 
 func (s *StubTransactionStore) CreateTransaction(ed TransactionDetails) error {
-	testId := fmt.Sprintf("tid-%v", ed.Name)
+	testID := fmt.Sprintf("tid-%v", ed.Name)
 	transaction := Transaction{
 		TransactionDetails: ed,
-		ID:                 testId,
+		ID:                 testID,
 	}
-	s.transactions[testId] = transaction
+	s.transactions[testID] = transaction
 	s.recordTransactionCalls = append(s.recordTransactionCalls, ed)
 	return nil
 }

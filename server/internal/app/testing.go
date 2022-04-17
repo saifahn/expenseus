@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"testing"
 
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"golang.org/x/oauth2"
@@ -68,6 +70,12 @@ var (
 			UserID:   "an_ID",
 			ImageKey: "test-image-key",
 		},
+	}
+
+	TestTracker = Tracker{
+		Name:  "Test Tracker",
+		Users: []string{TestSeanUser.ID},
+		ID:    "test-id",
 	}
 )
 
@@ -179,6 +187,33 @@ func NewGetAllUsersRequest() *http.Request {
 func NewGoogleCallbackRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
 	return req
+}
+
+// NewCreateTrackerRequest creates a request to be used in tests to create a new tracker.
+func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker) *http.Request {
+	trackerJSON, err := json.Marshal(trackerDetails)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/trackers", bytes.NewBuffer(trackerJSON))
+	return req
+}
+
+// NewGetTrackerByIDRequest creates a request to be used in tests to get a
+// tracker by ID, with the ID in the request context.
+func NewGetTrackerByIDRequest(t testing.TB, trackerID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s", trackerID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
+	return req.WithContext(ctx)
+}
+
+// NewGetTrackerByUserRequest creates a request to be used in tests to get a
+// tracker by userID, with the userID in the request context.
+func NewGetTrackerByUserRequest(t testing.TB, userID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/user/%s", userID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
+	return req.WithContext(ctx)
 }
 
 // #region Sessions

@@ -1,10 +1,7 @@
 package app
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -21,12 +18,7 @@ func TestCreateTracker(t *testing.T) {
 		Name:  "Test Tracker",
 		Users: []string{TestSeanUser.ID},
 	}
-	trackerJSON, err := json.Marshal(testTrackerDetails)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	request, _ := http.NewRequest(http.MethodPost, "/api/v1/trackers", bytes.NewBuffer(trackerJSON))
+	request := NewCreateTrackerRequest(t, testTrackerDetails)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.CreateTracker)
@@ -38,18 +30,12 @@ func TestCreateTracker(t *testing.T) {
 
 func TestGetTrackerByID(t *testing.T) {
 	assert := assert.New(t)
-	testTracker := Tracker{
-		Name:  "Test Tracker",
-		Users: []string{TestSeanUser.ID},
-		ID:    "test-id",
-	}
 	store := StubTransactionStore{
-		trackers: []Tracker{testTracker},
+		trackers: []Tracker{TestTracker},
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s", testTracker.ID), nil)
-	request = request.WithContext(context.WithValue(request.Context(), CtxKeyTrackerID, testTracker.ID))
+	request := NewGetTrackerByIDRequest(t, TestTracker.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.GetTrackerByID)
@@ -63,23 +49,17 @@ func TestGetTrackerByID(t *testing.T) {
 
 	assert.Equal(jsonContentType, response.Result().Header.Get("content-type"))
 	assert.Equal(http.StatusOK, response.Code)
-	assert.Equal(testTracker, got)
+	assert.Equal(TestTracker, got)
 }
 
 func TestGetTrackersByUser(t *testing.T) {
 	assert := assert.New(t)
-	testTracker := Tracker{
-		Name:  "Test Tracker",
-		Users: []string{TestSeanUser.ID},
-		ID:    "test-id",
-	}
 	store := StubTransactionStore{
-		trackers: []Tracker{testTracker},
+		trackers: []Tracker{TestTracker},
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/user/%s", TestSeanUser.ID), nil)
-	request = request.WithContext(context.WithValue(request.Context(), CtxKeyUserID, TestSeanUser.ID))
+	request := NewGetTrackerByUserRequest(t, TestSeanUser.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.GetTrackersByUser)
@@ -93,5 +73,5 @@ func TestGetTrackersByUser(t *testing.T) {
 
 	assert.Equal(jsonContentType, response.Result().Header.Get("content-type"))
 	assert.Equal(http.StatusOK, response.Code)
-	assert.Contains(got, testTracker)
+	assert.Contains(got, TestTracker)
 }

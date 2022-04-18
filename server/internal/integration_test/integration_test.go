@@ -268,10 +268,15 @@ func TestCreatingTrackers(t *testing.T) {
 			cookie:       http.Cookie{Name: "invalid"},
 			expectedCode: http.StatusUnauthorized,
 		},
-		"user is not involved in tracker": {
+		"session user is not involved in tracker": {
 			tracker:      app.TestTracker,
 			cookie:       http.Cookie{Name: "session", Value: "not-in-tracker-user"},
 			expectedCode: http.StatusForbidden,
+		},
+		"session is involved in tracker": {
+			tracker:      app.TestTracker,
+			cookie:       http.Cookie{Name: "session", Value: app.TestSeanTransaction.UserID},
+			expectedCode: http.StatusAccepted,
 		},
 	}
 

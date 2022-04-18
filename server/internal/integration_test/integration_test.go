@@ -372,6 +372,12 @@ func TestGetTrackersByUser(t *testing.T) {
 			wantCode:     http.StatusOK,
 			wantTrackers: nil,
 		},
+		"with a user in a tracker": {
+			user:         app.TestTracker.Users[0],
+			cookie:       app.ValidCookie,
+			wantCode:     http.StatusOK,
+			wantTrackers: []app.Tracker{app.TestTracker},
+		},
 	}
 
 	for name, tc := range tests {
@@ -388,7 +394,23 @@ func TestGetTrackersByUser(t *testing.T) {
 			if err != nil {
 				t.Logf("error parsing response from server %q into slice of Trackers: %v", response.Body, err)
 			}
-			assert.Equal(tc.wantTrackers, gotTrackers)
+			assert.Len(gotTrackers, len(tc.wantTrackers))
+
+			// check without ID because it will be set as a UUID in the real db
+			var wantTrackersNoID, gotTrackersNoID []app.Tracker
+			for _, wt := range tc.wantTrackers {
+				wantTrackersNoID = append(wantTrackersNoID, app.Tracker{
+					Name:  wt.Name,
+					Users: wt.Users,
+				})
+			}
+			for _, gt := range gotTrackers {
+				gotTrackersNoID = append(gotTrackersNoID, app.Tracker{
+					Name:  gt.Name,
+					Users: gt.Users,
+				})
+			}
+			assert.EqualValues(wantTrackersNoID, gotTrackersNoID)
 		})
 	}
 }

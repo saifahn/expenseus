@@ -152,6 +152,7 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 	return transactions, nil
 }
 
+// CreateTracker calls the repository to create a new tracker item.
 func (d *dynamoDB) CreateTracker(tracker app.Tracker) error {
 	id := uuid.New().String()
 
@@ -167,19 +168,34 @@ func (d *dynamoDB) CreateTracker(tracker app.Tracker) error {
 	return nil
 }
 
+func trackerItemToTracker(ti TrackerItem) app.Tracker {
+	return app.Tracker{
+		ID:    ti.ID,
+		Name:  ti.Name,
+		Users: ti.Users,
+	}
+}
+
+// GetTracker calls the repository to get a tracker by its ID, returning the
+// tracker if found and an error if not.
 func (d *dynamoDB) GetTracker(trackerID string) (app.Tracker, error) {
 	item, err := d.trackers.Get(trackerID)
 	if err != nil {
 		return app.Tracker{}, err
 	}
 
-	return app.Tracker{
-		Name:  item.Name,
-		Users: item.Users,
-		ID:    item.ID,
-	}, nil
+	return trackerItemToTracker(*item), nil
 }
 
 func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
-	return nil, nil
+	items, err := d.trackers.GetByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var trackers []app.Tracker
+	for _, item := range items {
+		trackers = append(trackers, trackerItemToTracker(item))
+	}
+	return trackers, nil
 }

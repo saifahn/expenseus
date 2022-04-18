@@ -33,10 +33,10 @@ type CreateTrackerInput struct {
 }
 
 type TrackersRepository interface {
+	Create(input CreateTrackerInput) error
 	Get(id string) (*TrackerItem, error)
 	GetAll() ([]TrackerItem, error)
-	Put(item TrackerItem) error
-	Create(input CreateTrackerInput) error
+	GetByUser(userID string) ([]TrackerItem, error)
 }
 
 type trackersRepo struct {
@@ -49,25 +49,11 @@ func NewTrackersRepository(t *table.Table) TrackersRepository {
 	return &trackersRepo{t}
 }
 
-func (t *trackersRepo) Get(id string) (*TrackerItem, error) {
-	// make the id
-	trackerIDKey := fmt.Sprintf("%s#%s", trackerKeyPrefix, id)
-	item := &TrackerItem{}
-	err := t.table.GetItem(attributes.String(trackerIDKey), attributes.String(trackerIDKey), item)
-	if err != nil {
-		return nil, err
-	}
-	return item, nil
-}
-
-func (t *trackersRepo) Put(item TrackerItem) error {
-	return t.table.PutItem(item)
-}
-
 func (t *trackersRepo) Create(input CreateTrackerInput) error {
 	trackerIDKey := makeTrackerIDKey(input.ID)
+	userIDKey := makeUserIDKey(input.Users[0])
 
-	return t.table.PutItem(TrackerItem{
+	err := t.table.PutItem(TrackerItem{
 		PK:         trackerIDKey,
 		SK:         trackerIDKey,
 		EntityType: trackerEntityType,
@@ -77,6 +63,32 @@ func (t *trackersRepo) Create(input CreateTrackerInput) error {
 		GSI1PK:     allTrackersKey,
 		GSI1SK:     trackerIDKey,
 	})
+	if err != nil {
+		return err
+	}
+
+	err = t.table.PutItem(TrackerItem{
+		PK:         userIDKey,
+		SK:         trackerIDKey,
+		EntityType: trackerEntityType,
+		ID:         input.ID,
+		Name:       input.Name,
+		Users:      input.Users,
+		GSI1PK:     allTrackersKey,
+		GSI1SK:     trackerIDKey,
+	})
+	return err
+}
+
+func (t *trackersRepo) Get(id string) (*TrackerItem, error) {
+	trackerIDKey := makeTrackerIDKey(id)
+
+	item := &TrackerItem{}
+	err := t.table.GetItem(attributes.String(trackerIDKey), attributes.String(trackerIDKey), item)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 func (t *trackersRepo) GetAll() ([]TrackerItem, error) {
@@ -89,6 +101,27 @@ func (t *trackersRepo) GetAll() ([]TrackerItem, error) {
 
 	var items []TrackerItem
 
+	_, err := t.table.Query(&items, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (t *trackersRepo) GetByUser(userID string) ([]TrackerItem, error) {
+	userIDKey := makeUserIDKey(userID)
+	allTrackerPrefix := fmt.Sprintf("%s#", trackerKeyPrefix)
+
+	options := []option.QueryInput{
+		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
+		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
+		option.QueryExpressionAttributeValue(":userKey", attributes.String(userIDKey)),
+		option.QueryExpressionAttributeValue(":allTrackerPrefix", attributes.String(allTrackerPrefix)),
+		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTrackerPrefix)"),
+	}
+
+	var items []TrackerItem
 	_, err := t.table.Query(&items, options...)
 	if err != nil {
 		return nil, err

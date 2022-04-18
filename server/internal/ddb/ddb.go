@@ -12,14 +12,16 @@ import (
 type dynamoDB struct {
 	users        UserRepository
 	transactions TxnRepository
+	trackers     TrackersRepository
 }
 
 func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
 	tbl := table.New(d, tableName)
 	users := NewUserRepository(tbl)
 	transactions := NewTxnRepository(tbl)
+	trackers := NewTrackersRepository(tbl)
 
-	return &dynamoDB{users: users, transactions: transactions}
+	return &dynamoDB{users, transactions, trackers}
 }
 
 func userToUserItem(u app.User) UserItem {
@@ -148,4 +150,28 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 		transactions = append(transactions, txnItemToTxn(ti))
 	}
 	return transactions, nil
+}
+
+func (d *dynamoDB) CreateTracker(tracker app.Tracker) error {
+	id := uuid.New().String()
+
+	err := d.trackers.Create(CreateTrackerInput{
+		ID:    id,
+		Name:  tracker.Name,
+		Users: tracker.Users,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *dynamoDB) GetTracker(trackerID string) (app.Tracker, error) {
+	//
+	return app.Tracker{}, nil
+}
+
+func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
+	return nil, nil
 }

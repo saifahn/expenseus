@@ -60,7 +60,8 @@ func Init(a *app.App) *chi.Mux {
 		r.Group(func(r chi.Router) {
 			r.Use(a.VerifyUser)
 			r.Post("/trackers", a.CreateTracker)
-			r.With(trackerIDCtx).Get("/trackers/{trackerstID}", a.GetTrackerByID)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
+			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})
 
 		r.Get("/login_google", a.OauthLogin)

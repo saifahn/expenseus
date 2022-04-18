@@ -257,6 +257,18 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 	})
 }
 
+func createTracker(t testing.TB, tracker app.Tracker, r http.Handler) {
+	response := httptest.NewRecorder()
+	request := app.NewCreateTrackerRequest(t, tracker)
+	validCookie := http.Cookie{
+		Name: "session",
+		// the cookie has to contain information from one of the users in the tracker
+		Value: tracker.Users[0],
+	}
+	request.AddCookie(&validCookie)
+	r.ServeHTTP(response, request)
+}
+
 func TestCreatingTrackers(t *testing.T) {
 	tests := map[string]struct {
 		tracker      app.Tracker
@@ -316,6 +328,12 @@ func TestGetTracker(t *testing.T) {
 			cookie:       app.ValidCookie,
 			expectedCode: http.StatusNotFound,
 		},
+		// NOTE: we can't actually do this here because we don't know the ID
+		// "with a tracker ID of an existing tracker": {
+		// 	trackerID:    app.TestTracker.ID,
+		// 	cookie:       app.ValidCookie,
+		// 	expectedCode: http.StatusAccepted,
+		// },
 	}
 
 	for name, tc := range tests {
@@ -326,6 +344,51 @@ func TestGetTracker(t *testing.T) {
 			router.ServeHTTP(response, request)
 
 			assert.Equal(tc.expectedCode, response.Code)
+		})
+	}
+}
+
+func TestGetTrackersByUser(t *testing.T) {
+	router, tearDownDB := setUpTestServer(t)
+	defer tearDownDB(t)
+	assert := assert.New(t)
+	createTracker(t, app.TestTracker, router)
+
+	tests := map[string]struct {
+		user         string
+		cookie       http.Cookie
+		wantCode     int
+		wantTrackers []app.Tracker
+	}{
+		"without a valid cookie": {
+			user:         "invalid",
+			cookie:       http.Cookie{Name: "invalid"},
+			wantCode:     http.StatusUnauthorized,
+			wantTrackers: nil,
+		},
+		"with a user in no trackers": {
+			user:         "notInAnyTrackers",
+			cookie:       app.ValidCookie,
+			wantCode:     http.StatusOK,
+			wantTrackers: nil,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			request := app.NewGetTrackerByUserRequest(t, tc.user)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var gotTrackers []app.Tracker
+			err := json.NewDecoder(response.Body).Decode(&gotTrackers)
+			if err != nil {
+				t.Logf("error parsing response from server %q into slice of Trackers: %v", response.Body, err)
+			}
+			assert.Equal(tc.wantTrackers, gotTrackers)
 		})
 	}
 }

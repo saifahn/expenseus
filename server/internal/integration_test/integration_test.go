@@ -295,3 +295,37 @@ func TestCreatingTrackers(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTracker(t *testing.T) {
+	router, tearDownDB := setUpTestServer(t)
+	defer tearDownDB(t)
+	assert := assert.New(t)
+
+	tests := map[string]struct {
+		trackerID    string
+		cookie       http.Cookie
+		expectedCode int
+	}{
+		"without a valid cookie": {
+			trackerID:    "invalid",
+			cookie:       http.Cookie{Name: "invalid"},
+			expectedCode: http.StatusUnauthorized,
+		},
+		"with a non-existent tracker ID": {
+			trackerID:    "non-existent-tracker-id",
+			cookie:       app.ValidCookie,
+			expectedCode: http.StatusNotFound,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			request := app.NewGetTrackerByIDRequest(t, tc.trackerID)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.expectedCode, response.Code)
+		})
+	}
+}

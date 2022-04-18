@@ -168,8 +168,16 @@ func (d *dynamoDB) CreateTracker(tracker app.Tracker) error {
 }
 
 func (d *dynamoDB) GetTracker(trackerID string) (app.Tracker, error) {
-	//
-	return app.Tracker{}, nil
+	item, err := d.trackers.Get(trackerID)
+	if err != nil {
+		return app.Tracker{}, err
+	}
+
+	return app.Tracker{
+		Name:  item.Name,
+		Users: item.Users,
+		ID:    item.ID,
+	}, nil
 }
 
 func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {

@@ -51,24 +51,25 @@ func NewTrackersRepository(t *table.Table) TrackersRepository {
 
 func (t *trackersRepo) Create(input CreateTrackerInput) error {
 	trackerIDKey := makeTrackerIDKey(input.ID)
-	userIDKey := makeUserIDKey(input.Users[0])
+	for _, user := range input.Users {
+		userIDKey := makeUserIDKey(user)
+		err := t.table.PutItem(TrackerItem{
+			PK:         userIDKey,
+			SK:         trackerIDKey,
+			EntityType: trackerEntityType,
+			ID:         input.ID,
+			Name:       input.Name,
+			Users:      input.Users,
+			GSI1PK:     allTrackersKey,
+			GSI1SK:     trackerIDKey,
+		})
+		if err != nil {
+			return err
+		}
+	}
 
 	err := t.table.PutItem(TrackerItem{
 		PK:         trackerIDKey,
-		SK:         trackerIDKey,
-		EntityType: trackerEntityType,
-		ID:         input.ID,
-		Name:       input.Name,
-		Users:      input.Users,
-		GSI1PK:     allTrackersKey,
-		GSI1SK:     trackerIDKey,
-	})
-	if err != nil {
-		return err
-	}
-
-	err = t.table.PutItem(TrackerItem{
-		PK:         userIDKey,
 		SK:         trackerIDKey,
 		EntityType: trackerEntityType,
 		ID:         input.ID,

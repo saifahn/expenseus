@@ -353,6 +353,11 @@ func TestGetTrackersByUser(t *testing.T) {
 	defer tearDownDB(t)
 	assert := assert.New(t)
 	createTracker(t, app.TestTracker, router)
+	testTrackerWithTwoUsers := app.Tracker{
+		Name:  "tracker for two",
+		Users: []string{app.TestSeanUser.ID, app.TestTomomiUser.ID},
+	}
+	createTracker(t, testTrackerWithTwoUsers, router)
 
 	tests := map[string]struct {
 		user         string
@@ -373,10 +378,16 @@ func TestGetTrackersByUser(t *testing.T) {
 			wantTrackers: nil,
 		},
 		"with a user in a tracker": {
-			user:         app.TestTracker.Users[0],
+			user:         app.TestTomomiUser.ID,
 			cookie:       app.ValidCookie,
 			wantCode:     http.StatusOK,
-			wantTrackers: []app.Tracker{app.TestTracker},
+			wantTrackers: []app.Tracker{testTrackerWithTwoUsers},
+		},
+		"with a user in two trackers": {
+			user:         app.TestSeanUser.ID,
+			cookie:       app.ValidCookie,
+			wantCode:     http.StatusOK,
+			wantTrackers: []app.Tracker{app.TestTracker, testTrackerWithTwoUsers},
 		},
 	}
 

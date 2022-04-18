@@ -187,6 +187,8 @@ func (d *dynamoDB) GetTracker(trackerID string) (app.Tracker, error) {
 	return trackerItemToTracker(*item), nil
 }
 
+// GetTrackersByUser calls the repository to return a list of trackers that a
+// user belongs to.
 func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 	items, err := d.trackers.GetByUser(userID)
 	if err != nil {

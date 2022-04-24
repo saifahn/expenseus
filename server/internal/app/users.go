@@ -19,14 +19,12 @@ type User struct {
 func (a *App) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	var u User
 	err := json.NewDecoder(r.Body).Decode(&u)
-
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = a.store.CreateUser(u)
-
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
@@ -35,7 +33,7 @@ func (a *App) CreateUser(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusAccepted)
 }
 
-// ListUser handles a request to get all users and return the list of users.
+// ListUsers handles a request to get all users and return the list of users.
 func (a *App) ListUsers(rw http.ResponseWriter, r *http.Request) {
 	users, err := a.store.GetAllUsers()
 	if err != nil {
@@ -57,7 +55,6 @@ func (a *App) GetUser(rw http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
 
 	user, err := a.store.GetUser(userID)
-
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusNotFound)
 		return
@@ -82,7 +79,6 @@ func (a *App) GetSelf(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := a.store.GetUser(id)
-
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
 	}

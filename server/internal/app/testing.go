@@ -218,6 +218,14 @@ func NewGetTrackerByUserRequest(t testing.TB, userID string) *http.Request {
 	return req.WithContext(ctx)
 }
 
+// NewGetTxnsByTrackerRequest creates a request to be used in tests to get a
+// a list of transactions by trackerID, with the trackerID in the request context
+func NewGetTxnsByTrackerRequest(t testing.TB, trackerID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s/transactions", trackerID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
+	return req.WithContext(ctx)
+}
+
 // #region Sessions
 type StubSessionManager struct {
 	saveCalls   []string
@@ -292,6 +300,7 @@ type StubTransactionStore struct {
 	users                  []User
 	trackers               []Tracker
 	recordTransactionCalls []TransactionDetails
+	getTxnsByTrackerCalls  []string
 }
 
 func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
@@ -383,6 +392,11 @@ func (s *StubTransactionStore) GetTrackersByUser(userID string) ([]Tracker, erro
 		}
 	}
 	return trackers, nil
+}
+
+func (s *StubTransactionStore) GetTxnsByTracker(trackerID string) ([]SharedTransaction, error) {
+	s.getTxnsByTrackerCalls = append(s.getTxnsByTrackerCalls, trackerID)
+	return nil, nil
 }
 
 // #endregion Store

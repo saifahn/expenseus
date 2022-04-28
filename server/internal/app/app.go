@@ -26,6 +26,7 @@ type Store interface {
 	CreateTracker(tracker Tracker) error
 	GetTracker(trackerID string) (Tracker, error)
 	GetTrackersByUser(userID string) ([]Tracker, error)
+	GetTxnsByTracker(trackerID string) ([]SharedTransaction, error)
 }
 
 type Auth interface {

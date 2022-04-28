@@ -18,7 +18,7 @@ func TestCreateTracker(t *testing.T) {
 		Name:  "Test Tracker",
 		Users: []string{TestSeanUser.ID},
 	}
-	request := NewCreateTrackerRequest(t, testTrackerDetails)
+	request := NewCreateTrackerRequest(t, testTrackerDetails, TestSeanUser.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.CreateTracker)

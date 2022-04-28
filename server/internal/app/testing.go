@@ -190,14 +190,16 @@ func NewGoogleCallbackRequest() *http.Request {
 }
 
 // NewCreateTrackerRequest creates a request to be used in tests to create a new tracker.
-func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker) *http.Request {
+func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker, userID string) *http.Request {
 	trackerJSON, err := json.Marshal(trackerDetails)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/trackers", bytes.NewBuffer(trackerJSON))
-	return req
+	// needs to pass in the userID of the user making the request to create the tracker
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
+	return req.WithContext(ctx)
 }
 
 // NewGetTrackerByIDRequest creates a request to be used in tests to get a

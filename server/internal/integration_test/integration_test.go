@@ -256,3 +256,172 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert.Equal(wantedTransactionDetails, transactionsGot[0].TransactionDetails)
 	})
 }
+
+func createTracker(t testing.TB, tracker app.Tracker, r http.Handler) {
+	response := httptest.NewRecorder()
+	request := app.NewCreateTrackerRequest(t, tracker)
+	validCookie := http.Cookie{
+		Name: "session",
+		// the cookie has to contain information from one of the users in the tracker
+		Value: tracker.Users[0],
+	}
+	request.AddCookie(&validCookie)
+	r.ServeHTTP(response, request)
+}
+
+func TestCreatingTrackers(t *testing.T) {
+	tests := map[string]struct {
+		tracker      app.Tracker
+		cookie       http.Cookie
+		expectedCode int
+	}{
+		"without a valid cookie": {
+			tracker:      app.TestTracker,
+			cookie:       http.Cookie{Name: "invalid"},
+			expectedCode: http.StatusUnauthorized,
+		},
+		"session user is not involved in tracker": {
+			tracker:      app.TestTracker,
+			cookie:       http.Cookie{Name: "session", Value: "not-in-tracker-user"},
+			expectedCode: http.StatusForbidden,
+		},
+		"session is involved in tracker": {
+			tracker:      app.TestTracker,
+			cookie:       http.Cookie{Name: "session", Value: app.TestSeanTransaction.UserID},
+			expectedCode: http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := setUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			request := app.NewCreateTrackerRequest(t, tc.tracker)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.expectedCode, response.Code)
+		})
+	}
+}
+
+func TestGetTracker(t *testing.T) {
+	router, tearDownDB := setUpTestServer(t)
+	defer tearDownDB(t)
+	assert := assert.New(t)
+
+	tests := map[string]struct {
+		trackerID    string
+		cookie       http.Cookie
+		expectedCode int
+	}{
+		"without a valid cookie": {
+			trackerID:    "invalid",
+			cookie:       http.Cookie{Name: "invalid"},
+			expectedCode: http.StatusUnauthorized,
+		},
+		"with a non-existent tracker ID": {
+			trackerID:    "non-existent-tracker-id",
+			cookie:       app.ValidCookie,
+			expectedCode: http.StatusNotFound,
+		},
+		// NOTE: we can't actually do this here because we don't know the ID
+		// "with a tracker ID of an existing tracker": {
+		// 	trackerID:    app.TestTracker.ID,
+		// 	cookie:       app.ValidCookie,
+		// 	expectedCode: http.StatusAccepted,
+		// },
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			request := app.NewGetTrackerByIDRequest(t, tc.trackerID)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.expectedCode, response.Code)
+		})
+	}
+}
+
+func TestGetTrackersByUser(t *testing.T) {
+	router, tearDownDB := setUpTestServer(t)
+	defer tearDownDB(t)
+	assert := assert.New(t)
+	createTracker(t, app.TestTracker, router)
+	testTrackerWithTwoUsers := app.Tracker{
+		Name:  "tracker for two",
+		Users: []string{app.TestSeanUser.ID, app.TestTomomiUser.ID},
+	}
+	createTracker(t, testTrackerWithTwoUsers, router)
+
+	tests := map[string]struct {
+		user         string
+		cookie       http.Cookie
+		wantCode     int
+		wantTrackers []app.Tracker
+	}{
+		"without a valid cookie": {
+			user:         "invalid",
+			cookie:       http.Cookie{Name: "invalid"},
+			wantCode:     http.StatusUnauthorized,
+			wantTrackers: nil,
+		},
+		"with a user in no trackers": {
+			user:         "notInAnyTrackers",
+			cookie:       app.ValidCookie,
+			wantCode:     http.StatusOK,
+			wantTrackers: nil,
+		},
+		"with a user in a tracker": {
+			user:         app.TestTomomiUser.ID,
+			cookie:       app.ValidCookie,
+			wantCode:     http.StatusOK,
+			wantTrackers: []app.Tracker{testTrackerWithTwoUsers},
+		},
+		"with a user in two trackers": {
+			user:         app.TestSeanUser.ID,
+			cookie:       app.ValidCookie,
+			wantCode:     http.StatusOK,
+			wantTrackers: []app.Tracker{app.TestTracker, testTrackerWithTwoUsers},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			request := app.NewGetTrackerByUserRequest(t, tc.user)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var gotTrackers []app.Tracker
+			err := json.NewDecoder(response.Body).Decode(&gotTrackers)
+			if err != nil {
+				t.Logf("error parsing response from server %q into slice of Trackers: %v", response.Body, err)
+			}
+			assert.Len(gotTrackers, len(tc.wantTrackers))
+
+			// check without ID because it will be set as a UUID in the real db
+			var wantTrackersNoID, gotTrackersNoID []app.Tracker
+			for _, wt := range tc.wantTrackers {
+				wantTrackersNoID = append(wantTrackersNoID, app.Tracker{
+					Name:  wt.Name,
+					Users: wt.Users,
+				})
+			}
+			for _, gt := range gotTrackers {
+				gotTrackersNoID = append(gotTrackersNoID, app.Tracker{
+					Name:  gt.Name,
+					Users: gt.Users,
+				})
+			}
+			assert.EqualValues(wantTrackersNoID, gotTrackersNoID)
+		})
+	}
+}

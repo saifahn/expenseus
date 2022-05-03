@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -11,7 +12,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"testing"
 
+	"github.com/nabeken/aws-go-dynamodb/table"
 	"golang.org/x/oauth2"
 )
 
@@ -67,6 +70,12 @@ var (
 			UserID:   "an_ID",
 			ImageKey: "test-image-key",
 		},
+	}
+
+	TestTracker = Tracker{
+		Name:  "Test Tracker",
+		Users: []string{TestSeanUser.ID},
+		ID:    "test-id",
 	}
 )
 
@@ -180,6 +189,33 @@ func NewGoogleCallbackRequest() *http.Request {
 	return req
 }
 
+// NewCreateTrackerRequest creates a request to be used in tests to create a new tracker.
+func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker) *http.Request {
+	trackerJSON, err := json.Marshal(trackerDetails)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/trackers", bytes.NewBuffer(trackerJSON))
+	return req
+}
+
+// NewGetTrackerByIDRequest creates a request to be used in tests to get a
+// tracker by ID, with the ID in the request context.
+func NewGetTrackerByIDRequest(t testing.TB, trackerID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s", trackerID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
+	return req.WithContext(ctx)
+}
+
+// NewGetTrackerByUserRequest creates a request to be used in tests to get a
+// tracker by userID, with the userID in the request context.
+func NewGetTrackerByUserRequest(t testing.TB, userID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/user/%s", userID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
+	return req.WithContext(ctx)
+}
+
 // #region Sessions
 type StubSessionManager struct {
 	saveCalls   []string
@@ -252,6 +288,7 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 type StubTransactionStore struct {
 	transactions           map[string]Transaction
 	users                  []User
+	trackers               []Tracker
 	recordTransactionCalls []TransactionDetails
 }
 
@@ -259,7 +296,7 @@ func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction
 	transaction := s.transactions[transactionID]
 	// check for empty Transaction
 	if transaction == (Transaction{}) {
-		return Transaction{}, errors.New("transaction not found")
+		return Transaction{}, table.ErrItemNotFound
 	}
 	return transaction, nil
 }
@@ -284,12 +321,12 @@ func (s *StubTransactionStore) GetTransactionsByUser(id string) ([]Transaction, 
 }
 
 func (s *StubTransactionStore) CreateTransaction(ed TransactionDetails) error {
-	testId := fmt.Sprintf("tid-%v", ed.Name)
+	testID := fmt.Sprintf("tid-%v", ed.Name)
 	transaction := Transaction{
 		TransactionDetails: ed,
-		ID:                 testId,
+		ID:                 testID,
 	}
-	s.transactions[testId] = transaction
+	s.transactions[testID] = transaction
 	s.recordTransactionCalls = append(s.recordTransactionCalls, ed)
 	return nil
 }
@@ -318,6 +355,32 @@ func (s *StubTransactionStore) CreateUser(u User) error {
 
 func (s *StubTransactionStore) GetAllUsers() ([]User, error) {
 	return s.users, nil
+}
+
+func (s *StubTransactionStore) CreateTracker(t Tracker) error {
+	s.trackers = append(s.trackers, t)
+	return nil
+}
+
+func (s *StubTransactionStore) GetTracker(id string) (Tracker, error) {
+	for _, t := range s.trackers {
+		if t.ID == id {
+			return t, nil
+		}
+	}
+	return Tracker{}, errors.New("tracker not found")
+}
+
+func (s *StubTransactionStore) GetTrackersByUser(userID string) ([]Tracker, error) {
+	var trackers []Tracker
+	for _, t := range s.trackers {
+		for _, uid := range t.Users {
+			if uid == userID {
+				trackers = append(trackers, t)
+			}
+		}
+	}
+	return trackers, nil
 }
 
 // #endregion Store

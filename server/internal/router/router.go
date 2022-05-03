@@ -57,6 +57,13 @@ func Init(a *app.App) *chi.Mux {
 			})
 		})
 
+		r.Group(func(r chi.Router) {
+			r.Use(a.VerifyUser)
+			r.Post("/trackers", a.CreateTracker)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
+			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
+		})
+
 		r.Get("/login_google", a.OauthLogin)
 		r.Get("/callback_google", a.OauthCallback)
 		r.Get("/logout", a.LogOut)
@@ -79,6 +86,15 @@ func userIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "userID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyUserID, id)
+		next.ServeHTTP(rw, r.WithContext(ctx))
+	})
+}
+
+// Gets the TrackerID from the URL and adds it to the TrackerID context for the request.
+func trackerIDCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "trackerID")
+		ctx := context.WithValue(r.Context(), app.CtxKeyTrackerID, id)
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

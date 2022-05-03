@@ -12,14 +12,16 @@ import (
 type dynamoDB struct {
 	users        UserRepository
 	transactions TxnRepository
+	trackers     TrackersRepository
 }
 
 func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
 	tbl := table.New(d, tableName)
 	users := NewUserRepository(tbl)
 	transactions := NewTxnRepository(tbl)
+	trackers := NewTrackersRepository(tbl)
 
-	return &dynamoDB{users: users, transactions: transactions}
+	return &dynamoDB{users, transactions, trackers}
 }
 
 func userToUserItem(u app.User) UserItem {
@@ -148,4 +150,54 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 		transactions = append(transactions, txnItemToTxn(ti))
 	}
 	return transactions, nil
+}
+
+// CreateTracker calls the repository to create a new tracker item.
+func (d *dynamoDB) CreateTracker(tracker app.Tracker) error {
+	id := uuid.New().String()
+
+	err := d.trackers.Create(CreateTrackerInput{
+		ID:    id,
+		Name:  tracker.Name,
+		Users: tracker.Users,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func trackerItemToTracker(ti TrackerItem) app.Tracker {
+	return app.Tracker{
+		ID:    ti.ID,
+		Name:  ti.Name,
+		Users: ti.Users,
+	}
+}
+
+// GetTracker calls the repository to get a tracker by its ID, returning the
+// tracker if found and an error if not.
+func (d *dynamoDB) GetTracker(trackerID string) (app.Tracker, error) {
+	item, err := d.trackers.Get(trackerID)
+	if err != nil {
+		return app.Tracker{}, err
+	}
+
+	return trackerItemToTracker(*item), nil
+}
+
+// GetTrackersByUser calls the repository to return a list of trackers that a
+// user belongs to.
+func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
+	items, err := d.trackers.GetByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	var trackers []app.Tracker
+	for _, item := range items {
+		trackers = append(trackers, trackerItemToTracker(item))
+	}
+	return trackers, nil
 }

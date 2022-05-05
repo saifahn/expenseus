@@ -226,6 +226,47 @@ func NewGetTxnsByTrackerRequest(t testing.TB, trackerID string) *http.Request {
 	return req.WithContext(ctx)
 }
 
+func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Reader {
+	return map[string]io.Reader{
+		"shop":   strings.NewReader(txn.Shop),
+		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		"date":   strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+	}
+}
+
+func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	values := MakeCreateSharedTxnRequestPayload(txn)
+	for key, r := range values {
+		var fw io.Writer
+		var err error
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+		if x, ok := r.(*os.File); ok {
+			fw, err = w.CreateFormFile(key, x.Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		} else {
+			// non-file values
+			fw, err = w.CreateFormField(key)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+	w.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/trackers/%s/transactions", txn.Tracker), &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req
+}
+
 // #region Sessions
 type StubSessionManager struct {
 	saveCalls   []string
@@ -301,6 +342,7 @@ type StubTransactionStore struct {
 	trackers               []Tracker
 	recordTransactionCalls []TransactionDetails
 	getTxnsByTrackerCalls  []string
+	createSharedTxnCalls   []SharedTransaction
 }
 
 func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
@@ -397,6 +439,11 @@ func (s *StubTransactionStore) GetTrackersByUser(userID string) ([]Tracker, erro
 func (s *StubTransactionStore) GetTxnsByTracker(trackerID string) ([]SharedTransaction, error) {
 	s.getTxnsByTrackerCalls = append(s.getTxnsByTrackerCalls, trackerID)
 	return nil, nil
+}
+
+func (s *StubTransactionStore) CreateSharedTxn(txn SharedTransaction) error {
+	s.createSharedTxnCalls = append(s.createSharedTxnCalls, txn)
+	return nil
 }
 
 // #endregion Store

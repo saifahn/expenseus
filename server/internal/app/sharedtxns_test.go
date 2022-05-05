@@ -51,21 +51,48 @@ func TestCreateSharedTxn(t *testing.T) {
 		assert.Equal(testSharedTransaction, store.createSharedTxnCalls[0])
 	})
 
-	// tests := map[string]struct {
-	// 	transaction SharedTransaction
-	// 	wantCode    int
-	// }{
-	// 	"with a valid transaction": {
-	// 		transaction: testSharedTransaction,
-	// 		wantCode:    http.StatusOK,
-	// 	},
-	// }
+	tests := map[string]struct {
+		transaction SharedTransaction
+		wantCode    int
+	}{
+		"with a transaction missing a shop": {
+			transaction: SharedTransaction{
+				Amount: 123,
+				Date:   123456,
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		"with a transaction missing a date": {
+			transaction: SharedTransaction{
+				Amount: 123,
+				Shop:   "test-shop",
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		"with a transaction missing an amount": {
+			transaction: SharedTransaction{
+				Date: 123456,
+				Shop: "test-shop",
+			},
+			wantCode: http.StatusBadRequest,
+		},
+	}
 
-	// for name, tc := range tests {
-	// 	t.Run(name, func(t *testing.T) {
-	// 		request := NewCreateSharedTxnRequest(t, tc.transaction)
-	// 	})
-	// }
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			store := StubTransactionStore{}
+			app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+
+			request := NewCreateSharedTxnRequest(tc.transaction)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(app.CreateSharedTxn)
+			handler.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
 
 	// t.Run("CreateSharedTxn calls the CreateSharedTxn function", func(t *testing.T) {
 	// shared transaction

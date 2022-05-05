@@ -55,7 +55,7 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	amount := r.FormValue("amount")
-	if amount == "" {
+	if amount == "0" {
 		http.Error(w, "amount must be provided", http.StatusBadRequest)
 		return
 	}
@@ -66,8 +66,8 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	date := r.FormValue("date")
-	if date == "" {
-		http.Error(w, "date not present", http.StatusBadRequest)
+	if date == "0" {
+		http.Error(w, "date must be provided", http.StatusBadRequest)
 		return
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type SharedTransaction struct {
@@ -42,12 +43,24 @@ func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
 
 // CreateSharedTxn handles a HTTP request to create a shared transaction
 func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
 	// TODO: refactor, use same logic for transactions and here
 	err := r.ParseMultipartForm(1024 * 1024 * 5)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	participants := r.FormValue("participants")
+	if participants == "" {
+		http.Error(w, "participants must be provided", http.StatusBadRequest)
+	}
+	if !strings.Contains(participants, userID) {
+		http.Error(w, "users cannot create a transaction that they are not part of", http.StatusForbidden)
+		return
+	}
+	splitParticipants := strings.Split(participants, ",")
+
 	shop := r.FormValue("shop")
 	if shop == "" {
 		http.Error(w, "transaction name must be provided", http.StatusBadRequest)
@@ -78,9 +91,10 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = a.store.CreateSharedTxn(SharedTransaction{
-		Shop:   shop,
-		Amount: amountParsed,
-		Date:   dateParsed,
+		Participants: splitParticipants,
+		Shop:         shop,
+		Amount:       amountParsed,
+		Date:         dateParsed,
 	})
 
 	if err != nil {

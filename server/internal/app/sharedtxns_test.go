@@ -28,9 +28,10 @@ func TestGetTransactionsByTracker(t *testing.T) {
 }
 
 var testSharedTransaction = SharedTransaction{
-	Shop:   "Test Shop",
-	Amount: 123,
-	Date:   123456,
+	Participants: []string{"user1", "user2"},
+	Shop:         "Test Shop",
+	Amount:       123,
+	Date:         123456,
 }
 
 func TestCreateSharedTxn(t *testing.T) {
@@ -40,7 +41,7 @@ func TestCreateSharedTxn(t *testing.T) {
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
 		// make the request
-		request := NewCreateSharedTxnRequest(testSharedTransaction)
+		request := NewCreateSharedTxnRequest(testSharedTransaction, "user1")
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(app.CreateSharedTxn)
@@ -52,29 +53,56 @@ func TestCreateSharedTxn(t *testing.T) {
 	})
 
 	tests := map[string]struct {
-		transaction SharedTransaction
-		wantCode    int
+		transaction   SharedTransaction
+		wantCode      int
+		userInContext string
 	}{
+		"with a userID in the context that doesn't match one of the users in the transaction": {
+			transaction: SharedTransaction{
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Date:         123456,
+				Shop:         "test-shop",
+			},
+			userInContext: "user-not-participating",
+			wantCode:      http.StatusForbidden,
+		},
 		"with a transaction missing a shop": {
 			transaction: SharedTransaction{
-				Amount: 123,
-				Date:   123456,
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Date:         123456,
 			},
-			wantCode: http.StatusBadRequest,
+			userInContext: "user1",
+			wantCode:      http.StatusBadRequest,
 		},
 		"with a transaction missing a date": {
 			transaction: SharedTransaction{
-				Amount: 123,
-				Shop:   "test-shop",
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Shop:         "test-shop",
 			},
-			wantCode: http.StatusBadRequest,
+			userInContext: "user1",
+			wantCode:      http.StatusBadRequest,
 		},
 		"with a transaction missing an amount": {
 			transaction: SharedTransaction{
-				Date: 123456,
-				Shop: "test-shop",
+				Participants: []string{"user1", "user2"},
+				Date:         123456,
+				Shop:         "test-shop",
 			},
-			wantCode: http.StatusBadRequest,
+			userInContext: "user1",
+			wantCode:      http.StatusBadRequest,
+		},
+		"with a valid transaction": {
+			transaction: SharedTransaction{
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Date:         123456,
+				Shop:         "test-shop",
+			},
+			userInContext: "user1",
+			wantCode:      http.StatusAccepted,
 		},
 	}
 
@@ -84,7 +112,7 @@ func TestCreateSharedTxn(t *testing.T) {
 			store := StubTransactionStore{}
 			app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-			request := NewCreateSharedTxnRequest(tc.transaction)
+			request := NewCreateSharedTxnRequest(tc.transaction, tc.userInContext)
 			response := httptest.NewRecorder()
 
 			handler := http.HandlerFunc(app.CreateSharedTxn)
@@ -93,14 +121,4 @@ func TestCreateSharedTxn(t *testing.T) {
 			assert.Equal(tc.wantCode, response.Code)
 		})
 	}
-
-	// t.Run("CreateSharedTxn calls the CreateSharedTxn function", func(t *testing.T) {
-	// shared transaction
-	// })
-	// table test
-	// with no user in cookie, error
-	// with user in the cookie but wrong user, error
-	// with user in the cookie correct, correct
-	// with an invalid transaction
-	// with a valid transaction
 }

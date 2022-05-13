@@ -227,14 +227,19 @@ func NewGetTxnsByTrackerRequest(t testing.TB, trackerID string) *http.Request {
 }
 
 func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Reader {
+	// make a comma separated list of participants
+	participants := strings.Join(txn.Participants, ",")
+
 	return map[string]io.Reader{
 		"shop":   strings.NewReader(txn.Shop),
 		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
-		"date":   strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+		// NOTE: currently, date will never be empty, change this?
+		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+		"participants": strings.NewReader(participants),
 	}
 }
 
-func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
+func NewCreateSharedTxnRequest(txn SharedTransaction, userID string) *http.Request {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	values := MakeCreateSharedTxnRequestPayload(txn)
@@ -264,7 +269,8 @@ func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
 
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/trackers/%s/transactions", txn.Tracker), &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	return req
+	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
+	return req.WithContext(ctx)
 }
 
 // #region Sessions

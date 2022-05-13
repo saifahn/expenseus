@@ -35,12 +35,11 @@ var testSharedTransaction = SharedTransaction{
 }
 
 func TestCreateSharedTxn(t *testing.T) {
-	t.Run("CreateSharedTxn calls CreateSharedTxn with the transaction when passed a valid shared transaction", func(t *testing.T) {
+	t.Run("CreateSharedTxn calls the store's CreateSharedTxn with the transaction when passed a valid shared transaction", func(t *testing.T) {
 		assert := assert.New(t)
 		store := StubTransactionStore{}
 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-		// make the request
 		request := NewCreateSharedTxnRequest(testSharedTransaction, "user1")
 		response := httptest.NewRecorder()
 
@@ -121,4 +120,23 @@ func TestCreateSharedTxn(t *testing.T) {
 			assert.Equal(tc.wantCode, response.Code)
 		})
 	}
+}
+
+func TestGetUnsettledTxnsByTracker(t *testing.T) {
+	t.Run("GetUnsettledTxnsByTracker calls the store's GetUnsettledTxnsByTracker with a given trackerID", func(t *testing.T) {
+		assert := assert.New(t)
+		store := StubTransactionStore{}
+		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+		wantTrackerID := "testTracker"
+
+		request := NewGetUnsettledTxnsByTrackerRequest(wantTrackerID)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(app.GetUnsettledTxnsByTracker)
+		handler.ServeHTTP(response, request)
+
+		assert.Equal(http.StatusOK, response.Code)
+		assert.Len(store.getUnsettledTxnsByTrackerCalls, 1)
+		assert.Equal(wantTrackerID, store.getUnsettledTxnsByTrackerCalls[0])
+	})
 }

@@ -104,3 +104,20 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusAccepted)
 }
+
+func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) {
+	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
+
+	transactions, err := a.store.GetUnsettledTxnsByTracker(trackerID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("something went wrong getting unsettled shared transactions from tracker: %v", err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(w).Encode(transactions)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}

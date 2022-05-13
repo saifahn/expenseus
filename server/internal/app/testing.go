@@ -273,6 +273,12 @@ func NewCreateSharedTxnRequest(txn SharedTransaction, userID string) *http.Reque
 	return req.WithContext(ctx)
 }
 
+func NewGetUnsettledTxnsByTrackerRequest(trackerID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s/transactions/unsettled", trackerID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
+	return req.WithContext(ctx)
+}
+
 // #region Sessions
 type StubSessionManager struct {
 	saveCalls   []string
@@ -343,12 +349,13 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 
 // #region Store
 type StubTransactionStore struct {
-	transactions           map[string]Transaction
-	users                  []User
-	trackers               []Tracker
-	recordTransactionCalls []TransactionDetails
-	getTxnsByTrackerCalls  []string
-	createSharedTxnCalls   []SharedTransaction
+	transactions                   map[string]Transaction
+	users                          []User
+	trackers                       []Tracker
+	recordTransactionCalls         []TransactionDetails
+	getTxnsByTrackerCalls          []string
+	createSharedTxnCalls           []SharedTransaction
+	getUnsettledTxnsByTrackerCalls []string
 }
 
 func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
@@ -450,6 +457,11 @@ func (s *StubTransactionStore) GetTxnsByTracker(trackerID string) ([]SharedTrans
 func (s *StubTransactionStore) CreateSharedTxn(txn SharedTransaction) error {
 	s.createSharedTxnCalls = append(s.createSharedTxnCalls, txn)
 	return nil
+}
+
+func (s *StubTransactionStore) GetUnsettledTxnsByTracker(trackerID string) ([]SharedTransaction, error) {
+	s.getUnsettledTxnsByTrackerCalls = append(s.getUnsettledTxnsByTrackerCalls, trackerID)
+	return nil, nil
 }
 
 // #endregion Store

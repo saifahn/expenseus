@@ -43,13 +43,13 @@ func setUpMockApp(t testing.TB, expectationsFn mockAppFn) *app.App {
 }
 
 func TestGetTxnsByTracker(t *testing.T) {
+	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}
 	sharedTransactions := []app.SharedTransaction{
 		{
 			ID: "test-shared-transaction",
 		},
 	}
-	testTrackerID := "test-tracker-id"
 
 	tests := map[string]struct {
 		trackerID      string
@@ -184,21 +184,45 @@ func TestCreateSharedTxn(t *testing.T) {
 	}
 }
 
-// func TestGetUnsettledTxnsByTracker(t *testing.T) {
-// 	t.Run("GetUnsettledTxnsByTracker calls the store's GetUnsettledTxnsByTracker with a given trackerID", func(t *testing.T) {
-// 		assert := assert.New(t)
-// 		store := StubTransactionStore{}
-// 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-// 		wantTrackerID := "testTracker"
+func TestGetUnsettledTxnsByTracker(t *testing.T) {
+	testTrackerID := "test-tracker-id"
+	emptyTransactions := []app.SharedTransaction{}
 
-// 		request := NewGetUnsettledTxnsByTrackerRequest(wantTrackerID)
-// 		response := httptest.NewRecorder()
+	tests := map[string]struct {
+		trackerID      string
+		expectationsFn mockAppFn
+		wantTxns       []app.SharedTransaction
+		wantCode       int
+	}{
+		"with an empty list of txns from the store, returns an empty list": {
+			trackerID: testTrackerID,
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
+			},
+			wantTxns: emptyTransactions,
+			wantCode: http.StatusOK,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := setUpMockApp(t, tc.expectationsFn)
 
-// 		handler := http.HandlerFunc(app.GetUnsettledTxnsByTracker)
-// 		handler.ServeHTTP(response, request)
+			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.trackerID)
+			response := httptest.NewRecorder()
 
-// 		assert.Equal(http.StatusOK, response.Code)
-// 		assert.Len(store.getUnsettledTxnsByTrackerCalls, 1)
-// 		assert.Equal(wantTrackerID, store.getUnsettledTxnsByTrackerCalls[0])
-// 	})
-// }
+			handler := http.HandlerFunc(a.GetUnsettledTxnsByTracker)
+			handler.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+			if tc.wantTxns != nil {
+				var got []app.SharedTransaction
+				err := json.NewDecoder(response.Body).Decode(&got)
+				if err != nil {
+					t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
+				}
+				assert.ElementsMatch(got, tc.wantTxns)
+			}
+		})
+	}
+}

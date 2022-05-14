@@ -12,48 +12,51 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type (
+	mockStoreFn func(m *mock_app.MockStore)
+)
+
 func TestGetTxnsByTracker(t *testing.T) {
-	t.Run("get transactions by tracker ID calls the GetTxnsByTracker function", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		mockStore := mock_app.NewMockStore(ctrl)
-		a := app.New(mockStore, &app.StubOauthConfig{}, &app.StubSessionManager{}, "", &app.StubImageStore{})
+	emptyTransactions := []app.SharedTransaction{}
 
-		trackerID := app.TestTracker.ID
-		request := app.NewGetTxnsByTrackerRequest(t, trackerID)
-		response := httptest.NewRecorder()
+	tests := map[string]struct {
+		trackerID     string
+		expectationFn mockStoreFn
+		wantTxns      []app.SharedTransaction
+	}{
+		"with an empty list of txns from the store, returns an empty list": {
+			trackerID: "test-tracker-id",
+			expectationFn: func(m *mock_app.MockStore) {
+				m.EXPECT().GetTxnsByTracker(gomock.Eq("test-tracker-id")).Return(emptyTransactions, nil).Times(1)
+			},
+			wantTxns: emptyTransactions,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			ctrl := gomock.NewController(t)
+			mockStore := mock_app.NewMockStore(ctrl)
+			a := app.New(mockStore, &app.StubOauthConfig{}, &app.StubSessionManager{}, "", &app.StubImageStore{})
 
-		mockStore.EXPECT().GetTxnsByTracker(gomock.Eq(trackerID)).Times(1)
+			request := app.NewGetTxnsByTrackerRequest(t, tc.trackerID)
+			response := httptest.NewRecorder()
 
-		handler := http.HandlerFunc(a.GetTxnsByTracker)
-		handler.ServeHTTP(response, request)
-	})
+			tc.expectationFn(mockStore)
 
-	t.Run("returns a list of transactions when received from the store", func(t *testing.T) {
-		assert := assert.New(t)
-		ctrl := gomock.NewController(t)
-		mockStore := mock_app.NewMockStore(ctrl)
-		a := app.New(mockStore, &app.StubOauthConfig{}, &app.StubSessionManager{}, "", &app.StubImageStore{})
+			handler := http.HandlerFunc(a.GetTxnsByTracker)
+			handler.ServeHTTP(response, request)
 
-		trackerID := app.TestTracker.ID
-		request := app.NewGetTxnsByTrackerRequest(t, trackerID)
-		response := httptest.NewRecorder()
+			var got []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			if err != nil {
+				t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
+			}
+			assert.Equal(http.StatusOK, response.Code)
+			assert.ElementsMatch(got, tc.wantTxns)
+		})
+	}
 
-		wantTransactions := []app.SharedTransaction{}
-		mockStore.EXPECT().GetTxnsByTracker(gomock.Eq(trackerID)).Return(wantTransactions, nil).Times(1)
-
-		handler := http.HandlerFunc(a.GetTxnsByTracker)
-		handler.ServeHTTP(response, request)
-
-		var got []app.SharedTransaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
-		}
-
-		// assert.Equal(app.jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(http.StatusOK, response.Code)
-		assert.ElementsMatch(got, wantTransactions)
-	})
 	// TODO: I should add like custom mock values from the store and then do tests based on the expected behaviour
 	// empty list of transactions
 	// list of transactions

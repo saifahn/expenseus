@@ -85,100 +85,88 @@ func TestGetTxnsByTracker(t *testing.T) {
 	}
 }
 
-// var testSharedTransaction = app.SharedTransaction{
-// 	Participants: []string{"user1", "user2"},
-// 	Shop:         "Test Shop",
-// 	Amount:       123,
-// 	Date:         123456,
-// }
+func TestCreateSharedTxn(t *testing.T) {
+	validSharedTxn := app.SharedTransaction{
+		Participants: []string{"user1", "user2"},
+		Amount:       123,
+		Date:         123456,
+		Shop:         "test-shop",
+	}
 
-// func TestCreateSharedTxn(t *testing.T) {
-// 	t.Run("CreateSharedTxn calls the store's CreateSharedTxn with the transaction when passed a valid shared transaction", func(t *testing.T) {
-// 		assert := assert.New(t)
-// 		store := StubTransactionStore{}
-// 		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+	tests := map[string]struct {
+		transaction    app.SharedTransaction
+		expectationsFn mockStoreFn
+		wantCode       int
+		userInContext  string
+	}{
+		"with a userID in the context that doesn't match one of the users in the transaction": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Date:         123456,
+				Shop:         "test-shop",
+			},
+			userInContext: "user-not-participating",
+			wantCode:      http.StatusForbidden,
+		},
+		"with a transaction missing a shop": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Date:         123456,
+			},
+			userInContext: "user1",
+			wantCode:      http.StatusBadRequest,
+		},
+		"with a transaction missing a date": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user1", "user2"},
+				Amount:       123,
+				Shop:         "test-shop",
+			},
+			userInContext: "user1",
+			wantCode:      http.StatusBadRequest,
+		},
+		"with a transaction missing an amount": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user1", "user2"},
+				Date:         123456,
+				Shop:         "test-shop",
+			},
+			userInContext: "user1",
+			wantCode:      http.StatusBadRequest,
+		},
+		"with a valid transaction": {
+			transaction: validSharedTxn,
+			expectationsFn: func(m *mock_app.MockStore) {
+				m.EXPECT().CreateSharedTxn(validSharedTxn).Times(1)
+			},
+			userInContext: "user1",
+			wantCode:      http.StatusAccepted,
+		},
+	}
 
-// 		request := NewCreateSharedTxnRequest(testSharedTransaction, "user1")
-// 		response := httptest.NewRecorder()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			ctrl := gomock.NewController(t)
+			mockStore := mock_app.NewMockStore(ctrl)
+			a := app.New(mockStore, &app.StubOauthConfig{}, &app.StubSessionManager{}, "", &app.StubImageStore{})
 
-// 		handler := http.HandlerFunc(app.CreateSharedTxn)
-// 		handler.ServeHTTP(response, request)
+			request := app.NewCreateSharedTxnRequest(tc.transaction, tc.userInContext)
+			response := httptest.NewRecorder()
 
-// 		assert.Equal(http.StatusAccepted, response.Code)
-// 		assert.Len(store.createSharedTxnCalls, 1)
-// 		assert.Equal(testSharedTransaction, store.createSharedTxnCalls[0])
-// 	})
+			if tc.expectationsFn != nil {
+				tc.expectationsFn(mockStore)
+			}
 
-// 	tests := map[string]struct {
-// 		transaction   SharedTransaction
-// 		wantCode      int
-// 		userInContext string
-// 	}{
-// 		"with a userID in the context that doesn't match one of the users in the transaction": {
-// 			transaction: SharedTransaction{
-// 				Participants: []string{"user1", "user2"},
-// 				Amount:       123,
-// 				Date:         123456,
-// 				Shop:         "test-shop",
-// 			},
-// 			userInContext: "user-not-participating",
-// 			wantCode:      http.StatusForbidden,
-// 		},
-// 		"with a transaction missing a shop": {
-// 			transaction: SharedTransaction{
-// 				Participants: []string{"user1", "user2"},
-// 				Amount:       123,
-// 				Date:         123456,
-// 			},
-// 			userInContext: "user1",
-// 			wantCode:      http.StatusBadRequest,
-// 		},
-// 		"with a transaction missing a date": {
-// 			transaction: SharedTransaction{
-// 				Participants: []string{"user1", "user2"},
-// 				Amount:       123,
-// 				Shop:         "test-shop",
-// 			},
-// 			userInContext: "user1",
-// 			wantCode:      http.StatusBadRequest,
-// 		},
-// 		"with a transaction missing an amount": {
-// 			transaction: SharedTransaction{
-// 				Participants: []string{"user1", "user2"},
-// 				Date:         123456,
-// 				Shop:         "test-shop",
-// 			},
-// 			userInContext: "user1",
-// 			wantCode:      http.StatusBadRequest,
-// 		},
-// 		"with a valid transaction": {
-// 			transaction: SharedTransaction{
-// 				Participants: []string{"user1", "user2"},
-// 				Amount:       123,
-// 				Date:         123456,
-// 				Shop:         "test-shop",
-// 			},
-// 			userInContext: "user1",
-// 			wantCode:      http.StatusAccepted,
-// 		},
-// 	}
+			handler := http.HandlerFunc(a.CreateSharedTxn)
+			handler.ServeHTTP(response, request)
 
-// 	for name, tc := range tests {
-// 		t.Run(name, func(t *testing.T) {
-// 			assert := assert.New(t)
-// 			store := StubTransactionStore{}
-// 			app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-
-// 			request := NewCreateSharedTxnRequest(tc.transaction, tc.userInContext)
-// 			response := httptest.NewRecorder()
-
-// 			handler := http.HandlerFunc(app.CreateSharedTxn)
-// 			handler.ServeHTTP(response, request)
-
-// 			assert.Equal(tc.wantCode, response.Code)
-// 		})
-// 	}
-// }
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
 
 // func TestGetUnsettledTxnsByTracker(t *testing.T) {
 // 	t.Run("GetUnsettledTxnsByTracker calls the store's GetUnsettledTxnsByTracker with a given trackerID", func(t *testing.T) {

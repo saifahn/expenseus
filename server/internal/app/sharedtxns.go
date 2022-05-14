@@ -29,8 +29,8 @@ func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
 	transactions, err := a.store.GetTxnsByTracker(trackerID)
 
 	if err != nil {
-		if err == ErrStoreItemNotFound {
-			http.Error(rw, "a tracker with that trackerID does not exist", http.StatusNotFound)
+		if err == ErrDBItemNotFound {
+			http.Error(rw, "a tracker with the given trackerID does not exist", http.StatusNotFound)
 			return
 		}
 		http.Error(rw, fmt.Sprintf("something went wrong getting shared transactions from tracker: %v", err.Error()), http.StatusInternalServerError)
@@ -116,6 +116,10 @@ func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) 
 
 	transactions, err := a.store.GetUnsettledTxnsByTracker(trackerID)
 	if err != nil {
+		if err == ErrDBItemNotFound {
+			http.Error(w, "a tracker with the given trackerID does not exist", http.StatusNotFound)
+			return
+		}
 		http.Error(w, fmt.Sprintf("something went wrong getting unsettled shared transactions from tracker: %v", err.Error()), http.StatusInternalServerError)
 		return
 	}

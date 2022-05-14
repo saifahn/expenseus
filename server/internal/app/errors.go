@@ -3,5 +3,5 @@ package app
 import "errors"
 
 var (
-	ErrStoreItemNotFound = errors.New("store: item not found")
+	ErrDBItemNotFound = errors.New("store: item not found")
 )

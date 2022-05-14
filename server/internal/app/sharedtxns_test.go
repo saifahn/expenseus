@@ -76,7 +76,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 		"with a trackerID of a non-existent tracker, returns a 404": {
 			trackerID: "non-existent-trackerID",
 			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrStoreItemNotFound).Times(1)
+				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrDBItemNotFound).Times(1)
 			},
 			wantTxns: nil,
 			wantCode: http.StatusNotFound,
@@ -131,6 +131,7 @@ func TestCreateSharedTxn(t *testing.T) {
 			userInContext: "user-not-participating",
 			wantCode:      http.StatusForbidden,
 		},
+		// TODO: handle a tracker not existing when trying to create a shared transaction
 		"with a transaction missing a shop": {
 			transaction: app.SharedTransaction{
 				Participants: []string{"user1", "user2"},
@@ -201,6 +202,14 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 			},
 			wantTxns: emptyTransactions,
 			wantCode: http.StatusOK,
+		},
+		"with a trackerID of a non-existent tracker, returns a 404": {
+			trackerID: "non-existent-trackerID",
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrDBItemNotFound).Times(1)
+			},
+			wantTxns: nil,
+			wantCode: http.StatusNotFound,
 		},
 	}
 	for name, tc := range tests {

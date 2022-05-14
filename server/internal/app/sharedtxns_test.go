@@ -13,8 +13,34 @@ import (
 )
 
 type (
-	mockStoreFn func(m *mock_app.MockStore)
+	MockApp struct {
+		mockStore    mock_app.MockStore
+		mockAuth     mock_app.MockAuth
+		mockImages   mock_app.MockImageStore
+		mockSessions mock_app.MockSessionManager
+	}
+	mockAppFn func(ma *MockApp)
 )
+
+func setUpMockApp(t testing.TB, expectationsFn mockAppFn) *app.App {
+	ctrl := gomock.NewController(t)
+	mockStore := mock_app.NewMockStore(ctrl)
+	mockAuth := mock_app.NewMockAuth(ctrl)
+	mockImages := mock_app.NewMockImageStore(ctrl)
+	mockSessions := mock_app.NewMockSessionManager(ctrl)
+
+	if expectationsFn != nil {
+		mockApp := &MockApp{
+			mockStore:    *mockStore,
+			mockAuth:     *mockAuth,
+			mockImages:   *mockImages,
+			mockSessions: *mockSessions,
+		}
+		expectationsFn(mockApp)
+	}
+
+	return app.New(mockStore, mockAuth, mockSessions, "", mockImages)
+}
 
 func TestGetTxnsByTracker(t *testing.T) {
 	emptyTransactions := []app.SharedTransaction{}
@@ -27,30 +53,30 @@ func TestGetTxnsByTracker(t *testing.T) {
 
 	tests := map[string]struct {
 		trackerID      string
-		expectationsFn mockStoreFn
+		expectationsFn mockAppFn
 		wantTxns       []app.SharedTransaction
 		wantCode       int
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
 			trackerID: testTrackerID,
-			expectationsFn: func(m *mock_app.MockStore) {
-				m.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
 			},
 			wantTxns: emptyTransactions,
 			wantCode: http.StatusOK,
 		},
 		"with a list of txns from the store, returns the list": {
 			trackerID: testTrackerID,
-			expectationsFn: func(m *mock_app.MockStore) {
-				m.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(sharedTransactions, nil).Times(1)
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(sharedTransactions, nil).Times(1)
 			},
 			wantTxns: sharedTransactions,
 			wantCode: http.StatusOK,
 		},
 		"with a trackerID of a non-existent tracker, returns a 404": {
 			trackerID: "non-existent-trackerID",
-			expectationsFn: func(m *mock_app.MockStore) {
-				m.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrStoreItemNotFound).Times(1)
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrStoreItemNotFound).Times(1)
 			},
 			wantTxns: nil,
 			wantCode: http.StatusNotFound,
@@ -60,14 +86,10 @@ func TestGetTxnsByTracker(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			ctrl := gomock.NewController(t)
-			mockStore := mock_app.NewMockStore(ctrl)
-			a := app.New(mockStore, &app.StubOauthConfig{}, &app.StubSessionManager{}, "", &app.StubImageStore{})
+			a := setUpMockApp(t, tc.expectationsFn)
 
 			request := app.NewGetTxnsByTrackerRequest(t, tc.trackerID)
 			response := httptest.NewRecorder()
-
-			tc.expectationsFn(mockStore)
 
 			handler := http.HandlerFunc(a.GetTxnsByTracker)
 			handler.ServeHTTP(response, request)
@@ -95,7 +117,7 @@ func TestCreateSharedTxn(t *testing.T) {
 
 	tests := map[string]struct {
 		transaction    app.SharedTransaction
-		expectationsFn mockStoreFn
+		expectationsFn mockAppFn
 		wantCode       int
 		userInContext  string
 	}{
@@ -138,8 +160,8 @@ func TestCreateSharedTxn(t *testing.T) {
 		},
 		"with a valid transaction": {
 			transaction: validSharedTxn,
-			expectationsFn: func(m *mock_app.MockStore) {
-				m.EXPECT().CreateSharedTxn(validSharedTxn).Times(1)
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().CreateSharedTxn(validSharedTxn).Times(1)
 			},
 			userInContext: "user1",
 			wantCode:      http.StatusAccepted,
@@ -149,16 +171,10 @@ func TestCreateSharedTxn(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			ctrl := gomock.NewController(t)
-			mockStore := mock_app.NewMockStore(ctrl)
-			a := app.New(mockStore, &app.StubOauthConfig{}, &app.StubSessionManager{}, "", &app.StubImageStore{})
+			a := setUpMockApp(t, tc.expectationsFn)
 
 			request := app.NewCreateSharedTxnRequest(tc.transaction, tc.userInContext)
 			response := httptest.NewRecorder()
-
-			if tc.expectationsFn != nil {
-				tc.expectationsFn(mockStore)
-			}
 
 			handler := http.HandlerFunc(a.CreateSharedTxn)
 			handler.ServeHTTP(response, request)

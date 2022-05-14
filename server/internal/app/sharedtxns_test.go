@@ -188,6 +188,10 @@ func TestCreateSharedTxn(t *testing.T) {
 func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}
+	unsettledTxns := []app.SharedTransaction{{
+		ID:        "test-unsettled-transaction",
+		Unsettled: true,
+	}}
 
 	tests := map[string]struct {
 		trackerID      string
@@ -201,6 +205,14 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
 			},
 			wantTxns: emptyTransactions,
+			wantCode: http.StatusOK,
+		},
+		"with a list of txns from the store, returns the list": {
+			trackerID: testTrackerID,
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(unsettledTxns, nil).Times(1)
+			},
+			wantTxns: unsettledTxns,
 			wantCode: http.StatusOK,
 		},
 		"with a trackerID of a non-existent tracker, returns a 404": {

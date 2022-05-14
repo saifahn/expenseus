@@ -26,23 +26,34 @@ func TestGetTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 
 	tests := map[string]struct {
-		trackerID     string
-		expectationFn mockStoreFn
-		wantTxns      []app.SharedTransaction
+		trackerID      string
+		expectationsFn mockStoreFn
+		wantTxns       []app.SharedTransaction
+		wantCode       int
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
 			trackerID: testTrackerID,
-			expectationFn: func(m *mock_app.MockStore) {
+			expectationsFn: func(m *mock_app.MockStore) {
 				m.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
 			},
 			wantTxns: emptyTransactions,
+			wantCode: http.StatusOK,
 		},
 		"with a list of txns from the store, returns the list": {
 			trackerID: testTrackerID,
-			expectationFn: func(m *mock_app.MockStore) {
+			expectationsFn: func(m *mock_app.MockStore) {
 				m.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(sharedTransactions, nil).Times(1)
 			},
 			wantTxns: sharedTransactions,
+			wantCode: http.StatusOK,
+		},
+		"with a trackerID of a non-existent tracker, returns a 404": {
+			trackerID: "non-existent-trackerID",
+			expectationsFn: func(m *mock_app.MockStore) {
+				m.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrStoreItemNotFound).Times(1)
+			},
+			wantTxns: nil,
+			wantCode: http.StatusNotFound,
 		},
 	}
 
@@ -56,25 +67,22 @@ func TestGetTxnsByTracker(t *testing.T) {
 			request := app.NewGetTxnsByTrackerRequest(t, tc.trackerID)
 			response := httptest.NewRecorder()
 
-			tc.expectationFn(mockStore)
+			tc.expectationsFn(mockStore)
 
 			handler := http.HandlerFunc(a.GetTxnsByTracker)
 			handler.ServeHTTP(response, request)
 
-			var got []app.SharedTransaction
-			err := json.NewDecoder(response.Body).Decode(&got)
-			if err != nil {
-				t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
+			assert.Equal(tc.wantCode, response.Code)
+			if tc.wantTxns != nil {
+				var got []app.SharedTransaction
+				err := json.NewDecoder(response.Body).Decode(&got)
+				if err != nil {
+					t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
+				}
+				assert.ElementsMatch(got, tc.wantTxns)
 			}
-			assert.Equal(http.StatusOK, response.Code)
-			assert.ElementsMatch(got, tc.wantTxns)
 		})
 	}
-
-	// TODO: I should add like custom mock values from the store and then do tests based on the expected behaviour
-	// empty list of transactions
-	// list of transactions
-	// tracker doesn't exist
 }
 
 // var testSharedTransaction = app.SharedTransaction{

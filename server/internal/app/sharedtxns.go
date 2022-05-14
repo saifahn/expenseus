@@ -29,6 +29,10 @@ func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
 	transactions, err := a.store.GetTxnsByTracker(trackerID)
 
 	if err != nil {
+		if err == ErrStoreItemNotFound {
+			http.Error(rw, "a tracker with that trackerID does not exist", http.StatusNotFound)
+			return
+		}
 		http.Error(rw, fmt.Sprintf("something went wrong getting shared transactions from tracker: %v", err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -105,6 +109,8 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// GetUnsettledTxnsByTracker handles a HTTP request to get transactions that
+// are unsettled and returns the list of transactions
 func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) {
 	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
 

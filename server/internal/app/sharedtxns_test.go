@@ -18,6 +18,12 @@ type (
 
 func TestGetTxnsByTracker(t *testing.T) {
 	emptyTransactions := []app.SharedTransaction{}
+	sharedTransactions := []app.SharedTransaction{
+		{
+			ID: "test-shared-transaction",
+		},
+	}
+	testTrackerID := "test-tracker-id"
 
 	tests := map[string]struct {
 		trackerID     string
@@ -25,13 +31,21 @@ func TestGetTxnsByTracker(t *testing.T) {
 		wantTxns      []app.SharedTransaction
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
-			trackerID: "test-tracker-id",
+			trackerID: testTrackerID,
 			expectationFn: func(m *mock_app.MockStore) {
-				m.EXPECT().GetTxnsByTracker(gomock.Eq("test-tracker-id")).Return(emptyTransactions, nil).Times(1)
+				m.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
 			},
 			wantTxns: emptyTransactions,
 		},
+		"with a list of txns from the store, returns the list": {
+			trackerID: testTrackerID,
+			expectationFn: func(m *mock_app.MockStore) {
+				m.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(sharedTransactions, nil).Times(1)
+			},
+			wantTxns: sharedTransactions,
+		},
 	}
+
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)

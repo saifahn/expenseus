@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/saifahn/expenseus/internal/app"
-	mock_app "github.com/saifahn/expenseus/internal/app/mock"
+	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -244,6 +244,39 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 				}
 				assert.ElementsMatch(got, tc.wantTxns)
 			}
+		})
+	}
+}
+
+func TestSettleAllTxnsByTracker(t *testing.T) {
+	testTrackerID := "test-tracker-id"
+
+	tests := map[string]struct {
+		trackerID      string
+		expectationsFn mockAppFn
+		wantCode       int
+	}{
+		"calls the store function successfully": {
+			trackerID: testTrackerID,
+			expectationsFn: func(ma *MockApp) {
+				ma.mockStore.EXPECT().SettleAllTxnsByTracker(testTrackerID).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := setUpMockApp(t, tc.expectationsFn)
+
+			request := app.NewSettleAllTxnsByTrackerRequest(tc.trackerID)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.SettleAllTxnsByTracker)
+			handler.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
 		})
 	}
 }

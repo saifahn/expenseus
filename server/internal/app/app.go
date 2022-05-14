@@ -29,6 +29,7 @@ type Store interface {
 	GetTxnsByTracker(trackerID string) ([]SharedTransaction, error)
 	CreateSharedTxn(txn SharedTransaction) error
 	GetUnsettledTxnsByTracker(trackerID string) ([]SharedTransaction, error)
+	SettleAllTxnsByTracker(trackerID string) error
 }
 
 type Auth interface {

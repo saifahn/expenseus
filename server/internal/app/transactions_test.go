@@ -198,7 +198,7 @@ func TestCreateTransaction(t *testing.T) {
 			UserID: TestTomomiUser.ID,
 		}
 		payload := MakeCreateTransactionRequestPayload(expectedDetails)
-		request := addUserCookieAndContext(NewCreateTransactionRequest(payload), TestTomomiUser.ID)
+		request := AddUserCookieAndContext(NewCreateTransactionRequest(payload), TestTomomiUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(app.CreateTransaction)
@@ -241,7 +241,7 @@ func TestCreateTransaction(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := addUserCookieAndContext(NewCreateTransactionRequest(values), TestSeanUser.ID)
+		request := AddUserCookieAndContext(NewCreateTransactionRequest(values), TestSeanUser.ID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(app.CreateTransaction)
@@ -264,7 +264,7 @@ func TestCreateTransaction(t *testing.T) {
 		defer f.Close()
 		defer os.Remove(f.Name())
 
-		request := addUserCookieAndContext(NewCreateTransactionRequest(values), userID)
+		request := AddUserCookieAndContext(NewCreateTransactionRequest(values), userID)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(app.CreateTransaction)

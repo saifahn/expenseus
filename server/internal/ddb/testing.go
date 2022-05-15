@@ -3,12 +3,14 @@ package ddb
 import (
 	"log"
 	"os"
+	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/nabeken/aws-go-dynamodb/table"
 )
 
 // NewDynamoDBLocalAPI creates a new session with DynamoDB for local testing.
@@ -92,4 +94,18 @@ func DeleteTable(d dynamodbiface.DynamoDBAPI, name string) error {
 
 	log.Println("successfully deleted the table", name)
 	return nil
+}
+
+// SetUpTestTable creates a table for testing.
+func SetUpTestTable(t testing.TB, tableName string) (*table.Table, func()) {
+	ddb := NewDynamoDBLocalAPI()
+	err := CreateTestTable(ddb, tableName)
+	if err != nil {
+		t.Fatalf("table could not be created: %v", err)
+	}
+
+	teardown := func() {
+		DeleteTable(ddb, tableName)
+	}
+	return table.New(ddb, tableName), teardown
 }

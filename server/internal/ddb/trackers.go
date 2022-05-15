@@ -35,7 +35,7 @@ type CreateTrackerInput struct {
 type TrackersRepository interface {
 	Create(input CreateTrackerInput) error
 	Get(id string) (*TrackerItem, error)
-	GetAll() ([]TrackerItem, error)
+	// GetAll() ([]TrackerItem, error)
 	GetByUser(userID string) ([]TrackerItem, error)
 }
 
@@ -92,23 +92,23 @@ func (t *trackersRepo) Get(id string) (*TrackerItem, error) {
 	return item, nil
 }
 
-func (t *trackersRepo) GetAll() ([]TrackerItem, error) {
-	options := []option.QueryInput{
-		option.Index("GSI1"),
-		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
-		option.QueryExpressionAttributeValue(":allTrackersKey", attributes.String(allTrackersKey)),
-		option.QueryKeyConditionExpression("#GSI1PK = :allTrackersKey"),
-	}
+// func (t *trackersRepo) GetAll() ([]TrackerItem, error) {
+// 	options := []option.QueryInput{
+// 		option.Index("GSI1"),
+// 		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
+// 		option.QueryExpressionAttributeValue(":allTrackersKey", attributes.String(allTrackersKey)),
+// 		option.QueryKeyConditionExpression("#GSI1PK = :allTrackersKey"),
+// 	}
 
-	var items []TrackerItem
+// 	var items []TrackerItem
 
-	_, err := t.table.Query(&items, options...)
-	if err != nil {
-		return nil, err
-	}
+// 	_, err := t.table.Query(&items, options...)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return items, nil
-}
+// 	return items, nil
+// }
 
 func (t *trackersRepo) GetByUser(userID string) ([]TrackerItem, error) {
 	userIDKey := makeUserIDKey(userID)

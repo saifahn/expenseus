@@ -421,7 +421,7 @@ func TestGetTrackersByUser(t *testing.T) {
 					Users: gt.Users,
 				})
 			}
-			assert.EqualValues(wantTrackersNoID, gotTrackersNoID)
+			assert.ElementsMatch(wantTrackersNoID, gotTrackersNoID)
 		})
 	}
 }

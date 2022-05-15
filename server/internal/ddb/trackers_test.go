@@ -3,7 +3,6 @@ package ddb
 import (
 	"testing"
 
-	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,14 +10,8 @@ const testTrackersTableName = "expenseus-testing-trackers"
 
 func TestCreateTracker(t *testing.T) {
 	assert := assert.New(t)
-	dynamoDB := NewDynamoDBLocalAPI()
-
-	err := CreateTestTable(dynamoDB, testTrackersTableName)
-	if err != nil {
-		t.Logf("table could not be created: %v", err)
-	}
-	defer DeleteTable(dynamoDB, testTrackersTableName)
-	tbl := table.New(dynamoDB, testTrackersTableName)
+	tbl, teardown := SetUpTestTable(t, testTrackersTableName)
+	defer teardown()
 	trackers := NewTrackersRepository(tbl)
 
 	testUserIDs := []string{"test-01", "test-02"}
@@ -28,7 +21,7 @@ func TestCreateTracker(t *testing.T) {
 		Name:  "The Test Tracker",
 	}
 
-	err = trackers.Create(testInput)
+	err := trackers.Create(testInput)
 	assert.NoError(err)
 
 	got, err := trackers.Get(testInput.ID)

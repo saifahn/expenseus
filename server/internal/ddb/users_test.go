@@ -11,19 +11,12 @@ const testUsersTableName = "expenseus-testing-users"
 
 func TestUsersTable(t *testing.T) {
 	assert := assert.New(t)
-	dynamodb := NewDynamoDBLocalAPI()
-
-	err := CreateTestTable(dynamodb, testUsersTableName)
-	if err != nil {
-		t.Logf("table could not be created: %v", err)
-	}
-	defer DeleteTable(dynamodb, testUsersTableName)
-
-	tbl := table.New(dynamodb, testUsersTableName)
+	tbl, teardown := SetUpTestTable(t, testUsersTableName)
+	defer teardown()
 	users := NewUserRepository(tbl)
 
 	// retrieving a non-existent user will give an error
-	_, err = users.Get("non-existent-user")
+	_, err := users.Get("non-existent-user")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	user := UserItem{

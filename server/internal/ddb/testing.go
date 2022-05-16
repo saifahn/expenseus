@@ -27,50 +27,74 @@ func CreateTestTable(d dynamodbiface.DynamoDBAPI, name string) error {
 	_, err := d.CreateTable(&dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
-				AttributeName: aws.String("PK"),
+				AttributeName: aws.String(tablePrimaryKey),
 				AttributeType: aws.String("S"),
 			},
 			{
-				AttributeName: aws.String("SK"),
+				AttributeName: aws.String(tableSortKey),
 				AttributeType: aws.String("S"),
 			},
 			{
-				AttributeName: aws.String("GSI1PK"),
+				AttributeName: aws.String(gsi1PrimaryKey),
 				AttributeType: aws.String("S"),
 			},
 			{
-				AttributeName: aws.String("GSI1SK"),
+				AttributeName: aws.String(gsi1SortKey),
+				AttributeType: aws.String("S"),
+			},
+			{
+				AttributeName: aws.String(unsettledTxnsIndexSK),
 				AttributeType: aws.String("S"),
 			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
-				AttributeName: aws.String("PK"),
+				AttributeName: aws.String(tablePrimaryKey),
 				KeyType:       aws.String("HASH"),
 			},
 			{
-				AttributeName: aws.String("SK"),
+				AttributeName: aws.String(tableSortKey),
 				KeyType:       aws.String("RANGE"),
 			},
 		},
-		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{{
-			IndexName: aws.String("GSI1"),
-			KeySchema: []*dynamodb.KeySchemaElement{
-				{
-					AttributeName: aws.String("GSI1PK"),
-					KeyType:       aws.String("HASH"),
+		GlobalSecondaryIndexes: []*dynamodb.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String(gsi1Name),
+				KeySchema: []*dynamodb.KeySchemaElement{
+					{
+						AttributeName: aws.String(gsi1PrimaryKey),
+						KeyType:       aws.String("HASH"),
+					},
+					{
+						AttributeName: aws.String(gsi1SortKey),
+						KeyType:       aws.String("RANGE"),
+					},
 				},
-				{
-					AttributeName: aws.String("GSI1SK"),
-					KeyType:       aws.String("RANGE"),
+				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
+				ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(1),
+					WriteCapacityUnits: aws.Int64(1),
 				},
 			},
-			Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
-			ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
-				ReadCapacityUnits:  aws.Int64(1),
-				WriteCapacityUnits: aws.Int64(1),
+			{
+				IndexName: aws.String(unsettledTxnsIndexName),
+				KeySchema: []*dynamodb.KeySchemaElement{
+					{
+						AttributeName: aws.String(unsettledTxnsIndexPK),
+						KeyType:       aws.String("HASH"),
+					},
+					{
+						AttributeName: aws.String(unsettledTxnsIndexSK),
+						KeyType:       aws.String("RANGE"),
+					},
+				},
+				Projection: &dynamodb.Projection{ProjectionType: aws.String(dynamodb.ProjectionTypeAll)},
+				ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
+					ReadCapacityUnits:  aws.Int64(1),
+					WriteCapacityUnits: aws.Int64(1),
+				},
 			},
-		}},
+		},
 		ProvisionedThroughput: &dynamodb.ProvisionedThroughput{
 			ReadCapacityUnits:  aws.Int64(1),
 			WriteCapacityUnits: aws.Int64(1),

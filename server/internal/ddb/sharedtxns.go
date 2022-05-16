@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
+	"github.com/nabeken/aws-go-dynamodb/table/option"
 )
 
 const (
@@ -29,6 +31,7 @@ type CreateSharedTxnInput struct {
 
 type SharedTxnsRepository interface {
 	Create(input CreateSharedTxnInput) error
+	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 }
 
 type sharedTxnsRepo struct {
@@ -68,6 +71,27 @@ func (r *sharedTxnsRepo) Create(input CreateSharedTxnInput) error {
 		Participants: input.Participants,
 	})
 	return err
+}
+
+func (r *sharedTxnsRepo) GetFromTracker(trackerID string) ([]SharedTxnItem, error) {
+	trackerIDKey := makeTrackerIDKey(trackerID)
+
+	options := []option.QueryInput{
+		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
+		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
+		option.QueryExpressionAttributeValue(":trackerID", attributes.String(trackerIDKey)),
+		option.QueryExpressionAttributeValue(":sharedTxnKeyPrefix", attributes.String(sharedTxnKeyPrefix)),
+		option.QueryKeyConditionExpression("#PK = :trackerID and begins_with(#SK, :sharedTxnKeyPrefix)"),
+	}
+
+	var items []SharedTxnItem
+
+	_, err := r.table.Query(&items, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }
 
 func makeSharedTxnIDKey(id string) string {

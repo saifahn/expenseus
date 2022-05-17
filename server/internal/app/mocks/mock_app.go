@@ -229,18 +229,18 @@ func (mr *MockStoreMockRecorder) GetUser(id interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockStore)(nil).GetUser), id)
 }
 
-// SettleAllTxnsByTracker mocks base method.
-func (m *MockStore) SettleAllTxnsByTracker(trackerID string) error {
+// SettleTxns mocks base method.
+func (m *MockStore) SettleTxns(txns []app.SharedTransaction) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SettleAllTxnsByTracker", trackerID)
+	ret := m.ctrl.Call(m, "SettleTxns", txns)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SettleAllTxnsByTracker indicates an expected call of SettleAllTxnsByTracker.
-func (mr *MockStoreMockRecorder) SettleAllTxnsByTracker(trackerID interface{}) *gomock.Call {
+// SettleTxns indicates an expected call of SettleTxns.
+func (mr *MockStoreMockRecorder) SettleTxns(txns interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SettleAllTxnsByTracker", reflect.TypeOf((*MockStore)(nil).SettleAllTxnsByTracker), trackerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SettleTxns", reflect.TypeOf((*MockStore)(nil).SettleTxns), txns)
 }
 
 // MockAuth is a mock of Auth interface.

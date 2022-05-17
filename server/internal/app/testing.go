@@ -284,12 +284,16 @@ func NewGetUnsettledTxnsByTrackerRequest(trackerID string) *http.Request {
 	return req.WithContext(ctx)
 }
 
-// NewSettleAllTxnsByTrackerRequest creates a request to be used in tests to
-// settle all transactions in a tracker
-func NewSettleAllTxnsByTrackerRequest(trackerID string) *http.Request {
-	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/trackers/%s/transactions/settle", trackerID), nil)
-	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
-	return req.WithContext(ctx)
+// NewSettleTxnsRequest creates a request to be used in tests to settle all
+// transactions in a tracker
+func NewSettleTxnsRequest(t testing.TB, txns []SharedTransaction) *http.Request {
+	transactionsJSON, err := json.Marshal(txns)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/shared/settle", bytes.NewBuffer(transactionsJSON))
+	return req
 }
 
 // #region Sessions
@@ -477,7 +481,7 @@ func (s *StubTransactionStore) GetUnsettledTxnsByTracker(trackerID string) ([]Sh
 	return nil, nil
 }
 
-func (s *StubTransactionStore) SettleAllTxnsByTracker(trackerID string) error {
+func (s *StubTransactionStore) SettleTxns(txns []SharedTransaction) error {
 	return nil
 }
 

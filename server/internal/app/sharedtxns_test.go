@@ -248,18 +248,22 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	}
 }
 
-func TestSettleAllTxnsByTracker(t *testing.T) {
-	testTrackerID := "test-tracker-id"
+func TestSettleTxns(t *testing.T) {
+	testTransaction := app.SharedTransaction{
+		ID:           "test-shared-txn-id",
+		Participants: []string{"user-01", "user-02"},
+		Tracker:      "test-tracker-id",
+	}
 
 	tests := map[string]struct {
-		trackerID      string
+		transactions   []app.SharedTransaction
 		expectationsFn mockAppFn
 		wantCode       int
 	}{
 		"calls the store function successfully": {
-			trackerID: testTrackerID,
+			transactions: []app.SharedTransaction{testTransaction},
 			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().SettleAllTxnsByTracker(testTrackerID).Times(1)
+				ma.mockStore.EXPECT().SettleTxns([]app.SharedTransaction{testTransaction}).Times(1)
 			},
 			wantCode: http.StatusAccepted,
 		},
@@ -269,10 +273,10 @@ func TestSettleAllTxnsByTracker(t *testing.T) {
 			assert := assert.New(t)
 			a := setUpMockApp(t, tc.expectationsFn)
 
-			request := app.NewSettleAllTxnsByTrackerRequest(tc.trackerID)
+			request := app.NewSettleTxnsRequest(t, tc.transactions)
 			response := httptest.NewRecorder()
 
-			handler := http.HandlerFunc(a.SettleAllTxnsByTracker)
+			handler := http.HandlerFunc(a.SettleTxns)
 			handler.ServeHTTP(response, request)
 
 			assert.Equal(tc.wantCode, response.Code)

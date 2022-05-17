@@ -132,13 +132,18 @@ func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// SettleAllTxnsByTracker handles a HTTP request to mark all transactions in a
-// tracker as settled
-func (a *App) SettleAllTxnsByTracker(w http.ResponseWriter, r *http.Request) {
+// SettleTxns handles a HTTP request to mark all transactions in a tracker as
+// settled
+func (a *App) SettleTxns(w http.ResponseWriter, r *http.Request) {
 	// TODO: make sure the user is part of the tracker
-	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
+	var txns []SharedTransaction
+	err := json.NewDecoder(r.Body).Decode(&txns)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	err := a.store.SettleAllTxnsByTracker(trackerID)
+	err = a.store.SettleTxns(txns)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("something went wrong settling transactions for tracker: %v", err.Error()), http.StatusInternalServerError)
 		return

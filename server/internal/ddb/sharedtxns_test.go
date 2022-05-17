@@ -75,4 +75,32 @@ func TestSharedTxns(t *testing.T) {
 		}
 		assert.Contains(got, want)
 	})
+
+	t.Run("creating an unsettled transaction and marking all transactions in a tracker settled", func(t *testing.T) {
+		tbl, teardown := SetUpTestTable(t, testSharedTxnsTableName)
+		defer teardown()
+		sharedTxns := NewSharedTxnsRepository(tbl)
+
+		testUnsettledInput := CreateSharedTxnInput{
+			ID:           "test-unsettled-shared-txn-id",
+			TrackerID:    "test-tracker-id",
+			Participants: []string{"test-01", "test-02"},
+			Unsettled:    true,
+		}
+		err := sharedTxns.Create(testUnsettledInput)
+		assert.NoError(err)
+
+		testSettleTxnPayload := SettleTxnInputItem{
+			ID:           testUnsettledInput.ID,
+			TrackerID:    "test-tracker-id",
+			Participants: []string{"test-01", "test-02"},
+		}
+
+		err = sharedTxns.Settle([]SettleTxnInputItem{testSettleTxnPayload})
+		assert.NoError(err)
+
+		got, err := sharedTxns.GetUnsettledFromTracker("test-tracker-id")
+		assert.NoError(err)
+		assert.Empty(got)
+	})
 }

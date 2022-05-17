@@ -32,10 +32,17 @@ type CreateSharedTxnInput struct {
 	Unsettled    bool
 }
 
+type SettleTxnInputItem struct {
+	ID           string
+	TrackerID    string
+	Participants []string
+}
+
 type SharedTxnsRepository interface {
 	Create(input CreateSharedTxnInput) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
+	Settle(input []SettleTxnInputItem) error
 }
 
 type sharedTxnsRepo struct {
@@ -125,6 +132,40 @@ func (r *sharedTxnsRepo) GetUnsettledFromTracker(trackerID string) ([]SharedTxnI
 	}
 
 	return items, nil
+}
+
+// Settle takes a slice of SettleTxnPayload and removes the "Unsettled"
+// attribute from the database items that correspond to the transactions
+func (r *sharedTxnsRepo) Settle(txns []SettleTxnInputItem) error {
+	var updateOpts []option.UpdateItemInput
+	updateOpts = append(updateOpts, option.UpdateExpressionAttributeName("Unsettled", "#unsettled"))
+	updateOpts = append(updateOpts, option.UpdateExpression("REMOVE #unsettled"))
+
+	for _, t := range txns {
+		trackerIDKey := makeTrackerIDKey(t.TrackerID)
+		txnIDKey := makeSharedTxnIDKey(t.ID)
+		_, err := r.table.UpdateItem(
+			attributes.String(trackerIDKey),
+			attributes.String(txnIDKey),
+			updateOpts...,
+		)
+		if err != nil {
+			return err
+		}
+
+		for _, u := range t.Participants {
+			userKey := makeUserIDKey(u)
+			_, err := r.table.UpdateItem(
+				attributes.String(userKey),
+				attributes.String(txnIDKey),
+				updateOpts...,
+			)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func makeSharedTxnIDKey(id string) string {

@@ -96,6 +96,7 @@ func trackerIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "trackerID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyTrackerID, id)
+		ctx = context.WithValue(ctx, app.CtxKeyUserID, r.Context().Value(app.CtxKeyUserID))
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

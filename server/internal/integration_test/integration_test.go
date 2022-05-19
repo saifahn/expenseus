@@ -438,6 +438,31 @@ func TestCreateSharedTxn(t *testing.T) {
 			cookie:      http.Cookie{Name: "invalid"},
 			wantCode:    http.StatusUnauthorized,
 		},
+		"with a valid cookie but an invalid transaction": {
+			transaction: app.SharedTransaction{},
+			cookie:      app.ValidCookie,
+			wantCode:    http.StatusBadRequest,
+		},
+		"with a valid cookie, but the user is not in the participants field": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user-01", "user-02"},
+				Shop:         "test-shop",
+				Amount:       123,
+				Date:         123456,
+			},
+			cookie:   http.Cookie{Name: "session", Value: "not-in-participants"},
+			wantCode: http.StatusForbidden,
+		},
+		"with a valid cookie and a valid transaction": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user-01", "user-02"},
+				Shop:         "test-shop",
+				Amount:       123,
+				Date:         123456,
+			},
+			cookie:   http.Cookie{Name: "session", Value: "user-01"},
+			wantCode: http.StatusAccepted,
+		},
 	}
 
 	for name, tc := range tests {
@@ -452,8 +477,4 @@ func TestCreateSharedTxn(t *testing.T) {
 			assert.Equal(tc.wantCode, response.Code)
 		})
 	}
-
-	// create shared transaction
-	// needs valid cookie
-	// user is the one creating the cookie
 }

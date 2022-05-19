@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,11 +19,12 @@ func TestCreateTracker(t *testing.T) {
 		Name:  "Test Tracker",
 		Users: []string{TestSeanUser.ID},
 	}
-	request := NewCreateTrackerRequest(t, testTrackerDetails, TestSeanUser.ID)
+	req := NewCreateTrackerRequest(t, testTrackerDetails)
+	req = req.WithContext(context.WithValue(req.Context(), CtxKeyUserID, TestSeanUser.ID))
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.CreateTracker)
-	handler.ServeHTTP(response, request)
+	handler.ServeHTTP(response, req)
 
 	assert.Equal(http.StatusAccepted, response.Code)
 	assert.Len(store.trackers, 1)

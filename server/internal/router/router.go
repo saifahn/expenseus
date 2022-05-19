@@ -61,6 +61,7 @@ func Init(a *app.App) *chi.Mux {
 			r.Use(a.VerifyUser)
 			r.Post("/trackers", a.CreateTracker)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
+			r.With(trackerIDCtx).Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
 			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})
 

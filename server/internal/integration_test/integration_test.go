@@ -425,3 +425,35 @@ func TestGetTrackersByUser(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateSharedTxn(t *testing.T) {
+	assert := assert.New(t)
+	tests := map[string]struct {
+		transaction app.SharedTransaction
+		cookie      http.Cookie
+		wantCode    int
+	}{
+		"without a valid cookie": {
+			transaction: app.SharedTransaction{},
+			cookie:      http.Cookie{Name: "invalid"},
+			wantCode:    http.StatusUnauthorized,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := setUpTestServer(t)
+			defer tearDownDB(t)
+			request := app.NewCreateSharedTxnRequest(tc.transaction)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+
+	// create shared transaction
+	// needs valid cookie
+	// user is the one creating the cookie
+}

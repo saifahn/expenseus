@@ -58,6 +58,7 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	participants := r.FormValue("participants")
 	if participants == "" {
 		http.Error(w, "participants must be provided", http.StatusBadRequest)
+		return
 	}
 	if !strings.Contains(participants, userID) {
 		http.Error(w, "users cannot create a transaction that they are not part of", http.StatusForbidden)
@@ -67,7 +68,7 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 
 	shop := r.FormValue("shop")
 	if shop == "" {
-		http.Error(w, "transaction name must be provided", http.StatusBadRequest)
+		http.Error(w, "shop must be provided", http.StatusBadRequest)
 		return
 	}
 

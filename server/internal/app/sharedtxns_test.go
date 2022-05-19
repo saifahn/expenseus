@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -174,11 +175,11 @@ func TestCreateSharedTxn(t *testing.T) {
 			assert := assert.New(t)
 			a := setUpMockApp(t, tc.expectationsFn)
 
-			request := app.NewCreateSharedTxnRequest(tc.transaction, tc.userInContext)
+			req := app.NewCreateSharedTxnRequest(tc.transaction)
+			req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, tc.userInContext))
 			response := httptest.NewRecorder()
-
 			handler := http.HandlerFunc(a.CreateSharedTxn)
-			handler.ServeHTTP(response, request)
+			handler.ServeHTTP(response, req)
 
 			assert.Equal(tc.wantCode, response.Code)
 		})

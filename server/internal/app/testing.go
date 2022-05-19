@@ -240,7 +240,7 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 
 // NewCreateSharedTxnRequest creates a request to be used in tests to create a
 // shared transaction, simulating data submitted from a form
-func NewCreateSharedTxnRequest(txn SharedTransaction, userID string) *http.Request {
+func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	values := MakeCreateSharedTxnRequestPayload(txn)
@@ -270,8 +270,8 @@ func NewCreateSharedTxnRequest(txn SharedTransaction, userID string) *http.Reque
 
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/trackers/%s/transactions", txn.Tracker), &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
-	return req.WithContext(ctx)
+	return req
+
 }
 
 // NewGetUnsettledTxnsByTrackerRequest creates a request to be used in tests to

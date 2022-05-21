@@ -478,3 +478,62 @@ func TestCreateSharedTxn(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTxnsByTracker(t *testing.T) {
+	testTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Shop:         "test-shop",
+		Amount:       123,
+		Date:         123456,
+		Tracker:      "test-tracker-01",
+	}
+	addTransaction := func(h http.Handler) {
+		request := app.NewCreateSharedTxnRequest(testTxn)
+		request.AddCookie(&http.Cookie{
+			Name:  "session",
+			Value: "user-01",
+		})
+		response := httptest.NewRecorder()
+		h.ServeHTTP(response, request)
+	}
+
+	assert := assert.New(t)
+	tests := map[string]struct {
+		tracker          string
+		wantTransactions []app.SharedTransaction
+		wantCode         int
+	}{
+		"for a non-existent tracker or one with no transactions": {
+			tracker:          "no-txn-tracker",
+			wantTransactions: []app.SharedTransaction{},
+			wantCode:         http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := setUpTestServer(t)
+			defer tearDownDB(t)
+
+			// add a transaction to be gotten
+			addTransaction(router)
+
+			request := app.NewGetTxnsByTrackerRequest(t, tc.tracker)
+			request.AddCookie(&app.ValidCookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			if err != nil {
+				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
+			}
+
+			assert.Len(got, len(tc.wantTransactions))
+			assert.ElementsMatch(got, tc.wantTransactions)
+		})
+
+	}
+}

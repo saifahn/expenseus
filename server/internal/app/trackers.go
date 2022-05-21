@@ -8,8 +8,6 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/table"
 )
 
-const CtxKeyTrackerID contextKey = iota
-
 type Tracker struct {
 	Name  string   `json:"name"`
 	Users []string `json:"users"`

@@ -47,6 +47,7 @@ func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
 
 // CreateSharedTxn handles a HTTP request to create a shared transaction
 func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
+	tracker := r.Context().Value(CtxKeyTrackerID).(string)
 	userID := r.Context().Value(CtxKeyUserID).(string)
 	// TODO: refactor, use same logic for transactions and here
 	err := r.ParseMultipartForm(1024 * 1024 * 5)
@@ -100,6 +101,7 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 		Shop:         shop,
 		Amount:       amountParsed,
 		Date:         dateParsed,
+		Tracker:      tracker,
 	})
 
 	if err != nil {

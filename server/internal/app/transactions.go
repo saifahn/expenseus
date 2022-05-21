@@ -10,8 +10,6 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/table"
 )
 
-const CtxKeyTransactionID contextKey = iota
-
 type TransactionDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userId"`

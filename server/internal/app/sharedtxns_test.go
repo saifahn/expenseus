@@ -114,13 +114,15 @@ func TestCreateSharedTxn(t *testing.T) {
 		Amount:       123,
 		Date:         123456,
 		Shop:         "test-shop",
+		Tracker:      "test-tracker-1",
 	}
 
 	tests := map[string]struct {
-		transaction    app.SharedTransaction
-		expectationsFn mockAppFn
-		wantCode       int
-		userInContext  string
+		transaction      app.SharedTransaction
+		expectationsFn   mockAppFn
+		wantCode         int
+		userInContext    string
+		trackerInContext string
 	}{
 		"with a userID in the context that doesn't match one of the users in the transaction": {
 			transaction: app.SharedTransaction{
@@ -160,13 +162,14 @@ func TestCreateSharedTxn(t *testing.T) {
 			userInContext: "user1",
 			wantCode:      http.StatusBadRequest,
 		},
-		"with a valid transaction": {
+		"with a valid transaction and tracker in context": {
 			transaction: validSharedTxn,
 			expectationsFn: func(ma *MockApp) {
 				ma.mockStore.EXPECT().CreateSharedTxn(validSharedTxn).Times(1)
 			},
-			userInContext: "user1",
-			wantCode:      http.StatusAccepted,
+			userInContext:    "user1",
+			trackerInContext: validSharedTxn.Tracker,
+			wantCode:         http.StatusAccepted,
 		},
 	}
 
@@ -176,7 +179,10 @@ func TestCreateSharedTxn(t *testing.T) {
 			a := setUpMockApp(t, tc.expectationsFn)
 
 			req := app.NewCreateSharedTxnRequest(tc.transaction)
-			req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, tc.userInContext))
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.userInContext)
+			ctx = context.WithValue(ctx, app.CtxKeyTrackerID, tc.trackerInContext)
+
+			req = req.WithContext(ctx)
 			response := httptest.NewRecorder()
 			handler := http.HandlerFunc(a.CreateSharedTxn)
 			handler.ServeHTTP(response, req)

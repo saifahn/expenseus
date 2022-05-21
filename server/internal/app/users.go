@@ -5,10 +5,6 @@ import (
 	"net/http"
 )
 
-const (
-	CtxKeyUserID contextKey = iota
-)
-
 type User struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`

@@ -508,6 +508,11 @@ func TestGetTxnsByTracker(t *testing.T) {
 			wantTransactions: []app.SharedTransaction{},
 			wantCode:         http.StatusOK,
 		},
+		"for a tracker with at least one transaction": {
+			tracker:          "test-tracker-01",
+			wantTransactions: []app.SharedTransaction{testTxn},
+			wantCode:         http.StatusOK,
+		},
 	}
 
 	for name, tc := range tests {
@@ -534,6 +539,5 @@ func TestGetTxnsByTracker(t *testing.T) {
 			assert.Len(got, len(tc.wantTransactions))
 			assert.ElementsMatch(got, tc.wantTransactions)
 		})
-
 	}
 }

@@ -553,3 +553,78 @@ func TestGetTxnsByTracker(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUnsettledTxnsFromTracker(t *testing.T) {
+	testUnsettledTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Shop:         "test-shop",
+		Amount:       123,
+		Date:         123456,
+		Tracker:      "test-tracker-01",
+		Unsettled:    true,
+	}
+	addTransaction := func(h http.Handler) {
+		request := app.NewCreateSharedTxnRequest(testUnsettledTxn)
+		request.AddCookie(&http.Cookie{
+			Name:  "session",
+			Value: "user-01",
+		})
+		response := httptest.NewRecorder()
+		h.ServeHTTP(response, request)
+	}
+
+	assert := assert.New(t)
+	tests := map[string]struct {
+		tracker          string
+		wantTransactions []app.SharedTransaction
+		wantCode         int
+	}{
+		"for a non-existent tracker or one with no unsettled txns": {
+			tracker:          "no-unsettled-txn-tracker",
+			wantTransactions: []app.SharedTransaction{},
+			wantCode:         http.StatusOK,
+		},
+		"for a tracker with at least one unsettled txn": {
+			tracker:          "test-tracker-01",
+			wantTransactions: []app.SharedTransaction{testUnsettledTxn},
+			wantCode:         http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := setUpTestServer(t)
+			defer tearDownDB(t)
+			addTransaction(router)
+
+			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.tracker)
+			request.AddCookie(&app.ValidCookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			if err != nil {
+				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
+			}
+			assert.Len(got, len(tc.wantTransactions))
+
+			// remove the ID from the got transactions to account for randomly generated
+			var gotWithoutID []app.SharedTransaction
+			for _, txn := range got {
+				gotWithoutID = append(gotWithoutID, app.SharedTransaction{
+					Participants: txn.Participants,
+					Shop:         txn.Shop,
+					Amount:       txn.Amount,
+					Date:         txn.Date,
+					Tracker:      txn.Tracker,
+					Unsettled:    txn.Unsettled,
+				})
+			}
+
+			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
+		})
+	}
+}

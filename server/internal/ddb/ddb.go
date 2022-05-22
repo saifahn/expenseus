@@ -250,6 +250,7 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 
 	var txns []app.SharedTransaction
 	for _, i := range items {
+		log.Printf("a txn item unsettled: %+v", i)
 		txns = append(txns, sharedTxnItemToSharedTxn(i))
 	}
 	return txns, nil

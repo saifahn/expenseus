@@ -229,12 +229,18 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 	// make a comma separated list of participants
 	participants := strings.Join(txn.Participants, ",")
 
+	var unsettled string
+	if txn.Unsettled {
+		unsettled = "true"
+	}
+
 	return map[string]io.Reader{
 		"shop":   strings.NewReader(txn.Shop),
 		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
 		// NOTE: currently, date will never be empty, change this?
 		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
 		"participants": strings.NewReader(participants),
+		"unsettled":    strings.NewReader(unsettled),
 	}
 }
 

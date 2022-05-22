@@ -206,10 +206,10 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 
 // CreateSharedTxn calls the repository to create a new shared transaction.
 func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
-	// TODO: create the ID
+	id := uuid.New().String()
 	// TODO: also just pass in the transaction, don't need this input thing any more
 	return d.sharedTxn.Create(CreateSharedTxnInput{
-		ID:           txn.ID,
+		ID:           id,
 		TrackerID:    txn.Tracker,
 		Participants: txn.Participants,
 		Unsettled:    txn.Unsettled,

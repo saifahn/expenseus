@@ -535,9 +535,21 @@ func TestGetTxnsByTracker(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
-
 			assert.Len(got, len(tc.wantTransactions))
-			assert.ElementsMatch(got, tc.wantTransactions)
+
+			// remove the ID from the got transactions to account for randomly generated
+			var gotWithoutID []app.SharedTransaction
+			for _, txn := range got {
+				gotWithoutID = append(gotWithoutID, app.SharedTransaction{
+					Participants: txn.Participants,
+					Shop:         txn.Shop,
+					Amount:       txn.Amount,
+					Date:         txn.Date,
+					Tracker:      txn.Tracker,
+				})
+			}
+
+			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
 		})
 	}
 }

@@ -3,6 +3,7 @@ package ddb
 import (
 	"testing"
 
+	"github.com/saifahn/expenseus/internal/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,24 +17,24 @@ func TestSharedTxns(t *testing.T) {
 		defer teardown()
 		sharedTxns := NewSharedTxnsRepository(tbl)
 
-		testInput := CreateSharedTxnInput{
-			ID:           "test-shared-txn-id",
-			TrackerID:    "test-tracker-id",
+		id := "test-shared-txn-id"
+		testInput := app.SharedTransaction{
+			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
 
-		err := sharedTxns.Create(testInput)
+		err := sharedTxns.Create(id, testInput)
 		assert.NoError(err)
 
-		got, err := sharedTxns.GetFromTracker(testInput.TrackerID)
+		got, err := sharedTxns.GetFromTracker(testInput.Tracker)
 		assert.NoError(err)
 
 		want := SharedTxnItem{
-			PK:           makeTrackerIDKey(testInput.TrackerID),
+			PK:           makeTrackerIDKey(testInput.Tracker),
 			SK:           makeSharedTxnIDKey(testInput.ID),
 			EntityType:   sharedTxnEntityType,
-			ID:           testInput.ID,
-			Tracker:      testInput.TrackerID,
+			ID:           id,
+			Tracker:      testInput.Tracker,
 			Participants: testInput.Participants,
 		}
 		assert.Contains(got, want)
@@ -44,32 +45,32 @@ func TestSharedTxns(t *testing.T) {
 		defer teardown()
 		sharedTxns := NewSharedTxnsRepository(tbl)
 
-		testInput := CreateSharedTxnInput{
-			ID:           "test-shared-txn-id",
-			TrackerID:    "test-tracker-id",
+		id := "test-shared-txn-id"
+		testInput := app.SharedTransaction{
+			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
-		err := sharedTxns.Create(testInput)
+		err := sharedTxns.Create(id, testInput)
 		assert.NoError(err)
 
-		testUnsettledInput := CreateSharedTxnInput{
-			ID:           "test-unsettled-shared-txn-id",
-			TrackerID:    "test-tracker-id",
+		unsettledID := "test-unsettled-shared-txn-id"
+		testUnsettledInput := app.SharedTransaction{
+			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 			Unsettled:    true,
 		}
-		err = sharedTxns.Create(testUnsettledInput)
+		err = sharedTxns.Create(unsettledID, testUnsettledInput)
 		assert.NoError(err)
 
 		got, err := sharedTxns.GetUnsettledFromTracker("test-tracker-id")
 		assert.NoError(err)
 
 		want := SharedTxnItem{
-			PK:           makeTrackerIDKey(testUnsettledInput.TrackerID),
+			PK:           makeTrackerIDKey(testUnsettledInput.Tracker),
 			SK:           makeSharedTxnIDKey(testUnsettledInput.ID),
 			EntityType:   sharedTxnEntityType,
-			ID:           testUnsettledInput.ID,
-			Tracker:      testUnsettledInput.TrackerID,
+			ID:           unsettledID,
+			Tracker:      testUnsettledInput.Tracker,
 			Participants: testUnsettledInput.Participants,
 			Unsettled:    unsettledFlagTrue,
 		}
@@ -81,13 +82,13 @@ func TestSharedTxns(t *testing.T) {
 		defer teardown()
 		sharedTxns := NewSharedTxnsRepository(tbl)
 
-		testUnsettledInput := CreateSharedTxnInput{
-			ID:           "test-unsettled-shared-txn-id",
-			TrackerID:    "test-tracker-id",
+		unsettledID := "test-unsettled-shared-txn-id"
+		testUnsettledInput := app.SharedTransaction{
+			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 			Unsettled:    true,
 		}
-		err := sharedTxns.Create(testUnsettledInput)
+		err := sharedTxns.Create(unsettledID, testUnsettledInput)
 		assert.NoError(err)
 
 		testSettleTxnPayload := SettleTxnInputItem{

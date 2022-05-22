@@ -7,6 +7,7 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/attributes"
 	"github.com/nabeken/aws-go-dynamodb/table"
 	"github.com/nabeken/aws-go-dynamodb/table/option"
+	"github.com/saifahn/expenseus/internal/app"
 )
 
 const (
@@ -27,17 +28,6 @@ type SharedTxnItem struct {
 	Participants []string `json:"Participants"`
 	Unsettled    string   `json:"Unsettled,omitempty"`
 }
-
-type CreateSharedTxnInput struct {
-	ID           string
-	TrackerID    string
-	Participants []string
-	Unsettled    bool
-	Date         int64
-	Amount       int64
-	Shop         string
-}
-
 type SettleTxnInputItem struct {
 	ID           string
 	TrackerID    string
@@ -45,7 +35,7 @@ type SettleTxnInputItem struct {
 }
 
 type SharedTxnsRepository interface {
-	Create(input CreateSharedTxnInput) error
+	Create(txnID string, input app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
 	Settle(input []SettleTxnInputItem) error
@@ -61,8 +51,8 @@ func NewSharedTxnsRepository(t *table.Table) SharedTxnsRepository {
 	return &sharedTxnsRepo{t}
 }
 
-func (r *sharedTxnsRepo) Create(input CreateSharedTxnInput) error {
-	trackerIDKey := makeTrackerIDKey(input.TrackerID)
+func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error {
+	trackerIDKey := makeTrackerIDKey(input.Tracker)
 	txnIDKey := makeSharedTxnIDKey(input.ID)
 	var unsettledVal string
 	if input.Unsettled {
@@ -75,8 +65,8 @@ func (r *sharedTxnsRepo) Create(input CreateSharedTxnInput) error {
 			PK:           userIDKey,
 			SK:           txnIDKey,
 			EntityType:   sharedTxnEntityType,
-			ID:           input.ID,
-			Tracker:      input.TrackerID,
+			ID:           txnID,
+			Tracker:      input.Tracker,
 			Participants: input.Participants,
 			Unsettled:    unsettledVal,
 			Date:         input.Date,
@@ -92,8 +82,8 @@ func (r *sharedTxnsRepo) Create(input CreateSharedTxnInput) error {
 		PK:           trackerIDKey,
 		SK:           txnIDKey,
 		EntityType:   sharedTxnEntityType,
-		ID:           input.ID,
-		Tracker:      input.TrackerID,
+		ID:           txnID,
+		Tracker:      input.Tracker,
 		Participants: input.Participants,
 		Unsettled:    unsettledVal,
 		Date:         input.Date,

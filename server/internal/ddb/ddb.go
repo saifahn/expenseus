@@ -208,15 +208,7 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
 	id := uuid.New().String()
 	// TODO: also just pass in the transaction, don't need this input thing any more
-	return d.sharedTxn.Create(CreateSharedTxnInput{
-		ID:           id,
-		TrackerID:    txn.Tracker,
-		Participants: txn.Participants,
-		Unsettled:    txn.Unsettled,
-		Date:         txn.Date,
-		Amount:       txn.Amount,
-		Shop:         txn.Shop,
-	})
+	return d.sharedTxn.Create(id, txn)
 }
 
 // A helper function for converting an item in the database representing a

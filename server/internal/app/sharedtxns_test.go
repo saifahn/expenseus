@@ -89,7 +89,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 			assert := assert.New(t)
 			a := setUpMockApp(t, tc.expectationsFn)
 
-			request := app.NewGetTxnsByTrackerRequest(t, tc.trackerID)
+			request := app.NewGetTxnsByTrackerRequest(tc.trackerID)
 			response := httptest.NewRecorder()
 
 			handler := http.HandlerFunc(a.GetTxnsByTracker)

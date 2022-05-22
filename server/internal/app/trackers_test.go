@@ -37,7 +37,7 @@ func TestGetTrackerByID(t *testing.T) {
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request := NewGetTrackerByIDRequest(t, TestTracker.ID)
+	request := NewGetTrackerByIDRequest(TestTracker.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.GetTrackerByID)
@@ -61,7 +61,7 @@ func TestGetTrackersByUser(t *testing.T) {
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request := NewGetTrackerByUserRequest(t, TestSeanUser.ID)
+	request := NewGetTrackerByUserRequest(TestSeanUser.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.GetTrackersByUser)

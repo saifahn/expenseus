@@ -202,7 +202,7 @@ func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker) *http.Request
 
 // NewGetTrackerByIDRequest creates a request to be used in tests to get a
 // tracker by ID, with the ID in the request context.
-func NewGetTrackerByIDRequest(t testing.TB, trackerID string) *http.Request {
+func NewGetTrackerByIDRequest(trackerID string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s", trackerID), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
 	return req.WithContext(ctx)
@@ -210,7 +210,7 @@ func NewGetTrackerByIDRequest(t testing.TB, trackerID string) *http.Request {
 
 // NewGetTrackerByUserRequest creates a request to be used in tests to get a
 // tracker by userID, with the userID in the request context.
-func NewGetTrackerByUserRequest(t testing.TB, userID string) *http.Request {
+func NewGetTrackerByUserRequest(userID string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/user/%s", userID), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
 	return req.WithContext(ctx)
@@ -218,7 +218,7 @@ func NewGetTrackerByUserRequest(t testing.TB, userID string) *http.Request {
 
 // NewGetTxnsByTrackerRequest creates a request to be used in tests to get a
 // a list of transactions by trackerID, with the trackerID in the request context
-func NewGetTxnsByTrackerRequest(t testing.TB, trackerID string) *http.Request {
+func NewGetTxnsByTrackerRequest(trackerID string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s/transactions", trackerID), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
 	return req.WithContext(ctx)

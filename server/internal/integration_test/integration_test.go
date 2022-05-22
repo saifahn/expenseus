@@ -338,7 +338,7 @@ func TestGetTracker(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			request := app.NewGetTrackerByIDRequest(t, tc.trackerID)
+			request := app.NewGetTrackerByIDRequest(tc.trackerID)
 			request.AddCookie(&tc.cookie)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
@@ -393,7 +393,7 @@ func TestGetTrackersByUser(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			request := app.NewGetTrackerByUserRequest(t, tc.user)
+			request := app.NewGetTrackerByUserRequest(tc.user)
 			request.AddCookie(&tc.cookie)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
@@ -523,7 +523,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 			// add a transaction to be gotten
 			addTransaction(router)
 
-			request := app.NewGetTxnsByTrackerRequest(t, tc.tracker)
+			request := app.NewGetTxnsByTrackerRequest(tc.tracker)
 			request.AddCookie(&app.ValidCookie)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)

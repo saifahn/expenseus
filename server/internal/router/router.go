@@ -43,6 +43,8 @@ func Init(a *app.App) *chi.Mux {
 				r.Use(transactionIDCtx)
 				r.Get("/", a.GetTransaction)
 			})
+
+			r.Post("/shared/settle", a.SettleTxns)
 		})
 
 		r.Route("/users", func(r chi.Router) {
@@ -62,8 +64,9 @@ func Init(a *app.App) *chi.Mux {
 			r.Post("/trackers", a.CreateTracker)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)
-			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
 			r.With(trackerIDCtx).Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
 			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})
 

@@ -479,6 +479,16 @@ func TestCreateSharedTxn(t *testing.T) {
 	}
 }
 
+func addTransaction(h http.Handler, txn app.SharedTransaction) {
+	request := app.NewCreateSharedTxnRequest(txn)
+	request.AddCookie(&http.Cookie{
+		Name:  "session",
+		Value: txn.Participants[0],
+	})
+	response := httptest.NewRecorder()
+	h.ServeHTTP(response, request)
+}
+
 func TestGetTxnsByTracker(t *testing.T) {
 	testTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
@@ -486,15 +496,6 @@ func TestGetTxnsByTracker(t *testing.T) {
 		Amount:       123,
 		Date:         123456,
 		Tracker:      "test-tracker-01",
-	}
-	addTransaction := func(h http.Handler) {
-		request := app.NewCreateSharedTxnRequest(testTxn)
-		request.AddCookie(&http.Cookie{
-			Name:  "session",
-			Value: "user-01",
-		})
-		response := httptest.NewRecorder()
-		h.ServeHTTP(response, request)
 	}
 
 	assert := assert.New(t)
@@ -521,7 +522,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 			defer tearDownDB(t)
 
 			// add a transaction to be gotten
-			addTransaction(router)
+			addTransaction(router, testTxn)
 
 			request := app.NewGetTxnsByTrackerRequest(tc.tracker)
 			request.AddCookie(&app.ValidCookie)
@@ -554,25 +555,16 @@ func TestGetTxnsByTracker(t *testing.T) {
 	}
 }
 
-func TestGetUnsettledTxnsFromTracker(t *testing.T) {
-	testUnsettledTxn := app.SharedTransaction{
-		Participants: []string{"user-01", "user-02"},
-		Shop:         "test-shop",
-		Amount:       123,
-		Date:         123456,
-		Tracker:      "test-tracker-01",
-		Unsettled:    true,
-	}
-	addTransaction := func(h http.Handler) {
-		request := app.NewCreateSharedTxnRequest(testUnsettledTxn)
-		request.AddCookie(&http.Cookie{
-			Name:  "session",
-			Value: "user-01",
-		})
-		response := httptest.NewRecorder()
-		h.ServeHTTP(response, request)
-	}
+var testUnsettledTxn = app.SharedTransaction{
+	Participants: []string{"user-01", "user-02"},
+	Shop:         "test-shop",
+	Amount:       123,
+	Date:         123456,
+	Tracker:      "test-tracker-01",
+	Unsettled:    true,
+}
 
+func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 	assert := assert.New(t)
 	tests := map[string]struct {
 		tracker          string
@@ -595,7 +587,7 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			router, tearDownDB := setUpTestServer(t)
 			defer tearDownDB(t)
-			addTransaction(router)
+			addTransaction(router, testUnsettledTxn)
 
 			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.tracker)
 			request.AddCookie(&app.ValidCookie)
@@ -625,6 +617,59 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			}
 
 			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
+		})
+	}
+}
+
+func TestSettleTxns(t *testing.T) {
+	assert := assert.New(t)
+	tests := map[string]struct {
+		cookie      http.Cookie
+		initialTxns []app.SharedTransaction
+		wantTxns    []app.SharedTransaction
+		wantCode    int
+	}{
+		// "you cannot settle a transaction that you are not a participant of": {
+		// 	cookie:      http.Cookie{Name: "session", Value: "not-a-participant"},
+		// 	initialTxns: []app.SharedTransaction{testUnsettledTxn},
+		// 	wantTxns:    []app.SharedTransaction{testUnsettledTxn},
+		// 	wantCode:    http.StatusForbidden,
+		// },
+		"you can settle a transaction that you are a participant of": {
+			cookie:      http.Cookie{Name: "session", Value: testUnsettledTxn.Participants[0]},
+			initialTxns: []app.SharedTransaction{testUnsettledTxn},
+			wantTxns:    []app.SharedTransaction{},
+			wantCode:    http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := setUpTestServer(t)
+			defer tearDownDB(t)
+			for _, txn := range tc.initialTxns {
+				addTransaction(router, txn)
+			}
+
+			request := app.NewSettleTxnsRequest(t, tc.initialTxns)
+			request.AddCookie(&tc.cookie)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			// get all of the requests from the unsettled txn tracker
+			request = app.NewGetUnsettledTxnsByTrackerRequest(testUnsettledTxn.Tracker)
+			request.AddCookie(&tc.cookie)
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			var got []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			if err != nil {
+				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
+			}
+			assert.Len(got, len(tc.wantTxns))
 		})
 	}
 }

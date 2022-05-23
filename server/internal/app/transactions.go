@@ -10,8 +10,6 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/table"
 )
 
-const CtxKeyTransactionID contextKey = iota
-
 type TransactionDetails struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userId"`
@@ -150,6 +148,7 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	dateParsed, err := strconv.ParseInt(date, 10, 64)
 	if err != nil {
 		http.Error(rw, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	file, header, err := r.FormFile("image")

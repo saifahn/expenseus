@@ -43,6 +43,8 @@ func Init(a *app.App) *chi.Mux {
 				r.Use(transactionIDCtx)
 				r.Get("/", a.GetTransaction)
 			})
+
+			r.Post("/shared/settle", a.SettleTxns)
 		})
 
 		r.Route("/users", func(r chi.Router) {
@@ -61,6 +63,10 @@ func Init(a *app.App) *chi.Mux {
 			r.Use(a.VerifyUser)
 			r.Post("/trackers", a.CreateTracker)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)
+			r.With(trackerIDCtx).Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
+			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
 			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})
 
@@ -95,6 +101,7 @@ func trackerIDCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "trackerID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyTrackerID, id)
+		ctx = context.WithValue(ctx, app.CtxKeyUserID, r.Context().Value(app.CtxKeyUserID))
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

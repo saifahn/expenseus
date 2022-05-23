@@ -79,9 +79,9 @@ var (
 	}
 )
 
-// addUserCookieContext adds a cookie and a user context to simulate a user
+// AddUserCookieContext adds a cookie and a user context to simulate a user
 // being logged in.
-func addUserCookieAndContext(req *http.Request, id string) *http.Request {
+func AddUserCookieAndContext(req *http.Request, id string) *http.Request {
 	req.AddCookie(&http.Cookie{Name: "session", Value: id})
 	ctx := context.WithValue(req.Context(), CtxKeyUserID, id)
 	return req.WithContext(ctx)
@@ -96,7 +96,7 @@ func NewGetTransactionRequest(id string) *http.Request {
 }
 
 // MakeCreateTransactionRequestPayload generates the payload to be given to
-// CreateTransactionRequest
+// NewCreateTransactionRequest
 func MakeCreateTransactionRequestPayload(td TransactionDetails) map[string]io.Reader {
 	return map[string]io.Reader{
 		"transactionName": strings.NewReader(td.Name),
@@ -105,8 +105,8 @@ func MakeCreateTransactionRequestPayload(td TransactionDetails) map[string]io.Re
 	}
 }
 
-// NewCreateTransactionRequest creates a request to be used in tests to create an
-// transaction
+// NewCreateTransactionRequest creates a request to be used in tests to create a
+// transaction, simulating data submitted from a form
 func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
@@ -202,7 +202,7 @@ func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker) *http.Request
 
 // NewGetTrackerByIDRequest creates a request to be used in tests to get a
 // tracker by ID, with the ID in the request context.
-func NewGetTrackerByIDRequest(t testing.TB, trackerID string) *http.Request {
+func NewGetTrackerByIDRequest(trackerID string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s", trackerID), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
 	return req.WithContext(ctx)
@@ -210,10 +210,94 @@ func NewGetTrackerByIDRequest(t testing.TB, trackerID string) *http.Request {
 
 // NewGetTrackerByUserRequest creates a request to be used in tests to get a
 // tracker by userID, with the userID in the request context.
-func NewGetTrackerByUserRequest(t testing.TB, userID string) *http.Request {
+func NewGetTrackerByUserRequest(userID string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/user/%s", userID), nil)
 	ctx := context.WithValue(req.Context(), CtxKeyUserID, userID)
 	return req.WithContext(ctx)
+}
+
+// NewGetTxnsByTrackerRequest creates a request to be used in tests to get a
+// a list of transactions by trackerID, with the trackerID in the request context
+func NewGetTxnsByTrackerRequest(trackerID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s/transactions", trackerID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
+	return req.WithContext(ctx)
+}
+
+// MakeCreateSharedTxnRequestPayload generates the payload to be given to NewCreateSharedTxnRequest
+func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Reader {
+	// make a comma separated list of participants
+	participants := strings.Join(txn.Participants, ",")
+
+	var unsettled string
+	if txn.Unsettled {
+		unsettled = "true"
+	}
+
+	return map[string]io.Reader{
+		"shop":   strings.NewReader(txn.Shop),
+		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		// NOTE: currently, date will never be empty, change this?
+		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+		"participants": strings.NewReader(participants),
+		"unsettled":    strings.NewReader(unsettled),
+	}
+}
+
+// NewCreateSharedTxnRequest creates a request to be used in tests to create a
+// shared transaction, simulating data submitted from a form
+func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	values := MakeCreateSharedTxnRequestPayload(txn)
+	for key, r := range values {
+		var fw io.Writer
+		var err error
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+		if x, ok := r.(*os.File); ok {
+			fw, err = w.CreateFormFile(key, x.Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		} else {
+			// non-file values
+			fw, err = w.CreateFormField(key)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+	w.Close()
+
+	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/trackers/%s/transactions", txn.Tracker), &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req
+
+}
+
+// NewGetUnsettledTxnsByTrackerRequest creates a request to be used in tests to
+// get unsettled transactions
+func NewGetUnsettledTxnsByTrackerRequest(trackerID string) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s/transactions/unsettled", trackerID), nil)
+	ctx := context.WithValue(req.Context(), CtxKeyTrackerID, trackerID)
+	return req.WithContext(ctx)
+}
+
+// NewSettleTxnsRequest creates a request to be used in tests to settle all
+// transactions in a tracker
+func NewSettleTxnsRequest(t testing.TB, txns []SharedTransaction) *http.Request {
+	transactionsJSON, err := json.Marshal(txns)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/shared/settle", bytes.NewBuffer(transactionsJSON))
+	return req
 }
 
 // #region Sessions
@@ -286,10 +370,13 @@ func (o *StubOauthConfig) GetInfoAndGenerateUser(state string, code string) (Use
 
 // #region Store
 type StubTransactionStore struct {
-	transactions           map[string]Transaction
-	users                  []User
-	trackers               []Tracker
-	recordTransactionCalls []TransactionDetails
+	transactions                   map[string]Transaction
+	users                          []User
+	trackers                       []Tracker
+	recordTransactionCalls         []TransactionDetails
+	getTxnsByTrackerCalls          []string
+	createSharedTxnCalls           []SharedTransaction
+	getUnsettledTxnsByTrackerCalls []string
 }
 
 func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
@@ -381,6 +468,25 @@ func (s *StubTransactionStore) GetTrackersByUser(userID string) ([]Tracker, erro
 		}
 	}
 	return trackers, nil
+}
+
+func (s *StubTransactionStore) GetTxnsByTracker(trackerID string) ([]SharedTransaction, error) {
+	s.getTxnsByTrackerCalls = append(s.getTxnsByTrackerCalls, trackerID)
+	return nil, nil
+}
+
+func (s *StubTransactionStore) CreateSharedTxn(txn SharedTransaction) error {
+	s.createSharedTxnCalls = append(s.createSharedTxnCalls, txn)
+	return nil
+}
+
+func (s *StubTransactionStore) GetUnsettledTxnsByTracker(trackerID string) ([]SharedTransaction, error) {
+	s.getUnsettledTxnsByTrackerCalls = append(s.getUnsettledTxnsByTrackerCalls, trackerID)
+	return nil, nil
+}
+
+func (s *StubTransactionStore) SettleTxns(txns []SharedTransaction) error {
+	return nil
 }
 
 // #endregion Store

@@ -11,20 +11,12 @@ const testTransactionsTableName = "expenseus-testing-transactions"
 
 func TestTransactionTable(t *testing.T) {
 	assert := assert.New(t)
-	dynamodb := NewDynamoDBLocalAPI()
-
-	// create the table in the local test database
-	err := CreateTestTable(dynamodb, testTransactionsTableName)
-	if err != nil {
-		t.Logf("table could not be created: %v", err)
-	}
-	defer DeleteTable(dynamodb, testTransactionsTableName)
-	tbl := table.New(dynamodb, testTransactionsTableName)
-	// create the transactions table instance
+	tbl, teardown := SetUpTestTable(t, testTransactionsTableName)
+	defer teardown()
 	transactions := NewTxnRepository(tbl)
 
 	// retrieving a non-existent item will give an error
-	_, err = transactions.Get("non-existent-item")
+	_, err := transactions.Get("non-existent-item")
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	item := &TransactionItem{

@@ -11,6 +11,12 @@ import (
 type contextKey int
 
 const (
+	CtxKeyTrackerID contextKey = iota
+	CtxKeyTransactionID
+	CtxKeyUserID
+)
+
+const (
 	jsonContentType  = "application/json"
 	SessionCookieKey = "expenseus-session"
 )
@@ -26,6 +32,10 @@ type Store interface {
 	CreateTracker(tracker Tracker) error
 	GetTracker(trackerID string) (Tracker, error)
 	GetTrackersByUser(userID string) ([]Tracker, error)
+	CreateSharedTxn(txn SharedTransaction) error
+	GetTxnsByTracker(trackerID string) ([]SharedTransaction, error)
+	GetUnsettledTxnsByTracker(trackerID string) ([]SharedTransaction, error)
+	SettleTxns(txns []SharedTransaction) error
 }
 
 type Auth interface {

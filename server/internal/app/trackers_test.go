@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -18,11 +19,12 @@ func TestCreateTracker(t *testing.T) {
 		Name:  "Test Tracker",
 		Users: []string{TestSeanUser.ID},
 	}
-	request := NewCreateTrackerRequest(t, testTrackerDetails)
+	req := NewCreateTrackerRequest(t, testTrackerDetails)
+	req = req.WithContext(context.WithValue(req.Context(), CtxKeyUserID, TestSeanUser.ID))
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.CreateTracker)
-	handler.ServeHTTP(response, request)
+	handler.ServeHTTP(response, req)
 
 	assert.Equal(http.StatusAccepted, response.Code)
 	assert.Len(store.trackers, 1)
@@ -35,7 +37,7 @@ func TestGetTrackerByID(t *testing.T) {
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request := NewGetTrackerByIDRequest(t, TestTracker.ID)
+	request := NewGetTrackerByIDRequest(TestTracker.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.GetTrackerByID)
@@ -59,7 +61,7 @@ func TestGetTrackersByUser(t *testing.T) {
 	}
 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request := NewGetTrackerByUserRequest(t, TestSeanUser.ID)
+	request := NewGetTrackerByUserRequest(TestSeanUser.ID)
 	response := httptest.NewRecorder()
 
 	handler := http.HandlerFunc(app.GetTrackersByUser)

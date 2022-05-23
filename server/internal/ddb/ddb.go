@@ -13,6 +13,7 @@ type dynamoDB struct {
 	users        UserRepository
 	transactions TxnRepository
 	trackers     TrackersRepository
+	sharedTxn    SharedTxnsRepository
 }
 
 func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
@@ -20,8 +21,9 @@ func New(d dynamodbiface.DynamoDBAPI, tableName string) *dynamoDB {
 	users := NewUserRepository(tbl)
 	transactions := NewTxnRepository(tbl)
 	trackers := NewTrackersRepository(tbl)
+	sharedTxn := NewSharedTxnsRepository(tbl)
 
-	return &dynamoDB{users, transactions, trackers}
+	return &dynamoDB{users, transactions, trackers, sharedTxn}
 }
 
 func userToUserItem(u app.User) UserItem {
@@ -200,4 +202,72 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 		trackers = append(trackers, trackerItemToTracker(item))
 	}
 	return trackers, nil
+}
+
+// CreateSharedTxn calls the repository to create a new shared transaction.
+func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
+	id := uuid.New().String()
+	// TODO: also just pass in the transaction, don't need this input thing any more
+	return d.sharedTxn.Create(id, txn)
+}
+
+// A helper function for converting an item in the database representing a
+// shared transaction to a shared transaction structure for the application.
+func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
+	return app.SharedTransaction{
+		ID:           item.ID,
+		Participants: item.Participants,
+		Date:         item.Date,
+		Amount:       item.Amount,
+		Tracker:      item.Tracker,
+		Unsettled:    item.Unsettled == unsettledFlagTrue,
+		Shop:         item.Shop,
+	}
+}
+
+// GetTxnsByTracker calls the repository to get a list of transactions from a
+// tracker with the given ID.
+func (d *dynamoDB) GetTxnsByTracker(trackerID string) ([]app.SharedTransaction, error) {
+	items, err := d.sharedTxn.GetFromTracker(trackerID)
+	if err != nil {
+		return nil, err
+	}
+
+	var txns []app.SharedTransaction
+	for _, i := range items {
+		txns = append(txns, sharedTxnItemToSharedTxn(i))
+	}
+	return txns, nil
+}
+
+// GetUnsettledTxnsByTracker calls the repository to get a list of unsettled
+// transactions from a tracker with the given ID.
+func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTransaction, error) {
+	items, err := d.sharedTxn.GetUnsettledFromTracker(trackerID)
+	if err != nil {
+		return nil, err
+	}
+
+	var txns []app.SharedTransaction
+	for _, i := range items {
+		log.Printf("a txn item unsettled: %+v", i)
+		txns = append(txns, sharedTxnItemToSharedTxn(i))
+	}
+	return txns, nil
+}
+
+// SettleTxns takes a list of transactions and calls the repository to mark
+// the database items that are related as settled.
+func (d *dynamoDB) SettleTxns(txns []app.SharedTransaction) error {
+	var input []SettleTxnInputItem
+
+	for _, t := range txns {
+		input = append(input, SettleTxnInputItem{
+			ID:           t.ID,
+			TrackerID:    t.Tracker,
+			Participants: t.Participants,
+		})
+	}
+
+	return d.sharedTxn.Settle(input)
 }

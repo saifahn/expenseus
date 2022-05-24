@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -40,7 +41,20 @@ func main() {
 		dynamo = dynamodb.New(sess)
 	}
 
-	db := ddb.New(dynamo, os.Getenv("DYNAMODB_USERS_TABLE_NAME"), os.Getenv("DYNAMODB_TRANSACTIONS_TABLE_NAME"))
+	err := ddb.CreateTestTable(dynamo, os.Getenv("DYNAMODB_TABLE_NAME"))
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			if aerr.Code() == dynamodb.ErrCodeResourceInUseException {
+				log.Print("table already exists")
+			} else {
+				log.Print(err.Error())
+			}
+		} else {
+			log.Print(err.Error())
+		}
+	}
+
+	db := ddb.New(dynamo, os.Getenv("DYNAMODB_TABLE_NAME"))
 
 	googleOauth := googleoauth.New()
 
@@ -54,5 +68,5 @@ func main() {
 
 	r := router.Init(a)
 
-	log.Fatal(http.ListenAndServe(":5000", r))
+	log.Fatal(http.ListenAndServe(":4000", r))
 }

@@ -34,13 +34,13 @@ export default function UserList() {
   }, []);
 
   return (
-    <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
+    <section className="p-6 border-dotted border-4 border-indigo-800">
       <h2 className="text-2xl">Users</h2>
       {users &&
         users.map(user => {
           return (
             <article
-              className="p-4 mt-4 rounded-md shadow-md bg-white"
+              className="p-4 mt-4 border-dotted border-2 border-pink-800"
               key={user.id}
             >
               <h3 className="text-xl">{user.username}</h3>

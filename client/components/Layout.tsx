@@ -11,18 +11,25 @@ export default function Layout({ children }) {
             </Link>
           </li>
           <li className="ml-4">
-            <Link href="/users">
-              <a>Users</a>
+            <Link href="/personal">
+              <a>Personal</a>
             </Link>
           </li>
           <li className="ml-4">
-            <Link href="/transactions">
-              <a>Transactions</a>
+            <Link href="/shared">
+              <a>Shared</a>
+            </Link>
+          </li>
+          <li className="ml-4">
+            <Link href="/bts">
+              <a>BTS</a>
             </Link>
           </li>
         </ul>
       </nav>
-      <main className="container mx-auto mt-4 py-8">{children}</main>
+      <main className="container h-full mx-auto border-4 border-gray-600 mt-4 p-8">
+        {children}
+      </main>
     </>
   );
 }

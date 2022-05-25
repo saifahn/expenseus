@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <div>
       {status === "loading" ? (
-        <div>Loading</div>
+        <div>Loading...</div>
       ) : (
         <>
           <Head>
@@ -46,11 +46,11 @@ export default function Home() {
             <link rel="icon" href="/favicon.ico" />
           </Head>
           <h1 className="text-4xl">Welcome to Expenseus</h1>
-          {error ? (
+          {
             // currently we are using 401 to check if a user is not signed in
             // we should make this more granular in the future potentially
             // for different 401s?
-            error === 401 ? (
+            error && error === 401 && (
               <a
                 href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}
                 className="inline-flex items-center border rounded-md px-3 py-2 mt-4"
@@ -63,25 +63,25 @@ export default function Home() {
                 />
                 <span className="ml-3">Sign in with Google</span>
               </a>
-            ) : (
-              <>
-                <p>There was an error. Please refresh and try again.</p>
-              </>
             )
-          ) : (
-            self && (
-              <>
-                <p className="mt-4" data-testid="welcome">
-                  Hi {self.username}!
-                </p>
-                <a
-                  href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`}
-                  className="inline-flex items-center border rounded-md px-3 py-2 mt-4"
-                >
-                  <span className="">Log out</span>
-                </a>
-              </>
-            )
+          }
+          {error && error !== 401 && (
+            <>
+              <p>There was an error. Please refresh and try again.</p>
+            </>
+          )}
+          {!error && self && (
+            <>
+              <p className="mt-4" data-testid="welcome">
+                Hi {self.username}!
+              </p>
+              <a
+                href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`}
+                className="inline-flex items-center border rounded-md px-3 py-2 mt-4"
+              >
+                <span className="">Log out</span>
+              </a>
+            </>
           )}
         </>
       )}

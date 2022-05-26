@@ -3,7 +3,7 @@ import { User } from 'components/UserList';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 interface UserFetchStatus {
-  status: 'idle' | 'fulfilled' | 'rejected' | 'loading';
+  status: 'idle' | 'success' | 'error' | 'loading';
   error: number;
 }
 
@@ -48,11 +48,11 @@ export function UserProvider({ children }) {
       const loggedInUser = await api.getSelf();
       if (!cancelled.current) {
         setUser(loggedInUser);
-        setStatus({ status: 'fulfilled', error: null });
+        setStatus({ status: 'success', error: null });
       }
     } catch (error) {
       if (!cancelled.current) {
-        return setStatus({ status: 'rejected', error });
+        return setStatus({ status: 'error', error });
       }
     }
   }

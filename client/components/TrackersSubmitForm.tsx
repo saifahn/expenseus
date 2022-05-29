@@ -29,6 +29,7 @@ export default function TrackersSubmitForm() {
     defaultValues: {
       users: user.id,
     },
+    shouldUseNativeValidation: true,
   });
   const submitCallback: SubmitHandler<Inputs> = (data) => {
     mutate(
@@ -46,7 +47,7 @@ export default function TrackersSubmitForm() {
             Name
           </label>
           <input
-            {...register('name')}
+            {...register('name', { required: 'Please input the tracker name' })}
             className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
             type="text"
             id="name"
@@ -58,7 +59,9 @@ export default function TrackersSubmitForm() {
             Participants
           </label>
           <input
-            {...register('users')}
+            {...register('users', {
+              required: 'Please input your participants',
+            })}
             className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
             type="text"
             id="participants"

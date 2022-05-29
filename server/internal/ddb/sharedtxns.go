@@ -53,7 +53,7 @@ func NewSharedTxnsRepository(t *table.Table) SharedTxnsRepository {
 
 func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error {
 	trackerIDKey := makeTrackerIDKey(input.Tracker)
-	txnIDKey := makeSharedTxnIDKey(input.ID)
+	txnIDKey := makeSharedTxnIDKey(txnID)
 	var unsettledVal string
 	if input.Unsettled {
 		unsettledVal = unsettledFlagTrue

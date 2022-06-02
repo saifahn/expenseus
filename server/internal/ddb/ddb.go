@@ -197,7 +197,7 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 		return nil, err
 	}
 
-	var trackers []app.Tracker
+	trackers := []app.Tracker{}
 	for _, item := range items {
 		trackers = append(trackers, trackerItemToTracker(item))
 	}

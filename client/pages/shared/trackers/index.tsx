@@ -14,7 +14,10 @@ export interface Tracker {
 export default function SharedTrackers() {
   const { user } = useUserContext();
   const { data, error } = useSWR<Tracker[]>(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/user/${user.id}`,
+    () =>
+      user
+        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/user/${user.id}`
+        : null,
     fetcher,
   );
 
@@ -24,7 +27,10 @@ export default function SharedTrackers() {
       <div className="mt-4 p-4">
         <h2 className="text-2xl">My Trackers</h2>
         {error && <div>Failed to load: {error}</div>}
-        {!data && <div>Loading...</div>}
+        {data === null && <div>Loading...</div>}
+        {data && data.length === 0 && (
+          <div>Please create a tracker to start</div>
+        )}
         {data &&
           data.map((tracker) => (
             <Link href={`/shared/trackers/${tracker.id}`} key={tracker.id}>

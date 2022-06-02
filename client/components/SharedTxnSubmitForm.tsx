@@ -40,7 +40,7 @@ interface Props {
 
 export default function SharedTxnSubmitForm({ tracker }: Props) {
   const { mutate } = useSWRConfig();
-  const { register, handleSubmit } = useForm({
+  const { register, handleSubmit, setValue } = useForm({
     shouldUseNativeValidation: true,
   });
 
@@ -49,6 +49,8 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
       createSharedTxn(data, tracker),
     );
+    setValue('name', '');
+    setValue('amount', 0);
   };
 
   return (

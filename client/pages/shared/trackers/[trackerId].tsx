@@ -29,7 +29,7 @@ export default function TrackerPage() {
   return (
     <SharedLayout>
       {error && <div>Failed to load</div>}
-      {!error && !tracker && <div>Loading...</div>}
+      {!error && !tracker && <div>Loading tracker information...</div>}
       {tracker && (
         <>
           <h2 className="text-2xl mt-8">{tracker.name}</h2>
@@ -43,8 +43,12 @@ export default function TrackerPage() {
         <SharedTxnSubmitForm tracker={tracker} />
       </div>
       <div className="mt-8">
+        <h3 className="text-2xl mt-4">Transactions</h3>
         {sharedTxnsError && <div>Failed to load</div>}
-        {!sharedTxnsError && !sharedTxns && <div>Loading...</div>}
+        {sharedTxns === null && <div>Loading list of transactions...</div>}
+        {sharedTxns && sharedTxns.length === 0 && (
+          <div>There are no transactions here yet</div>
+        )}
         {sharedTxns &&
           sharedTxns.map((txn) => (
             <article className="p-2 border-2 mt-4" key={txn.id}>

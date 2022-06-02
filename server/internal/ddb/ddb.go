@@ -233,7 +233,7 @@ func (d *dynamoDB) GetTxnsByTracker(trackerID string) ([]app.SharedTransaction, 
 		return nil, err
 	}
 
-	var txns []app.SharedTransaction
+	txns := []app.SharedTransaction{}
 	for _, i := range items {
 		txns = append(txns, sharedTxnItemToSharedTxn(i))
 	}

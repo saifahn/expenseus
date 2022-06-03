@@ -1,124 +1,106 @@
-import { TransactionAPI } from "api";
-import { useState, useRef, FormEvent } from "react";
+import { useUserContext } from 'context/user';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { useSWRConfig } from 'swr';
 
-interface Props {
-  handleAfterSubmit(): Promise<void>;
+type Inputs = {
+  transactionName: string;
+  amount: number;
+  date: string;
+  image: File;
+};
+
+async function createTransaction(data: Inputs) {
+  const formData = new FormData();
+  formData.append('transactionName', data.transactionName);
+  formData.append('amount', data.amount.toString());
+  formData.append('image', data.image);
+
+  const unixDate = new Date(data.date).getTime();
+  formData.append('date', unixDate.toString());
+
+  await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+    body: formData,
+  });
 }
 
-export default function TransactionSubmitForm({ handleAfterSubmit }: Props) {
-  const [transactionName, setTransactionName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [{ status, error }, setStatus] = useState({
-    status: "idle",
-    error: null,
+export default function TransactionSubmitForm() {
+  const { user } = useUserContext();
+  const { mutate } = useSWRConfig();
+  const { register, handleSubmit, setValue } = useForm({
+    shouldUseNativeValidation: true,
   });
-  const [statusMessage, setStatusMessage] = useState<string>();
-  const imageInput = useRef(null);
 
-  async function createTransaction(data: FormData) {
-    try {
-      const api = new TransactionAPI();
-      const response = await api.createTransaction(data);
-      setStatusMessage(response);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setStatus({ status: "loading", error: null });
-    try {
-      const data = new FormData();
-      data.append("transactionName", transactionName);
-      data.append("amount", amount);
-      data.append("date", Date.parse(date).toString());
-      if (imageInput.current?.files.length) {
-        data.append("image", imageInput.current.files[0]);
-      }
-
-      await createTransaction(data);
-      setStatus({ status: "fulfilled", error: null });
-      await handleAfterSubmit();
-    } catch (err) {
-      setStatus({ status: "rejected", error: err });
-    }
-  }
+  const submitCallback: SubmitHandler<Inputs> = (data) => {
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
+      createTransaction(data),
+    );
+    setValue('transactionName', '');
+    setValue('amount', 0);
+    setValue('image', null);
+  };
 
   return (
-    <div className="mt-6">
-      <h2 className="text-2xl">Create a new transaction</h2>
-      <div className="mx-auto w-full max-w-xs">
-        <form
-          className="bg-white p-6 rounded-lg shadow-md"
-          onSubmit={handleSubmit}
-        >
-          <div>
-            <label className="block font-semibold" htmlFor="name">
-              Name
-            </label>
-            <input
-              className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
-              id="name"
-              type="text"
-              value={transactionName}
-              onChange={e => setTransactionName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mt-6" htmlFor="amount">
-              Amount
-            </label>
-            <input
-              className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mt-6" htmlFor="date">
-              Date
-            </label>
-            <input
-              className="shadow appearance-none w-full border rounded mt-2 py-2 px-3 leading-tight focus:outline-none focus:ring"
-              id="amount"
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              required
-            />
-          </div>
-          <div className="mt-6">
-            <label className="block font-semibold" htmlFor="addPicture">
-              Add a picture?
-            </label>
-            <input
-              id="addPicture"
-              type="file"
-              role="button"
-              aria-label="Add picture"
-              accept="image/*"
-              ref={imageInput}
-            />
-          </div>
-          <div className="mt-6 flex justify-end">
-            <button
-              className="bg-indigo-500 hover:bg-indigo-700 text-white py-2 px-4 rounded focus:outline-none focus:ring"
-              type="submit"
-            >
-              Create transaction
-            </button>
-          </div>
-        </form>
-        {status === "loading" && <p role="status">{status}</p>}
-        {status === "fulfilled" && <p role="status">{statusMessage}</p>}
-        {status === "rejected" && <p role="status">{error.message}</p>}
+    <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6">
+      <h3 className="text-lg font-semibold">Create Transaction</h3>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="name">
+          Name
+        </label>
+        <input
+          {...register('transactionName', {
+            required: 'Please input a transaction name',
+          })}
+          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
+          type="text"
+          id="transactionName"
+        />
       </div>
-    </div>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="amount">
+          Amount
+        </label>
+        <input
+          {...register('amount', { required: 'Please input an amount' })}
+          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
+          type="number"
+          id="amount"
+        />
+      </div>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="date">
+          Date
+        </label>
+        <input
+          {...register('date', { required: 'Please input a date' })}
+          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
+          type="date"
+          id="date"
+        />
+      </div>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="addPicture">
+          Add a picture?
+        </label>
+        <input
+          {...register('image')}
+          id="addPicture"
+          type="file"
+          role="button"
+          aria-label="Add picture"
+          accept="image/*"
+        />
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring">
+          Create transaction
+        </button>
+      </div>
+    </form>
   );
 }

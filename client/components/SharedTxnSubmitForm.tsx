@@ -20,7 +20,7 @@ async function createSharedTxn(data: Inputs, tracker: Tracker) {
 
   const unixDate = new Date(data.date).getTime();
   formData.append('date', unixDate.toString());
-  // make formData
+
   await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
     {
@@ -49,7 +49,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
       createSharedTxn(data, tracker),
     );
-    setValue('name', '');
+    setValue('shop', '');
     setValue('amount', 0);
   };
 
@@ -61,7 +61,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
           Shop
         </label>
         <input
-          {...register('shop', { required: 'Please input the shop name' })}
+          {...register('shop', { required: 'Please input a shop name' })}
           className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
           type="text"
           id="shop"
@@ -72,7 +72,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
           Amount
         </label>
         <input
-          {...register('amount', { required: 'Please input the amount' })}
+          {...register('amount', { required: 'Please input an amount' })}
           className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
           type="number"
           id="amount"
@@ -83,7 +83,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
           Date
         </label>
         <input
-          {...register('date', { required: 'Please input the date' })}
+          {...register('date', { required: 'Please input a date' })}
           className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
           type="date"
           id="date"
@@ -96,7 +96,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
         <input {...register('unsettled')} type="checkbox" id="unsettled" />
       </div>
       <div className="mt-4 flex justify-end">
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring">
+        <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring">
           Create transaction
         </button>
       </div>

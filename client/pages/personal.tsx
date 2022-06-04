@@ -1,4 +1,3 @@
-import { fetcher } from 'config/fetcher';
 import TransactionSubmitForm from 'components/TransactionSubmitForm';
 import { useUserContext } from 'context/user';
 import useSWR from 'swr';
@@ -13,12 +12,10 @@ interface Transaction {
 
 export default function Personal() {
   const { user } = useUserContext();
-  const { data: transactions, error } = useSWR<Transaction[]>(
-    () =>
-      user
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`
-        : null,
-    fetcher,
+  const { data: transactions, error } = useSWR<Transaction[]>(() =>
+    user
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`
+      : null,
   );
 
   return (

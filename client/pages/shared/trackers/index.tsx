@@ -1,4 +1,3 @@
-import { fetcher } from 'config/fetcher';
 import SharedLayout from 'components/SharedLayout';
 import TrackersSubmitForm from 'components/TrackersSubmitForm';
 import { useUserContext } from 'context/user';
@@ -13,12 +12,10 @@ export interface Tracker {
 
 export default function SharedTrackers() {
   const { user } = useUserContext();
-  const { data, error } = useSWR<Tracker[]>(
-    () =>
-      user
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/user/${user.id}`
-        : null,
-    fetcher,
+  const { data, error } = useSWR<Tracker[]>(() =>
+    user
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/user/${user.id}`
+      : null,
   );
 
   return (

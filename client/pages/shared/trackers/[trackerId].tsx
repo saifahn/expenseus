@@ -1,4 +1,3 @@
-import { fetcher } from 'config/fetcher';
 import SharedLayout from 'components/SharedLayout';
 import SharedTxnSubmitForm from 'components/SharedTxnSubmitForm';
 import { useRouter } from 'next/router';
@@ -19,11 +18,9 @@ export default function TrackerPage() {
   const { trackerId } = router.query;
   const { data: tracker, error } = useSWR<Tracker>(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${trackerId}`,
-    fetcher,
   );
   const { data: sharedTxns, error: sharedTxnsError } = useSWR<SharedTxn[]>(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${trackerId}/transactions`,
-    fetcher,
   );
 
   return (

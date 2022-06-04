@@ -1,4 +1,4 @@
-import { fetcher } from 'api';
+import { fetcher } from 'config/fetcher';
 import SharedLayout from 'components/SharedLayout';
 import SharedTxnSubmitForm from 'components/SharedTxnSubmitForm';
 import { useRouter } from 'next/router';

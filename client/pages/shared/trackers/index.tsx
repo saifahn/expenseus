@@ -1,4 +1,4 @@
-import { fetcher } from 'api';
+import { fetcher } from 'config/fetcher';
 import SharedLayout from 'components/SharedLayout';
 import TrackersSubmitForm from 'components/TrackersSubmitForm';
 import { useUserContext } from 'context/user';

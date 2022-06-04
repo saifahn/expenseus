@@ -1,4 +1,4 @@
-import { fetcher } from 'api';
+import { fetcher } from 'config/fetcher';
 import TransactionSubmitForm from 'components/TransactionSubmitForm';
 import { useUserContext } from 'context/user';
 import useSWR from 'swr';

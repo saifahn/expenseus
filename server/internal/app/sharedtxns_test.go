@@ -13,36 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type (
-	MockApp struct {
-		mockStore    mock_app.MockStore
-		mockAuth     mock_app.MockAuth
-		mockImages   mock_app.MockImageStore
-		mockSessions mock_app.MockSessionManager
-	}
-	mockAppFn func(ma *MockApp)
-)
-
-func setUpMockApp(t testing.TB, expectationsFn mockAppFn) *app.App {
-	ctrl := gomock.NewController(t)
-	mockStore := mock_app.NewMockStore(ctrl)
-	mockAuth := mock_app.NewMockAuth(ctrl)
-	mockImages := mock_app.NewMockImageStore(ctrl)
-	mockSessions := mock_app.NewMockSessionManager(ctrl)
-
-	if expectationsFn != nil {
-		mockApp := &MockApp{
-			mockStore:    *mockStore,
-			mockAuth:     *mockAuth,
-			mockImages:   *mockImages,
-			mockSessions: *mockSessions,
-		}
-		expectationsFn(mockApp)
-	}
-
-	return app.New(mockStore, mockAuth, mockSessions, "", mockImages)
-}
-
 func TestGetTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}
@@ -54,30 +24,30 @@ func TestGetTxnsByTracker(t *testing.T) {
 
 	tests := map[string]struct {
 		trackerID      string
-		expectationsFn mockAppFn
+		expectationsFn mock_app.MockAppFn
 		wantTxns       []app.SharedTransaction
 		wantCode       int
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
 			trackerID: testTrackerID,
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
 			},
 			wantTxns: emptyTransactions,
 			wantCode: http.StatusOK,
 		},
 		"with a list of txns from the store, returns the list": {
 			trackerID: testTrackerID,
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(sharedTransactions, nil).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTxnsByTracker(gomock.Eq(testTrackerID)).Return(sharedTransactions, nil).Times(1)
 			},
 			wantTxns: sharedTransactions,
 			wantCode: http.StatusOK,
 		},
 		"with a trackerID of a non-existent tracker, returns a 404": {
 			trackerID: "non-existent-trackerID",
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrDBItemNotFound).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrDBItemNotFound).Times(1)
 			},
 			wantTxns: nil,
 			wantCode: http.StatusNotFound,
@@ -87,7 +57,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			a := setUpMockApp(t, tc.expectationsFn)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			request := app.NewGetTxnsByTrackerRequest(tc.trackerID)
 			response := httptest.NewRecorder()
@@ -119,7 +89,7 @@ func TestCreateSharedTxn(t *testing.T) {
 
 	tests := map[string]struct {
 		transaction      app.SharedTransaction
-		expectationsFn   mockAppFn
+		expectationsFn   mock_app.MockAppFn
 		wantCode         int
 		userInContext    string
 		trackerInContext string
@@ -164,8 +134,8 @@ func TestCreateSharedTxn(t *testing.T) {
 		},
 		"with a valid transaction and tracker in context": {
 			transaction: validSharedTxn,
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().CreateSharedTxn(validSharedTxn).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().CreateSharedTxn(validSharedTxn).Times(1)
 			},
 			userInContext:    "user1",
 			trackerInContext: validSharedTxn.Tracker,
@@ -176,7 +146,7 @@ func TestCreateSharedTxn(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			a := setUpMockApp(t, tc.expectationsFn)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			req := app.NewCreateSharedTxnRequest(tc.transaction)
 			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.userInContext)
@@ -202,30 +172,30 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 
 	tests := map[string]struct {
 		trackerID      string
-		expectationsFn mockAppFn
+		expectationsFn mock_app.MockAppFn
 		wantTxns       []app.SharedTransaction
 		wantCode       int
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
 			trackerID: testTrackerID,
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(emptyTransactions, nil).Times(1)
 			},
 			wantTxns: emptyTransactions,
 			wantCode: http.StatusOK,
 		},
 		"with a list of txns from the store, returns the list": {
 			trackerID: testTrackerID,
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(unsettledTxns, nil).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq(testTrackerID)).Return(unsettledTxns, nil).Times(1)
 			},
 			wantTxns: unsettledTxns,
 			wantCode: http.StatusOK,
 		},
 		"with a trackerID of a non-existent tracker, returns a 404": {
 			trackerID: "non-existent-trackerID",
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrDBItemNotFound).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetUnsettledTxnsByTracker(gomock.Eq("non-existent-trackerID")).Return(nil, app.ErrDBItemNotFound).Times(1)
 			},
 			wantTxns: nil,
 			wantCode: http.StatusNotFound,
@@ -234,7 +204,7 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			a := setUpMockApp(t, tc.expectationsFn)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.trackerID)
 			response := httptest.NewRecorder()
@@ -264,13 +234,13 @@ func TestSettleTxns(t *testing.T) {
 
 	tests := map[string]struct {
 		transactions   []app.SharedTransaction
-		expectationsFn mockAppFn
+		expectationsFn mock_app.MockAppFn
 		wantCode       int
 	}{
 		"calls the store function successfully": {
 			transactions: []app.SharedTransaction{testTransaction},
-			expectationsFn: func(ma *MockApp) {
-				ma.mockStore.EXPECT().SettleTxns([]app.SharedTransaction{testTransaction}).Times(1)
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().SettleTxns([]app.SharedTransaction{testTransaction}).Times(1)
 			},
 			wantCode: http.StatusAccepted,
 		},
@@ -278,7 +248,7 @@ func TestSettleTxns(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			a := setUpMockApp(t, tc.expectationsFn)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			request := app.NewSettleTxnsRequest(t, tc.transactions)
 			response := httptest.NewRecorder()

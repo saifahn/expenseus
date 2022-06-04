@@ -94,6 +94,20 @@ func (mr *MockStoreMockRecorder) CreateUser(user interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockStore)(nil).CreateUser), user)
 }
 
+// DeleteTransaction mocks base method.
+func (m *MockStore) DeleteTransaction(txnID, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteTransaction", txnID, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteTransaction indicates an expected call of DeleteTransaction.
+func (mr *MockStoreMockRecorder) DeleteTransaction(txnID, userID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTransaction", reflect.TypeOf((*MockStore)(nil).DeleteTransaction), txnID, userID)
+}
+
 // GetAllTransactions mocks base method.
 func (m *MockStore) GetAllTransactions() ([]app.Transaction, error) {
 	m.ctrl.T.Helper()

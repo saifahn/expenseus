@@ -347,5 +347,4 @@ func TestGetAllTransactions(t *testing.T) {
 		assert.Equal(t, len(wantedTransactions), len(got))
 		assert.ElementsMatch(t, got, wantedTransactions)
 	})
-
 }

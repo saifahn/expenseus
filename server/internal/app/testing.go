@@ -377,6 +377,7 @@ type StubTransactionStore struct {
 	getTxnsByTrackerCalls          []string
 	createSharedTxnCalls           []SharedTransaction
 	getUnsettledTxnsByTrackerCalls []string
+	deleteTransactionCalls         [][]string
 }
 
 func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
@@ -424,6 +425,11 @@ func (s *StubTransactionStore) GetAllTransactions() ([]Transaction, error) {
 		transactions = append(transactions, e)
 	}
 	return transactions, nil
+}
+
+func (s *StubTransactionStore) DeleteTransaction(txnID, userID string) error {
+	s.deleteTransactionCalls = append(s.deleteTransactionCalls, []string{txnID, userID})
+	return nil
 }
 
 func (s *StubTransactionStore) GetUser(id string) (User, error) {

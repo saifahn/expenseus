@@ -16,7 +16,7 @@ import (
 const testTableName = "expenseus-integ-test"
 
 func setUpDB(d dynamodbiface.DynamoDBAPI) (app.Store, error) {
-	err := ddb.CreateTestTable(d, testTableName)
+	err := ddb.CreateTable(d, testTableName)
 	if err != nil {
 		return nil, err
 	}

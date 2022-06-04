@@ -41,7 +41,7 @@ func main() {
 		dynamo = dynamodb.New(sess)
 	}
 
-	err := ddb.CreateTestTable(dynamo, os.Getenv("DYNAMODB_TABLE_NAME"))
+	err := ddb.CreateTable(dynamo, os.Getenv("DYNAMODB_TABLE_NAME"))
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() == dynamodb.ErrCodeResourceInUseException {

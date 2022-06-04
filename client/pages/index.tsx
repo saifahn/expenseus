@@ -5,7 +5,10 @@ export default function Home() {
   return (
     <>
       <div>Hi, {user.username}!</div>
-      <div>Here, we're going to show all of your transactions.</div>
+      <div>
+        You should be able to see a summary of your recent transactions here -
+        up to 3 months or 100 transactions, whichever is less.
+      </div>
     </>
   );
 }

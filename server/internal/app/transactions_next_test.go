@@ -2,7 +2,6 @@ package app_test
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -37,8 +36,7 @@ func TestDeleteTransaction(t *testing.T) {
 			assert := assert.New(t)
 			a := mock_app.SetUp(t, tc.expectationsFn)
 
-			req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/transactions/%s", tc.transactionId), nil)
-			assert.NoError(err)
+			req := app.NewDeleteTransactionRequest(tc.transactionId)
 			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
 			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.transactionId)
 

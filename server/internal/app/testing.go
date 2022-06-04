@@ -139,6 +139,13 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 	return req
 }
 
+// NewDeleteTransactionRequest creates a request to be used in tests to delete a
+// transaction.
+func NewDeleteTransactionRequest(id string) *http.Request {
+	req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/transactions/%s", id), nil)
+	return req
+}
+
 // NewGetTransactionsByUserRequest creates a request to be used in tests to get all
 // transactions of a user, with the user in the request context.
 func NewGetTransactionsByUserRequest(userID string) *http.Request {

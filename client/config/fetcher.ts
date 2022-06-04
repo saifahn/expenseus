@@ -19,7 +19,6 @@ export class HttpException extends Error {
 
 export async function fetcher(url: string) {
   const res = await fetch(url, { credentials: 'include' });
-  console.log(res);
 
   if (!res.ok) {
     let info = await res.text();

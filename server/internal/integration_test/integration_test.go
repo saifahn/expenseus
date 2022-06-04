@@ -651,9 +651,20 @@ func TestSettleTxns(t *testing.T) {
 				addTransaction(router, txn)
 			}
 
-			request := app.NewSettleTxnsRequest(t, tc.initialTxns)
+			// get the one unsettled transaction that should be there
+			request := app.NewGetUnsettledTxnsByTrackerRequest(testUnsettledTxn.Tracker)
 			request.AddCookie(&tc.cookie)
 			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			var unsettled []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&unsettled)
+			if err != nil {
+				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
+			}
+
+			request = app.NewSettleTxnsRequest(t, unsettled)
+			request.AddCookie(&tc.cookie)
+			response = httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
 			assert.Equal(tc.wantCode, response.Code)
@@ -665,7 +676,7 @@ func TestSettleTxns(t *testing.T) {
 			router.ServeHTTP(response, request)
 
 			var got []app.SharedTransaction
-			err := json.NewDecoder(response.Body).Decode(&got)
+			err = json.NewDecoder(response.Body).Decode(&got)
 			if err != nil {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}

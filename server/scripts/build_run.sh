@@ -7,7 +7,7 @@ SCRIPTS="$(dirname $0)"
 ROOT="$(dirname "$SCRIPTS")"
 
 # source the env
-source $ROOT/.envrc
+source $ROOT/.env
 
 rm -rf $ROOT/webserver
 go build $ROOT/cmd/webserver

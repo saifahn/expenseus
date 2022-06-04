@@ -9,8 +9,8 @@ import (
 )
 
 type Tracker struct {
-	Name  string   `json:"name"`
-	Users []string `json:"users"`
+	Name  string   `json:"name" validate:"required"`
+	Users []string `json:"users" validate:"required"`
 	ID    string   `json:"id"`
 }
 
@@ -23,6 +23,11 @@ func (a *App) CreateTracker(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	err = a.validate.Struct(t)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 
 	// don't allow the user to create a tracker they are not involved in

@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { UserAPI } from "api";
+import useSWR from 'swr';
 
 export interface User {
   username: string;
@@ -7,40 +6,21 @@ export interface User {
   id: string;
 }
 
-/**
- * Component rendering a list of users
- */
 export default function UserList() {
-  const [users, setUsers] = useState<User[]>();
-  const cancelled = useRef(false);
-
-  async function fetchUsers() {
-    try {
-      const api = new UserAPI();
-      const users = await api.listUsers();
-      if (!cancelled.current) {
-        setUsers(users);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  useEffect(() => {
-    fetchUsers();
-    return () => {
-      cancelled.current = true;
-    };
-  }, []);
+  const { data: users, error } = useSWR<User[]>(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users`,
+  );
 
   return (
-    <section className="p-6 shadow-lg bg-indigo-50 rounded-xl">
+    <section className="p-6 border-dotted border-4 border-indigo-800">
       <h2 className="text-2xl">Users</h2>
+      {error && <div>Failed to load users</div>}
+      {!error && !users && <div>Loading user information...</div>}
       {users &&
-        users.map(user => {
+        users.map((user) => {
           return (
             <article
-              className="p-4 mt-4 rounded-md shadow-md bg-white"
+              className="p-4 mt-4 border-dotted border-2 border-pink-800"
               key={user.id}
             >
               <h3 className="text-xl">{user.username}</h3>

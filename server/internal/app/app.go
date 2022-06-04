@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/oauth2"
 )
 
@@ -63,14 +64,18 @@ type App struct {
 	sessions SessionManager
 	images   ImageStore
 	frontend string
+	validate *validator.Validate
 }
 
 func New(store Store, oauth Auth, sessions SessionManager, frontend string, images ImageStore) *App {
+	validate := validator.New()
+
 	return &App{
 		store:    store,
 		auth:     oauth,
 		sessions: sessions,
 		frontend: frontend,
 		images:   images,
+		validate: validate,
 	}
 }

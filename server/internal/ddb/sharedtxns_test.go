@@ -31,7 +31,7 @@ func TestSharedTxns(t *testing.T) {
 
 		want := SharedTxnItem{
 			PK:           makeTrackerIDKey(testInput.Tracker),
-			SK:           makeSharedTxnIDKey(testInput.ID),
+			SK:           makeSharedTxnIDKey(id),
 			EntityType:   sharedTxnEntityType,
 			ID:           id,
 			Tracker:      testInput.Tracker,
@@ -67,7 +67,7 @@ func TestSharedTxns(t *testing.T) {
 
 		want := SharedTxnItem{
 			PK:           makeTrackerIDKey(testUnsettledInput.Tracker),
-			SK:           makeSharedTxnIDKey(testUnsettledInput.ID),
+			SK:           makeSharedTxnIDKey(unsettledID),
 			EntityType:   sharedTxnEntityType,
 			ID:           unsettledID,
 			Tracker:      testUnsettledInput.Tracker,
@@ -92,7 +92,7 @@ func TestSharedTxns(t *testing.T) {
 		assert.NoError(err)
 
 		testSettleTxnPayload := SettleTxnInputItem{
-			ID:           testUnsettledInput.ID,
+			ID:           unsettledID,
 			TrackerID:    "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}

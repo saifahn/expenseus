@@ -197,7 +197,7 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 		return nil, err
 	}
 
-	var trackers []app.Tracker
+	trackers := []app.Tracker{}
 	for _, item := range items {
 		trackers = append(trackers, trackerItemToTracker(item))
 	}
@@ -233,7 +233,7 @@ func (d *dynamoDB) GetTxnsByTracker(trackerID string) ([]app.SharedTransaction, 
 		return nil, err
 	}
 
-	var txns []app.SharedTransaction
+	txns := []app.SharedTransaction{}
 	for _, i := range items {
 		txns = append(txns, sharedTxnItemToSharedTxn(i))
 	}

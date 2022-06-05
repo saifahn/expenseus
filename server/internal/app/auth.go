@@ -18,6 +18,7 @@ func (a *App) VerifyUser(next http.Handler) http.Handler {
 		id, err := a.sessions.GetUserID(r)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		ctx := context.WithValue(r.Context(), CtxKeyUserID, id)

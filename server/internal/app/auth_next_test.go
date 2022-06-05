@@ -80,3 +80,59 @@ func TestOauthCallback(t *testing.T) {
 		})
 	}
 }
+
+// tests that the middleware will either pass on the response or return a 401
+func TestVerifyUser(t *testing.T) {
+	tests := map[string]struct {
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"when the user's session cannot be validated": {
+			expectFn: func(ma *mock_app.App) {
+				ma.MockSessions.EXPECT().Validate(gomock.Any()).Return(false).Times(1)
+			},
+			wantCode: http.StatusUnauthorized,
+		},
+		"when the user's session is successfully validated": {
+			expectFn: func(ma *mock_app.App) {
+				ma.MockSessions.EXPECT().Validate(gomock.Any()).Return(true).Times(1)
+				ma.MockSessions.EXPECT().GetUserID(gomock.Any()).Return("a-user-id", nil).Times(1)
+				ma.MockStore.EXPECT().GetAllUsers().Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
+
+			req := app.NewGetAllUsersRequest()
+			response := httptest.NewRecorder()
+
+			handler := a.VerifyUser(http.HandlerFunc(a.ListUsers))
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
+func TestLogOut(t *testing.T) {
+	t.Run("session manager calls remove", func(t *testing.T) {
+		assert := assert.New(t)
+		expectFn := func(ma *mock_app.App) {
+			ma.MockSessions.EXPECT().Remove(gomock.Any(), gomock.Any()).Times(1)
+		}
+		a := mock_app.SetUp(t, expectFn)
+
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
+		response := httptest.NewRecorder()
+
+		handler := http.HandlerFunc(a.LogOut)
+		handler.ServeHTTP(response, req)
+
+		assert.Equal(http.StatusTemporaryRedirect, response.Code)
+	})
+}

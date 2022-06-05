@@ -12,6 +12,43 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetTransaction(t *testing.T) {
+	testTxnID := "test-txn-id"
+	tests := map[string]struct {
+		txnID          string
+		expectationsFn mock_app.MockAppFn
+		wantTxns       app.Transaction
+		wantCode       int
+	}{
+		"calls the store function to get the transaction": {
+			txnID: testTxnID,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
+			},
+			wantTxns: app.Transaction{ID: testTxnID},
+			wantCode: http.StatusOK,
+		},
+		// "returns a response without an image":                  {},
+		// "returns an image url if the transaction has an image": {},
+		// "returns 404 on a non-existent transaction":            {},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewGetTransactionRequest(tc.txnID)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.GetTransaction)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
 func TestDeleteTransaction(t *testing.T) {
 	// testTransaction := app.Transaction{}
 

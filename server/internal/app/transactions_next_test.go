@@ -3,8 +3,11 @@ package app_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -147,6 +150,105 @@ func TestGetTxnsByUser(t *testing.T) {
 			err := json.NewDecoder(response.Body).Decode(&got)
 			assert.NoError(err)
 			assert.Equal(tc.wantTxns, got)
+		})
+	}
+}
+
+func TestCreateTransaction(t *testing.T) {
+	testTxnDetails := app.TransactionDetails{
+		Name:   "test-txn",
+		Amount: 123,
+		Date:   123456,
+	}
+
+	testImgTxnDetails := app.TransactionDetails{
+		Name:     "test-txn",
+		Amount:   123,
+		Date:     123456,
+		ImageKey: "test-image-key",
+	}
+
+	tests := map[string]struct {
+		txnDetails     app.TransactionDetails
+		user           string
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+		withImg        bool
+	}{
+		"with a valid transaction without an image": {
+			txnDetails: testTxnDetails,
+			user:       "user-01",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.TransactionDetails{
+					Name:   testTxnDetails.Name,
+					Amount: testTxnDetails.Amount,
+					Date:   testTxnDetails.Date,
+					UserID: "user-01",
+				})).Return(nil).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+		"with a transaction with an image that fails the image check": {
+			txnDetails: testImgTxnDetails,
+			user:       "user-02",
+			expectationsFn: func(ma *mock_app.App) {
+				// can't assert the file exactly, so use any
+				ma.MockImages.EXPECT().Validate(gomock.Any()).Return(false, nil).Times(1)
+			},
+			wantCode: http.StatusUnprocessableEntity,
+			withImg:  true,
+		},
+		"with a transaction with an image that passes the image check and successfully uploads": {
+			txnDetails: testImgTxnDetails,
+			user:       "user-02",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockImages.EXPECT().Validate(gomock.Any()).Return(true, nil).Times(1)
+				ma.MockImages.EXPECT().Upload(gomock.Any(), gomock.Any()).Return(testImgTxnDetails.ImageKey, nil)
+				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.TransactionDetails{
+					Name:     testImgTxnDetails.Name,
+					Amount:   testImgTxnDetails.Amount,
+					Date:     testImgTxnDetails.Date,
+					ImageKey: testImgTxnDetails.ImageKey,
+					UserID:   "user-02",
+				})).Times(1)
+			},
+			withImg:  true,
+			wantCode: http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			var payload map[string]io.Reader
+			if tc.withImg {
+				testFile, err := os.CreateTemp("", "example-file")
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer testFile.Close()
+				defer os.Remove(testFile.Name())
+
+				payload = map[string]io.Reader{
+					"transactionName": strings.NewReader(testImgTxnDetails.Name),
+					"amount":          strings.NewReader("123"),
+					"date":            strings.NewReader("123456"),
+					"image":           testFile,
+				}
+			} else {
+				payload = app.MakeCreateTransactionRequestPayload(tc.txnDetails)
+			}
+
+			req := app.NewCreateTransactionRequest(payload)
+			req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, tc.user))
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.CreateTransaction)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
 		})
 	}
 }

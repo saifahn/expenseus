@@ -45,9 +45,7 @@ func TestOauthCallback(t *testing.T) {
 		"when the user does not exist yet in the db": {
 			expectFn: func(ma *mock_app.App) {
 				ma.MockAuth.EXPECT().GetInfoAndGenerateUser(gomock.Any(), gomock.Any()).Return(newUser, nil).Times(1)
-				ma.MockStore.EXPECT().GetAllUsers().Return([]app.User{
-					{Username: "a-different-user", ID: "a-different-user-id"},
-				}, nil).Times(1)
+				ma.MockStore.EXPECT().GetUser(newUser.ID).Return(app.User{}, app.ErrDBItemNotFound).Times(1)
 				ma.MockStore.EXPECT().CreateUser(newUser).Times(1)
 				ma.MockSessions.EXPECT().Save(gomock.Any(), gomock.Any()).Times(1)
 			},
@@ -56,9 +54,7 @@ func TestOauthCallback(t *testing.T) {
 		"when the user exists in the db": {
 			expectFn: func(ma *mock_app.App) {
 				ma.MockAuth.EXPECT().GetInfoAndGenerateUser(gomock.Any(), gomock.Any()).Return(newUser, nil).Times(1)
-				ma.MockStore.EXPECT().GetAllUsers().Return([]app.User{
-					{Username: newUser.Username, ID: newUser.ID},
-				}, nil).Times(1)
+				ma.MockStore.EXPECT().GetUser(newUser.ID).Return(app.User{Username: newUser.Username, ID: newUser.ID}, nil).Times(1)
 				ma.MockSessions.EXPECT().Save(gomock.Any(), gomock.Any()).Times(1)
 			},
 			wantCode: http.StatusTemporaryRedirect,

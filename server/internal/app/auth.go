@@ -40,22 +40,19 @@ func (a *App) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: check by UserID instead?
-	existingUsers, err := a.store.GetAllUsers()
-	if err != nil {
+	match, err := a.store.GetUser(user.ID)
+	if err != nil && err != ErrDBItemNotFound {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// check if the user exists already
-	for _, u := range existingUsers {
-		if u.ID == user.ID {
-			ctx := context.WithValue(r.Context(), CtxKeyUserID, u.ID)
-			r = r.WithContext(ctx)
-			a.sessions.Save(rw, r)
-			http.Redirect(rw, r, a.frontend, http.StatusTemporaryRedirect)
-			return
-		}
+	// if the user exists, log in
+	if match != (User{}) {
+		ctx := context.WithValue(r.Context(), CtxKeyUserID, user.ID)
+		r = r.WithContext(ctx)
+		a.sessions.Save(rw, r)
+		http.Redirect(rw, r, a.frontend, http.StatusTemporaryRedirect)
+		return
 	}
 
 	// otherwise, create the user

@@ -6,8 +6,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
-
-	"github.com/nabeken/aws-go-dynamodb/table"
 )
 
 type TransactionDetails struct {
@@ -31,8 +29,7 @@ func (a *App) GetTransaction(rw http.ResponseWriter, r *http.Request) {
 	transaction, err := a.store.GetTransaction(transactionID)
 
 	if err != nil {
-		// NOTE: should potentially actually use a type defined in the app?
-		if err == table.ErrItemNotFound {
+		if err == ErrDBItemNotFound {
 			http.Error(rw, err.Error(), http.StatusNotFound)
 			return
 		}

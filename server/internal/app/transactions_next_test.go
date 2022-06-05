@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,10 +15,24 @@ import (
 
 func TestGetTransaction(t *testing.T) {
 	testTxnID := "test-txn-id"
+
+	txnWithImageKey := app.Transaction{
+		ID: testTxnID,
+		TransactionDetails: app.TransactionDetails{
+			ImageKey: "test-image-key",
+		},
+	}
+
+	txnWithImageURL := app.Transaction{
+		ID:                 txnWithImageKey.ID,
+		ImageURL:           "test-image-url",
+		TransactionDetails: txnWithImageKey.TransactionDetails,
+	}
+
 	tests := map[string]struct {
 		txnID          string
 		expectationsFn mock_app.MockAppFn
-		wantTxns       app.Transaction
+		wantTxn        *app.Transaction
 		wantCode       int
 	}{
 		"calls the store function to get the transaction": {
@@ -25,12 +40,26 @@ func TestGetTransaction(t *testing.T) {
 			expectationsFn: func(ma *mock_app.App) {
 				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
 			},
-			wantTxns: app.Transaction{ID: testTxnID},
+			wantTxn:  &app.Transaction{ID: testTxnID},
 			wantCode: http.StatusOK,
 		},
-		// "returns a response without an image":                  {},
-		// "returns an image url if the transaction has an image": {},
-		// "returns 404 on a non-existent transaction":            {},
+		"with a txnID of a transaction with an image": {
+			txnID: testTxnID,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(txnWithImageKey, nil).Times(1)
+				ma.MockImages.EXPECT().AddImageToTransaction(gomock.Eq(txnWithImageKey)).Return(txnWithImageURL, nil)
+			},
+			wantTxn:  &txnWithImageURL,
+			wantCode: http.StatusOK,
+		},
+		"returns 404 on a non-existent transaction": {
+			txnID: "non-existent-txn",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransaction(gomock.Eq("non-existent-txn")).Return(app.Transaction{}, app.ErrDBItemNotFound).Times(1)
+			},
+			wantTxn:  nil,
+			wantCode: http.StatusNotFound,
+		},
 	}
 
 	for name, tc := range tests {
@@ -45,6 +74,13 @@ func TestGetTransaction(t *testing.T) {
 			handler.ServeHTTP(response, req)
 
 			assert.Equal(tc.wantCode, response.Code)
+
+			if tc.wantTxn != nil {
+				var got app.Transaction
+				err := json.NewDecoder(response.Body).Decode(&got)
+				assert.NoError(err)
+				assert.Equal(*tc.wantTxn, got)
+			}
 		})
 	}
 }

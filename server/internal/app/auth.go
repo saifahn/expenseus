@@ -43,6 +43,7 @@ func (a *App) OauthCallback(rw http.ResponseWriter, r *http.Request) {
 	existingUsers, err := a.store.GetAllUsers()
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// check if the user exists already

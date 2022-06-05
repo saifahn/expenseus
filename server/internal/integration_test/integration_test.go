@@ -152,15 +152,16 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	})
 }
 
+func createTestTransaction(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
+	payload := app.MakeCreateTransactionRequestPayload(ed)
+	request := app.NewCreateTransactionRequest(payload)
+	request.AddCookie(&http.Cookie{Name: "session", Value: userid})
+	response := httptest.NewRecorder()
+	r.ServeHTTP(response, request)
+	assert.Equal(t, http.StatusAccepted, response.Code)
+}
+
 func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
-	var createTestTransaction = func(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
-		payload := app.MakeCreateTransactionRequestPayload(ed)
-		request := app.NewCreateTransactionRequest(payload)
-		request.AddCookie(&http.Cookie{Name: "session", Value: userid})
-		response := httptest.NewRecorder()
-		r.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusAccepted, response.Code)
-	}
 
 	t.Run("an transaction can be added with a valid cookie and be retrieved as part of a GetAll request", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
@@ -255,6 +256,60 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert.Len(transactionsGot, 1)
 		assert.Equal(wantedTransactionDetails, transactionsGot[0].TransactionDetails)
 	})
+}
+
+func TestDeletingTransactions(t *testing.T) {
+	tests := map[string]struct {
+		td       app.TransactionDetails
+		user     string
+		wantCode int
+	}{
+		"with a valid cookie, the transaction is deleted": {
+			td:       app.TestSeanTransactionDetails,
+			user:     app.TestSeanUser.ID,
+			wantCode: http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := setUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			createUser(t, app.TestSeanUser, router)
+			createTestTransaction(t, router, tc.td, tc.user)
+
+			request := app.NewGetTransactionsByUserRequest(tc.user)
+			request.AddCookie(&http.Cookie{Name: "session", Value: tc.user})
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			var got []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			if err != nil {
+				t.Errorf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
+			}
+			assert.Len(got, 1)
+
+			request = app.NewDeleteTransactionRequest(got[0].ID)
+			request.AddCookie(&http.Cookie{Name: "session", Value: tc.user})
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			assert.Equal(tc.wantCode, response.Code)
+
+			// get the transactions again - this time it should be empty
+			request = app.NewGetTransactionsByUserRequest(tc.user)
+			request.AddCookie(&http.Cookie{Name: "session", Value: tc.user})
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			err = json.NewDecoder(response.Body).Decode(&got)
+			if err != nil {
+				t.Errorf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
+			}
+			assert.Len(got, 0)
+		})
+	}
 }
 
 func createTracker(t testing.TB, tracker app.Tracker, r http.Handler) {

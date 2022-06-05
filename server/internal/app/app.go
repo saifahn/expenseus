@@ -27,6 +27,7 @@ type Store interface {
 	GetTransactionsByUser(userID string) ([]Transaction, error)
 	GetAllTransactions() ([]Transaction, error)
 	CreateTransaction(transactionDetails TransactionDetails) error
+	DeleteTransaction(txnID, userID string) error
 	CreateUser(user User) error
 	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)

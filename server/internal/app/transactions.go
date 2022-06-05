@@ -109,7 +109,7 @@ func (a *App) GetAllTransactions(rw http.ResponseWriter, r *http.Request) {
 func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(CtxKeyUserID).(string)
 	if !ok {
-		http.Error(rw, "user id not found in context", http.StatusUnauthorized)
+		http.Error(rw, ErrUserNotInCtx.Error(), http.StatusUnauthorized)
 	}
 
 	err := r.ParseMultipartForm(1024 * 1024 * 5)
@@ -193,4 +193,27 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	rw.WriteHeader(http.StatusAccepted)
+}
+
+// DeleteTransaction handles a HTTP request to delete a transaction with the given ID.
+func (a *App) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(CtxKeyUserID).(string)
+	if !ok {
+		http.Error(w, ErrUserNotInCtx.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	txnID, ok := r.Context().Value(CtxKeyTransactionID).(string)
+	if !ok {
+		http.Error(w, "transaction ID not found in context", http.StatusBadRequest)
+		return
+	}
+
+	err := a.store.DeleteTransaction(txnID, user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }

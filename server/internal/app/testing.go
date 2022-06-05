@@ -139,6 +139,13 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 	return req
 }
 
+// NewDeleteTransactionRequest creates a request to be used in tests to delete a
+// transaction.
+func NewDeleteTransactionRequest(id string) *http.Request {
+	req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/transactions/%s", id), nil)
+	return req
+}
+
 // NewGetTransactionsByUserRequest creates a request to be used in tests to get all
 // transactions of a user, with the user in the request context.
 func NewGetTransactionsByUserRequest(userID string) *http.Request {
@@ -377,6 +384,7 @@ type StubTransactionStore struct {
 	getTxnsByTrackerCalls          []string
 	createSharedTxnCalls           []SharedTransaction
 	getUnsettledTxnsByTrackerCalls []string
+	deleteTransactionCalls         [][]string
 }
 
 func (s *StubTransactionStore) GetTransaction(transactionID string) (Transaction, error) {
@@ -424,6 +432,11 @@ func (s *StubTransactionStore) GetAllTransactions() ([]Transaction, error) {
 		transactions = append(transactions, e)
 	}
 	return transactions, nil
+}
+
+func (s *StubTransactionStore) DeleteTransaction(txnID, userID string) error {
+	s.deleteTransactionCalls = append(s.deleteTransactionCalls, []string{txnID, userID})
+	return nil
 }
 
 func (s *StubTransactionStore) GetUser(id string) (User, error) {

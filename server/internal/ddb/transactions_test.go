@@ -58,7 +58,7 @@ func TestTransactionTable(t *testing.T) {
 	assert.Contains(itemsGot, *item)
 
 	// the item is successfully deleted
-	err = transactions.Delete(item.UserID, item.ID)
+	err = transactions.Delete(item.ID, item.UserID)
 	assert.NoError(err)
 	_, err = transactions.Get(item.ID)
 	assert.EqualError(err, table.ErrItemNotFound.Error())

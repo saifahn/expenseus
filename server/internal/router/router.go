@@ -42,6 +42,7 @@ func Init(a *app.App) *chi.Mux {
 			r.Route("/{transactionID}", func(r chi.Router) {
 				r.Use(transactionIDCtx)
 				r.Get("/", a.GetTransaction)
+				r.Delete("/", a.DeleteTransaction)
 			})
 
 			r.Post("/shared/settle", a.SettleTxns)

@@ -9,48 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateUser(t *testing.T) {
-	store := StubTransactionStore{}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-
-	user := TestSeanUser
-	userJSON, err := json.Marshal(user)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	request := NewCreateUserRequest(userJSON)
-	response := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(app.CreateUser)
-	handler.ServeHTTP(response, request)
-
-	assert.Equal(t, http.StatusAccepted, response.Code)
-	assert.Len(t, store.users, 1)
-	assert.Contains(t, store.users, user)
-}
-
-func TestListUsers(t *testing.T) {
-	store := StubTransactionStore{users: []User{TestSeanUser, TestTomomiUser}}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-
-	request := NewGetAllUsersRequest()
-	response := httptest.NewRecorder()
-
-	handler := http.HandlerFunc(app.ListUsers)
-	handler.ServeHTTP(response, request)
-
-	var got []User
-	err := json.NewDecoder(response.Body).Decode(&got)
-	if err != nil {
-		t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-	}
-
-	assert.Equal(t, http.StatusOK, response.Code)
-	assert.Len(t, got, len(store.users))
-	assert.ElementsMatch(t, got, store.users)
-}
-
 func TestGetUserByID(t *testing.T) {
 	t.Run("returns a users details if the user exists", func(t *testing.T) {
 		store := StubTransactionStore{users: []User{TestSeanUser}}

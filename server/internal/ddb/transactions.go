@@ -9,6 +9,12 @@ import (
 	"github.com/nabeken/aws-go-dynamodb/table/option"
 )
 
+const (
+	txnKeyPrefix  = "txn"
+	txnEntityType = "transaction"
+	allTxnKey     = "transactions"
+)
+
 type TransactionItem struct {
 	PK         string `json:"PK"`
 	SK         string `json:"SK"`
@@ -21,12 +27,6 @@ type TransactionItem struct {
 	GSI1PK     string `json:"GSI1PK"`
 	GSI1SK     string `json:"GSI1SK"`
 }
-
-const (
-	txnKeyPrefix  = "txn"
-	txnEntityType = "transaction"
-	allTxnKey     = "transactions"
-)
 
 type TxnRepository interface {
 	Get(transactionID string) (*TransactionItem, error)
@@ -92,7 +92,7 @@ func (t *txnRepo) Put(item TransactionItem) error {
 	return t.table.PutItem(item)
 }
 
-func (t *txnRepo) Delete(userID, txnID string) error {
+func (t *txnRepo) Delete(txnID, userID string) error {
 	userIDKey := makeUserIDKey(userID)
 	txnIDKey := makeTxnIDKey(txnID)
 	return t.table.DeleteItem(attributes.String(userIDKey), attributes.String(txnIDKey))

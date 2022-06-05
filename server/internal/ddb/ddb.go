@@ -141,6 +141,10 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	return transactions, nil
 }
 
+func (d *dynamoDB) DeleteTransaction(txnID, user string) error {
+	return d.transactions.Delete(txnID, user)
+}
+
 func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
 	items, err := d.transactions.GetByUserID(userID)
 	if err != nil {
@@ -207,7 +211,6 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 // CreateSharedTxn calls the repository to create a new shared transaction.
 func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
 	id := uuid.New().String()
-	// TODO: also just pass in the transaction, don't need this input thing any more
 	return d.sharedTxn.Create(id, txn)
 }
 
@@ -250,7 +253,6 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 
 	var txns []app.SharedTransaction
 	for _, i := range items {
-		log.Printf("a txn item unsettled: %+v", i)
 		txns = append(txns, sharedTxnItemToSharedTxn(i))
 	}
 	return txns, nil

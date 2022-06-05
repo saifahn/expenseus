@@ -200,16 +200,19 @@ func (a *App) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(CtxKeyUserID).(string)
 	if !ok {
 		http.Error(w, ErrUserNotInCtx.Error(), http.StatusUnauthorized)
+		return
 	}
 
 	txnID, ok := r.Context().Value(CtxKeyTransactionID).(string)
 	if !ok {
 		http.Error(w, "transaction ID not found in context", http.StatusBadRequest)
+		return
 	}
 
 	err := a.store.DeleteTransaction(txnID, user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)

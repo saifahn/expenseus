@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/saifahn/expenseus/internal/app"
+	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/saifahn/expenseus/internal/ddb"
 	"github.com/saifahn/expenseus/internal/router"
 	"github.com/stretchr/testify/assert"
@@ -42,9 +43,9 @@ func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 		t.Fatalf("could not set up the database: %v", err)
 	}
 
-	oauth := &app.StubOauthConfig{}
+	oauth := &mock_app.MockAuth{}
 	auth := &app.StubSessionManager{}
-	images := &app.StubImageStore{}
+	images := &mock_app.MockImageStore{}
 	a := app.New(db, oauth, auth, "", images)
 	r := router.Init(a)
 

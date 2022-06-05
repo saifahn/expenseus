@@ -1,56 +1,192 @@
-package app
+package app_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/saifahn/expenseus/internal/app"
+	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetSelf(t *testing.T) {
-	t.Run("returns the user details from the stored session if the user exists", func(t *testing.T) {
-		store := StubTransactionStore{users: []User{TestSeanUser}}
-		oauth := StubOauthConfig{}
-		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
+func TestCreateUser(t *testing.T) {
+	testUser := app.User{
+		Username: "test-user",
+	}
 
-		request := NewGetSelfRequest()
-		// add the user into the request cookie
-		request.AddCookie(&ValidCookie)
-		response := httptest.NewRecorder()
+	expectFn := func(ma *mock_app.App) {
+		ma.MockStore.EXPECT().CreateUser(testUser).Return(nil).Times(1)
+	}
 
-		handler := http.HandlerFunc(a.GetSelf)
-		handler.ServeHTTP(response, request)
+	assert := assert.New(t)
+	a := mock_app.SetUp(t, expectFn)
 
-		// decode the response
-		var got User
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
+	userJSON, err := json.Marshal(testUser)
+	assert.NoError(err)
 
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, TestSeanUser, got)
-	})
+	request := app.NewCreateUserRequest(userJSON)
+	response := httptest.NewRecorder()
 
-	t.Run("returns a 404 if the user does not exist", func(t *testing.T) {
-		store := StubTransactionStore{users: []User{TestSeanUser}}
-		oauth := StubOauthConfig{}
-		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
+	handler := http.HandlerFunc(a.CreateUser)
+	handler.ServeHTTP(response, request)
 
-		request := NewGetSelfRequest()
-		// add the user into the request cookie
-		request.AddCookie(&http.Cookie{
-			Name:  ValidCookie.Name,
-			Value: "non-existent-user",
+	assert.Equal(http.StatusAccepted, response.Code)
+}
+
+func TestListUsers(t *testing.T) {
+	testUser := app.User{
+		Username: "test-user",
+	}
+
+	tests := map[string]struct {
+		users    []app.User
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"with no users returned from the store": {
+			users: []app.User{},
+			expectFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetAllUsers().Return([]app.User{}, nil).Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+		"with a user returned from the store": {
+			users: []app.User{testUser},
+			expectFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetAllUsers().Return([]app.User{testUser}, nil).Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
+
+			request := app.NewGetAllUsersRequest()
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.ListUsers)
+			handler.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.User
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Equal(tc.users, got)
 		})
-		response := httptest.NewRecorder()
-		handler := http.HandlerFunc(a.GetSelf)
-		handler.ServeHTTP(response, request)
+	}
+}
 
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.NotEqual(t, jsonContentType, response.Result().Header.Get("content-type"))
-	})
+func TestGetUserByID(t *testing.T) {
+	testUser := app.User{
+		Username: "test-user",
+	}
+
+	tests := map[string]struct {
+		userID   string
+		user     app.User
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"with no user returned from the store": {
+			userID: "not-found",
+			user:   app.User{},
+			expectFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetUser("not-found").Return(app.User{}, app.ErrDBItemNotFound).Times(1)
+			},
+			wantCode: http.StatusNotFound,
+		},
+		"with a user returned from the store": {
+			userID: testUser.Username,
+			user:   testUser,
+			expectFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetUser(testUser.Username).Return(testUser, nil).Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
+
+			request := app.NewGetUserRequest(tc.userID)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.GetUser)
+			handler.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			if tc.wantCode == http.StatusOK {
+				var got app.User
+				err := json.NewDecoder(response.Body).Decode(&got)
+				assert.NoError(err)
+				assert.Equal(tc.user, got)
+			}
+		})
+	}
+}
+
+func TestGetSelf(t *testing.T) {
+	testUser := app.User{
+		Username: "test-user",
+	}
+
+	tests := map[string]struct {
+		userID   string
+		user     app.User
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"with a user in the session that is non-existent": {
+			userID: "not-found",
+			user:   app.User{},
+			expectFn: func(ma *mock_app.App) {
+				ma.MockSessions.EXPECT().GetUserID(gomock.Any()).Return("not-found", nil).Times(1)
+				ma.MockStore.EXPECT().GetUser("not-found").Return(app.User{}, app.ErrDBItemNotFound).Times(1)
+			},
+			wantCode: http.StatusNotFound,
+		},
+		// TODO: handle a non-valid session
+		"with a user returned from the store": {
+			userID: testUser.Username,
+			user:   testUser,
+			expectFn: func(ma *mock_app.App) {
+				ma.MockSessions.EXPECT().GetUserID(gomock.Any()).Return(testUser.Username, nil).Times(1)
+				ma.MockStore.EXPECT().GetUser(testUser.Username).Return(testUser, nil).Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
+
+			req := app.NewGetSelfRequest()
+			req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, tc.userID))
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.GetSelf)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			if tc.wantCode == http.StatusOK {
+				var got app.User
+				err := json.NewDecoder(response.Body).Decode(&got)
+				assert.NoError(err)
+			}
+		})
+	}
 }

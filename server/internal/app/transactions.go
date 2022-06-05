@@ -66,6 +66,16 @@ func (a *App) GetTransactionsByUser(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for i, txn := range transactions {
+		if txn.ImageKey != "" {
+			transactions[i], err = a.images.AddImageToTransaction(txn)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	rw.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(rw).Encode(transactions)
 	if err != nil {

@@ -12,58 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetTransactionByUser(t *testing.T) {
-	store := StubTransactionStore{
-		users: []User{
-			TestSeanUser,
-			TestTomomiUser,
-		},
-		transactions: map[string]Transaction{
-			"1":    TestSeanTransaction,
-			"9281": TestTomomiTransaction,
-		},
-	}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-
-	t.Run("gets tomochi's transactions", func(t *testing.T) {
-		request := NewGetTransactionsByUserRequest(TestTomomiUser.ID)
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetTransactionsByUser)
-		handler.ServeHTTP(response, request)
-
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Len(t, got, 1)
-		assert.Contains(t, got, TestTomomiTransaction)
-	})
-
-	t.Run("gets saifahn's transactions", func(t *testing.T) {
-		request := NewGetTransactionsByUserRequest(TestSeanUser.ID)
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetTransactionsByUser)
-		handler.ServeHTTP(response, request)
-
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Len(t, got, 1)
-		assert.Contains(t, got, TestSeanTransaction)
-	})
-}
-
 func TestCreateTransaction(t *testing.T) {
 	// FIXME: for some reason, this stopped working after adding amount to the transactions
 	// t.Run("returns an error if there is no user in the context", func(t *testing.T) {

@@ -85,6 +85,72 @@ func TestGetTransaction(t *testing.T) {
 	}
 }
 
+func TestGetTxnsByUser(t *testing.T) {
+	testTxn := app.Transaction{ID: "txn-01"}
+	testTxnWithImageKey := app.Transaction{
+		ID:                 "txn-image-key",
+		TransactionDetails: app.TransactionDetails{ImageKey: "test-image-key"},
+	}
+	testTxnWithImageURL := app.Transaction{
+		ID:                 testTxnWithImageKey.ID,
+		ImageURL:           "test-image-url",
+		TransactionDetails: testTxnWithImageKey.TransactionDetails,
+	}
+
+	tests := map[string]struct {
+		user           string
+		expectationsFn mock_app.MockAppFn
+		wantTxns       []app.Transaction
+		wantCode       int
+	}{
+		"with a user that has one transaction": {
+			user: "one-txn-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransactionsByUser(gomock.Eq("one-txn-user")).Return([]app.Transaction{testTxn}, nil).Times(1)
+			},
+			wantTxns: []app.Transaction{testTxn},
+			wantCode: http.StatusOK,
+		},
+		"with a user that has 0 transactions": {
+			user: "zero-txn-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransactionsByUser(gomock.Eq("zero-txn-user")).Return([]app.Transaction{}, nil).Times(1)
+			},
+			wantTxns: []app.Transaction{},
+			wantCode: http.StatusOK,
+		},
+		"with transactions that have images": {
+			user: "txn-with-image-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransactionsByUser(gomock.Eq("txn-with-image-user")).Return([]app.Transaction{testTxnWithImageKey}, nil).Times(1)
+				ma.MockImages.EXPECT().AddImageToTransaction(gomock.Eq(testTxnWithImageKey)).Return(testTxnWithImageURL, nil).Times(1)
+			},
+			wantTxns: []app.Transaction{testTxnWithImageURL},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewGetTransactionsByUserRequest(tc.user)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.GetTransactionsByUser)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Equal(tc.wantTxns, got)
+		})
+	}
+}
+
 func TestDeleteTransaction(t *testing.T) {
 	// testTransaction := app.Transaction{}
 

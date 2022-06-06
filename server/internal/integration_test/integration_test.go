@@ -7,14 +7,24 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/gorilla/securecookie"
 	"github.com/saifahn/expenseus/internal/app"
 	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/saifahn/expenseus/internal/ddb"
 	"github.com/saifahn/expenseus/internal/router"
+	"github.com/saifahn/expenseus/internal/sessions"
 	"github.com/stretchr/testify/assert"
 )
 
-const testTableName = "expenseus-integ-test"
+const (
+	testTableName = "expenseus-integ-test"
+)
+
+var (
+	testSessionHashKey  = securecookie.GenerateRandomKey(64)
+	testSessionRangeKey = securecookie.GenerateRandomKey(32)
+	cookies             = securecookie.New(testSessionHashKey, testSessionRangeKey)
+)
 
 func setUpDB(d dynamodbiface.DynamoDBAPI) (app.Store, error) {
 	err := ddb.CreateTable(d, testTableName)
@@ -34,6 +44,19 @@ func tearDownDB(d dynamodbiface.DynamoDBAPI) error {
 	return nil
 }
 
+// createCookie uses the same keys as the session manager provided for the
+// integration tests to encode a value and provide it in a cookie for the tests
+func createCookie(userID string) *http.Cookie {
+	encoded, err := cookies.Encode(app.SessionCookieKey, userID)
+	if err != nil {
+		panic(err)
+	}
+	return &http.Cookie{
+		Name:  app.SessionCookieKey,
+		Value: encoded,
+	}
+}
+
 // setUpTestServer sets up a server with with the real routes and a test
 // dynamodb instance, with stubs for the rest of the app
 func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
@@ -44,9 +67,9 @@ func setUpTestServer(t *testing.T) (http.Handler, func(t *testing.T)) {
 	}
 
 	oauth := &mock_app.MockAuth{}
-	auth := &app.StubSessionManager{}
+	session := sessions.New(testSessionHashKey, testSessionRangeKey)
 	images := &mock_app.MockImageStore{}
-	a := app.New(db, oauth, auth, "", images)
+	a := app.New(db, oauth, session, "", images)
 	r := router.Init(a)
 
 	return r, func(t *testing.T) {
@@ -64,7 +87,7 @@ func createUser(t *testing.T, user app.User, r http.Handler) {
 	}
 	response := httptest.NewRecorder()
 	request := app.NewCreateUserRequest(userJSON)
-	request.AddCookie(&app.ValidCookie)
+	request.AddCookie(createCookie(app.TestSeanUser.ID))
 	r.ServeHTTP(response, request)
 	assert.Equal(t, http.StatusAccepted, response.Code)
 }
@@ -92,17 +115,15 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 		// should not work as the userID from the cookie does not exist
 		response = httptest.NewRecorder()
 		request = app.NewGetSelfRequest()
-		request.AddCookie(&http.Cookie{
-			Name:  "session",
-			Value: "not-real-id",
-		})
+		request.AddCookie(createCookie("not-real-id"))
+
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusNotFound, response.Code)
 
 		// use a cookie with the SAME ID
 		response = httptest.NewRecorder()
 		request = app.NewGetSelfRequest()
-		request.AddCookie(&app.ValidCookie)
+		request.AddCookie(createCookie(app.TestSeanUser.ID))
 		router.ServeHTTP(response, request)
 
 		var userGot app.User
@@ -116,7 +137,7 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 		// GET the specifically created user from the db by ID
 		response = httptest.NewRecorder()
 		request = app.NewGetUserRequest(app.TestSeanUser.ID)
-		request.AddCookie(&app.ValidCookie)
+		request.AddCookie(createCookie(app.TestSeanUser.ID))
 		router.ServeHTTP(response, request)
 
 		err = json.NewDecoder(response.Body).Decode(&userGot)
@@ -139,7 +160,7 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 		// GET all users
 		response := httptest.NewRecorder()
 		request := app.NewGetAllUsersRequest()
-		request.AddCookie(&app.ValidCookie)
+		request.AddCookie(createCookie(app.TestSeanUser.ID))
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
 
@@ -156,14 +177,13 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 func createTestTransaction(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
 	payload := app.MakeCreateTransactionRequestPayload(ed)
 	request := app.NewCreateTransactionRequest(payload)
-	request.AddCookie(&http.Cookie{Name: "session", Value: userid})
+	request.AddCookie(createCookie(userid))
 	response := httptest.NewRecorder()
 	r.ServeHTTP(response, request)
 	assert.Equal(t, http.StatusAccepted, response.Code)
 }
 
 func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
-
 	t.Run("an transaction can be added with a valid cookie and be retrieved as part of a GetAll request", func(t *testing.T) {
 		router, tearDownDB := setUpTestServer(t)
 		defer tearDownDB(t)
@@ -178,7 +198,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 		// try and get it
 		request := app.NewGetAllTransactionsRequest()
-		request.AddCookie(&http.Cookie{Name: "session", Value: wantedTransactionDetails.UserID})
+		request.AddCookie(createCookie(wantedTransactionDetails.UserID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
@@ -203,7 +223,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
 		request := app.NewGetAllTransactionsRequest()
-		request.AddCookie(&app.ValidCookie)
+		request.AddCookie(createCookie(app.TestSeanUser.ID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 
@@ -218,7 +238,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert.NotZero(transactionID)
 
 		request = app.NewGetTransactionRequest(transactionID)
-		request.AddCookie(&app.ValidCookie)
+		request.AddCookie(createCookie(app.TestSeanUser.ID))
 		response = httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
@@ -243,7 +263,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		createTestTransaction(t, router, wantedTransactionDetails, app.TestSeanUser.ID)
 
 		request := app.NewGetTransactionsByUserRequest(app.TestSeanUser.ID)
-		request.AddCookie(&app.ValidCookie)
+		request.AddCookie(createCookie(app.TestSeanUser.ID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
 		assert.Equal(http.StatusOK, response.Code)
@@ -282,7 +302,7 @@ func TestDeletingTransactions(t *testing.T) {
 			createTestTransaction(t, router, tc.td, tc.user)
 
 			request := app.NewGetTransactionsByUserRequest(tc.user)
-			request.AddCookie(&http.Cookie{Name: "session", Value: tc.user})
+			request.AddCookie(createCookie(tc.user))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
@@ -294,14 +314,14 @@ func TestDeletingTransactions(t *testing.T) {
 			assert.Len(got, 1)
 
 			request = app.NewDeleteTransactionRequest(got[0].ID)
-			request.AddCookie(&http.Cookie{Name: "session", Value: tc.user})
+			request.AddCookie(createCookie(tc.user))
 			response = httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 			assert.Equal(tc.wantCode, response.Code)
 
 			// get the transactions again - this time it should be empty
 			request = app.NewGetTransactionsByUserRequest(tc.user)
-			request.AddCookie(&http.Cookie{Name: "session", Value: tc.user})
+			request.AddCookie(createCookie(tc.user))
 			response = httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 			err = json.NewDecoder(response.Body).Decode(&got)
@@ -316,12 +336,8 @@ func TestDeletingTransactions(t *testing.T) {
 func createTracker(t testing.TB, tracker app.Tracker, r http.Handler) {
 	response := httptest.NewRecorder()
 	request := app.NewCreateTrackerRequest(t, tracker)
-	validCookie := http.Cookie{
-		Name: "session",
-		// the cookie has to contain information from one of the users in the tracker
-		Value: tracker.Users[0],
-	}
-	request.AddCookie(&validCookie)
+	// the cookie has to contain information from one of the users in the tracker
+	request.AddCookie(createCookie(tracker.Users[0]))
 	r.ServeHTTP(response, request)
 }
 
@@ -338,12 +354,12 @@ func TestCreatingTrackers(t *testing.T) {
 		},
 		"session user is not involved in tracker": {
 			tracker:      app.TestTracker,
-			cookie:       http.Cookie{Name: "session", Value: "not-in-tracker-user"},
+			cookie:       *createCookie("not-in-tracker-user"),
 			expectedCode: http.StatusForbidden,
 		},
 		"session is involved in tracker": {
 			tracker:      app.TestTracker,
-			cookie:       http.Cookie{Name: "session", Value: app.TestSeanTransaction.UserID},
+			cookie:       *createCookie(app.TestSeanTransaction.UserID),
 			expectedCode: http.StatusAccepted,
 		},
 	}
@@ -381,7 +397,7 @@ func TestGetTracker(t *testing.T) {
 		},
 		"with a non-existent tracker ID": {
 			trackerID:    "non-existent-tracker-id",
-			cookie:       app.ValidCookie,
+			cookie:       *createCookie(app.TestSeanUser.ID),
 			expectedCode: http.StatusNotFound,
 		},
 		// NOTE: we can't actually do this here because we don't know the ID
@@ -429,19 +445,19 @@ func TestGetTrackersByUser(t *testing.T) {
 		},
 		"with a user in no trackers": {
 			user:         "notInAnyTrackers",
-			cookie:       app.ValidCookie,
+			cookie:       *createCookie(app.TestSeanUser.ID),
 			wantCode:     http.StatusOK,
 			wantTrackers: nil,
 		},
 		"with a user in a tracker": {
 			user:         app.TestTomomiUser.ID,
-			cookie:       app.ValidCookie,
+			cookie:       *createCookie(app.TestSeanUser.ID),
 			wantCode:     http.StatusOK,
 			wantTrackers: []app.Tracker{testTrackerWithTwoUsers},
 		},
 		"with a user in two trackers": {
 			user:         app.TestSeanUser.ID,
-			cookie:       app.ValidCookie,
+			cookie:       *createCookie(app.TestSeanUser.ID),
 			wantCode:     http.StatusOK,
 			wantTrackers: []app.Tracker{app.TestTracker, testTrackerWithTwoUsers},
 		},
@@ -496,7 +512,7 @@ func TestCreateSharedTxn(t *testing.T) {
 		},
 		"with a valid cookie but an invalid transaction": {
 			transaction: app.SharedTransaction{},
-			cookie:      app.ValidCookie,
+			cookie:      *createCookie(app.TestSeanUser.ID),
 			wantCode:    http.StatusBadRequest,
 		},
 		"with a valid cookie, but the user is not in the participants field": {
@@ -506,7 +522,7 @@ func TestCreateSharedTxn(t *testing.T) {
 				Amount:       123,
 				Date:         123456,
 			},
-			cookie:   http.Cookie{Name: "session", Value: "not-in-participants"},
+			cookie:   *createCookie("not-in-participants"),
 			wantCode: http.StatusForbidden,
 		},
 		"with a valid cookie and a valid transaction": {
@@ -516,7 +532,7 @@ func TestCreateSharedTxn(t *testing.T) {
 				Amount:       123,
 				Date:         123456,
 			},
-			cookie:   http.Cookie{Name: "session", Value: "user-01"},
+			cookie:   *createCookie("user-01"),
 			wantCode: http.StatusAccepted,
 		},
 	}
@@ -537,10 +553,7 @@ func TestCreateSharedTxn(t *testing.T) {
 
 func addTransaction(h http.Handler, txn app.SharedTransaction) {
 	request := app.NewCreateSharedTxnRequest(txn)
-	request.AddCookie(&http.Cookie{
-		Name:  "session",
-		Value: txn.Participants[0],
-	})
+	request.AddCookie(createCookie(txn.Participants[0]))
 	response := httptest.NewRecorder()
 	h.ServeHTTP(response, request)
 }
@@ -581,7 +594,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 			addTransaction(router, testTxn)
 
 			request := app.NewGetTxnsByTrackerRequest(tc.tracker)
-			request.AddCookie(&app.ValidCookie)
+			request.AddCookie(createCookie(app.TestSeanUser.ID))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
@@ -646,7 +659,7 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			addTransaction(router, testUnsettledTxn)
 
 			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.tracker)
-			request.AddCookie(&app.ValidCookie)
+			request.AddCookie(createCookie(app.TestSeanUser.ID))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
@@ -692,7 +705,7 @@ func TestSettleTxns(t *testing.T) {
 		// 	wantCode:    http.StatusForbidden,
 		// },
 		"you can settle a transaction that you are a participant of": {
-			cookie:      http.Cookie{Name: "session", Value: testUnsettledTxn.Participants[0]},
+			cookie:      *createCookie(testUnsettledTxn.Participants[0]),
 			initialTxns: []app.SharedTransaction{testUnsettledTxn},
 			wantTxns:    []app.SharedTransaction{},
 			wantCode:    http.StatusAccepted,

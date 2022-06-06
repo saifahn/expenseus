@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -295,49 +294,3 @@ func NewSettleTxnsRequest(t testing.TB, txns []SharedTransaction) *http.Request 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/shared/settle", bytes.NewBuffer(transactionsJSON))
 	return req
 }
-
-// #region Sessions
-type StubSessionManager struct {
-	saveCalls   []string
-	removeCalls int
-}
-
-var ValidCookie = http.Cookie{
-	Name:  "session",
-	Value: TestSeanUser.ID,
-}
-
-func (s *StubSessionManager) Validate(r *http.Request) bool {
-	cookies := r.Cookies()
-	for _, cookie := range cookies {
-		if cookie.Name == ValidCookie.Name {
-			if len(cookie.Value) > 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func (s *StubSessionManager) Save(rw http.ResponseWriter, r *http.Request) {
-	userID := r.Context().Value(CtxKeyUserID).(string)
-	s.saveCalls = append(s.saveCalls, userID)
-	http.SetCookie(rw, &ValidCookie)
-}
-
-func (s *StubSessionManager) GetUserID(r *http.Request) (string, error) {
-	// get it from the cookie
-	cookies := r.Cookies()
-	for _, cookie := range cookies {
-		if cookie.Name == ValidCookie.Name {
-			return cookie.Value, nil
-		}
-	}
-	return "", errors.New("no user ID was found")
-}
-
-func (s *StubSessionManager) Remove(rw http.ResponseWriter, r *http.Request) {
-	s.removeCalls++
-}
-
-// #endregion Sessions

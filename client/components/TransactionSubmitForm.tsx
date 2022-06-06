@@ -68,7 +68,9 @@ export default function TransactionSubmitForm() {
         <input
           {...register('amount', { required: 'Please input an amount' })}
           className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           id="amount"
         />
       </div>

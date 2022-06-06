@@ -1,6 +1,7 @@
-package app
+package app_test
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,342 +10,283 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/saifahn/expenseus/internal/app"
+	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetTransactionByID(t *testing.T) {
-	store := StubTransactionStore{
-		users: []User{},
-		transactions: map[string]Transaction{
-			"1":    TestSeanTransaction,
-			"9281": TestTomomiTransaction,
-			"134":  TestTransactionWithImage,
+func TestGetTransaction(t *testing.T) {
+	testTxnID := "test-txn-id"
+
+	txnWithImageKey := app.Transaction{
+		ID: testTxnID,
+		TransactionDetails: app.TransactionDetails{
+			ImageKey: "test-image-key",
 		},
 	}
-	images := StubImageStore{}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
 
-	t.Run("get an transaction by id", func(t *testing.T) {
-		request := NewGetTransactionRequest("1")
-		response := httptest.NewRecorder()
+	txnWithImageURL := app.Transaction{
+		ID:                 txnWithImageKey.ID,
+		ImageURL:           "test-image-url",
+		TransactionDetails: txnWithImageKey.TransactionDetails,
+	}
 
-		handler := http.HandlerFunc(app.GetTransaction)
-		handler.ServeHTTP(response, request)
+	tests := map[string]struct {
+		txnID          string
+		expectationsFn mock_app.MockAppFn
+		wantTxn        *app.Transaction
+		wantCode       int
+	}{
+		"calls the store function to get the transaction": {
+			txnID: testTxnID,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
+			},
+			wantTxn:  &app.Transaction{ID: testTxnID},
+			wantCode: http.StatusOK,
+		},
+		"with a txnID of a transaction with an image": {
+			txnID: testTxnID,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(txnWithImageKey, nil).Times(1)
+				ma.MockImages.EXPECT().AddImageToTransaction(gomock.Eq(txnWithImageKey)).Return(txnWithImageURL, nil)
+			},
+			wantTxn:  &txnWithImageURL,
+			wantCode: http.StatusOK,
+		},
+		"returns 404 on a non-existent transaction": {
+			txnID: "non-existent-txn",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransaction(gomock.Eq("non-existent-txn")).Return(app.Transaction{}, app.ErrDBItemNotFound).Times(1)
+			},
+			wantTxn:  nil,
+			wantCode: http.StatusNotFound,
+		},
+	}
 
-		var got Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into Transaction, '%v'", response.Body, err)
-		}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, got, TestSeanTransaction)
-	})
+			req := app.NewGetTransactionRequest(tc.txnID)
+			response := httptest.NewRecorder()
 
-	t.Run("gets another transaction by id", func(t *testing.T) {
-		request := NewGetTransactionRequest("9281")
-		response := httptest.NewRecorder()
+			handler := http.HandlerFunc(a.GetTransaction)
+			handler.ServeHTTP(response, req)
 
-		handler := http.HandlerFunc(app.GetTransaction)
-		handler.ServeHTTP(response, request)
+			assert.Equal(tc.wantCode, response.Code)
 
-		var got Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into Transaction, '%v'", response.Body, err)
-		}
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, got, TestTomomiTransaction)
-	})
-
-	t.Run("returns a response without an imageKey or imageUrl for an transaction without an image", func(t *testing.T) {
-		request := NewGetTransactionRequest("9281")
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetTransaction)
-		handler.ServeHTTP(response, request)
-
-		rawJSON := response.Body.String()
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.NotContains(t, rawJSON, "imageKey")
-		assert.NotContains(t, rawJSON, "imageUrl")
-	})
-
-	t.Run("returns a response with an imageUrl for an transaction that has an image", func(t *testing.T) {
-		request := NewGetTransactionRequest("134")
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetTransaction)
-		handler.ServeHTTP(response, request)
-
-		rawJSON := response.Body.String()
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		// TODO somehow don't return this to the front end but we need to use it in the back end so we can't just use "-"?
-		// assert.NotContains(t, rawJSON, "imageKey")
-		assert.Len(t, images.addImageToTransactionCalls, 1)
-		assert.Contains(t, rawJSON, "imageUrl")
-	})
-
-	t.Run("returns 404 on non-existent transaction", func(t *testing.T) {
-		request := NewGetTransactionRequest("13371337")
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetTransaction)
-		handler.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-	})
+			if tc.wantTxn != nil {
+				var got app.Transaction
+				err := json.NewDecoder(response.Body).Decode(&got)
+				assert.NoError(err)
+				assert.Equal(*tc.wantTxn, got)
+			}
+		})
+	}
 }
 
-func TestGetTransactionByUser(t *testing.T) {
-	store := StubTransactionStore{
-		users: []User{
-			TestSeanUser,
-			TestTomomiUser,
+func TestGetTxnsByUser(t *testing.T) {
+	testTxn := app.Transaction{ID: "txn-01"}
+	testTxnWithImageKey := app.Transaction{
+		ID:                 "txn-image-key",
+		TransactionDetails: app.TransactionDetails{ImageKey: "test-image-key"},
+	}
+	testTxnWithImageURL := app.Transaction{
+		ID:                 testTxnWithImageKey.ID,
+		ImageURL:           "test-image-url",
+		TransactionDetails: testTxnWithImageKey.TransactionDetails,
+	}
+
+	tests := map[string]struct {
+		user           string
+		expectationsFn mock_app.MockAppFn
+		wantTxns       []app.Transaction
+		wantCode       int
+	}{
+		"with a user that has one transaction": {
+			user: "one-txn-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransactionsByUser(gomock.Eq("one-txn-user")).Return([]app.Transaction{testTxn}, nil).Times(1)
+			},
+			wantTxns: []app.Transaction{testTxn},
+			wantCode: http.StatusOK,
 		},
-		transactions: map[string]Transaction{
-			"1":    TestSeanTransaction,
-			"9281": TestTomomiTransaction,
+		"with a user that has 0 transactions": {
+			user: "zero-txn-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransactionsByUser(gomock.Eq("zero-txn-user")).Return([]app.Transaction{}, nil).Times(1)
+			},
+			wantTxns: []app.Transaction{},
+			wantCode: http.StatusOK,
+		},
+		"with transactions that have images": {
+			user: "txn-with-image-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTransactionsByUser(gomock.Eq("txn-with-image-user")).Return([]app.Transaction{testTxnWithImageKey}, nil).Times(1)
+				ma.MockImages.EXPECT().AddImageToTransaction(gomock.Eq(testTxnWithImageKey)).Return(testTxnWithImageURL, nil).Times(1)
+			},
+			wantTxns: []app.Transaction{testTxnWithImageURL},
+			wantCode: http.StatusOK,
 		},
 	}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	t.Run("gets tomochi's transactions", func(t *testing.T) {
-		request := NewGetTransactionsByUserRequest(TestTomomiUser.ID)
-		response := httptest.NewRecorder()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
-		handler := http.HandlerFunc(app.GetTransactionsByUser)
-		handler.ServeHTTP(response, request)
+			req := app.NewGetTransactionsByUserRequest(tc.user)
+			response := httptest.NewRecorder()
 
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
+			handler := http.HandlerFunc(a.GetTransactionsByUser)
+			handler.ServeHTTP(response, req)
 
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Len(t, got, 1)
-		assert.Contains(t, got, TestTomomiTransaction)
-	})
+			assert.Equal(tc.wantCode, response.Code)
 
-	t.Run("gets saifahn's transactions", func(t *testing.T) {
-		request := NewGetTransactionsByUserRequest(TestSeanUser.ID)
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetTransactionsByUser)
-		handler.ServeHTTP(response, request)
-
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Len(t, got, 1)
-		assert.Contains(t, got, TestSeanTransaction)
-	})
+			var got []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Equal(tc.wantTxns, got)
+		})
+	}
 }
 
 func TestCreateTransaction(t *testing.T) {
-	// FIXME: for some reason, this stopped working after adding amount to the transactions
-	// t.Run("returns an error if there is no user in the context", func(t *testing.T) {
-	// 	store := StubTransactionStore{}
-	// 	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-
-	// 	values := map[string]io.Reader{
-	// 		"transactionName": strings.NewReader("Test Transaction"),
-	// 		"amount":          strings.NewReader("123"),
-	// 	}
-
-	// 	var b bytes.Buffer
-	// 	w := multipart.NewWriter(&b)
-	// 	for _, reader := range values {
-	// 		var fw io.Writer
-	// 		fw, _ = w.CreateFormField("transactionName")
-	// 		if _, err := io.Copy(fw, reader); err != nil {
-	// 			fmt.Println(err.Error())
-	// 		}
-	// 	}
-	// 	w.Close()
-	// 	request, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions", &b)
-	// 	request.Header.Set("Content-Type", w.FormDataContentType())
-	// 	response := httptest.NewRecorder()
-
-	// 	handler := http.HandlerFunc(app.CreateTransaction)
-	// 	assert.Panics(t, func() {
-	// 		handler.ServeHTTP(response, request)
-	// 	}, "The code did not panic due to a lack of context")
-	// })
-
-	t.Run("calls the store's CreateTransaction with the right details on POST", func(t *testing.T) {
-		store := StubTransactionStore{
-			transactions: map[string]Transaction{},
-		}
-		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-		expectedDetails := TransactionDetails{
-			Name:   "Test Transaction",
-			Amount: 123,
-			Date:   1644085875,
-			UserID: TestTomomiUser.ID,
-		}
-		payload := MakeCreateTransactionRequestPayload(expectedDetails)
-		request := AddUserCookieAndContext(NewCreateTransactionRequest(payload), TestTomomiUser.ID)
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.CreateTransaction)
-		handler.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusAccepted, response.Code)
-		assert.Len(t, store.recordTransactionCalls, 1)
-		assert.Equal(t, expectedDetails, store.recordTransactionCalls[0])
-	})
-
-	// prepares a temp file, information, and values for image upload tests
-	var testAmount = "918"
-	var testAmountInt64 = int64(918)
-	var testDate = "1644085875"
-	var testDateInt64 = int64(1644085875)
-	prepareFileAndInfo := func(t *testing.T) (*os.File, string, map[string]io.Reader) {
-		f, err := os.CreateTemp("", "example-file")
-		if err != nil {
-			t.Fatal(err)
-		}
-		transactionName := "Test Transaction with Image"
-
-		values := map[string]io.Reader{
-			"transactionName": strings.NewReader(transactionName),
-			"amount":          strings.NewReader(testAmount),
-			"date":            strings.NewReader(testDate),
-			"image":           f,
-		}
-		return f, transactionName, values
+	testTxnDetails := app.TransactionDetails{
+		Name:   "test-txn",
+		Amount: 123,
+		Date:   123456,
 	}
 
-	t.Run("if an image is provided and it fails the image check, there is an error response", func(t *testing.T) {
-		store := StubTransactionStore{
-			transactions: map[string]Transaction{},
-		}
-		images := StubInvalidImageStore{}
-		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
+	testImgTxnDetails := app.TransactionDetails{
+		Name:     "test-txn",
+		Amount:   123,
+		Date:     123456,
+		ImageKey: "test-image-key",
+	}
 
-		f, _, values := prepareFileAndInfo(t)
-		defer f.Close()
-		defer os.Remove(f.Name())
+	tests := map[string]struct {
+		txnDetails     app.TransactionDetails
+		user           string
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+		withImg        bool
+	}{
+		"with a valid transaction without an image": {
+			txnDetails: testTxnDetails,
+			user:       "user-01",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.TransactionDetails{
+					Name:   testTxnDetails.Name,
+					Amount: testTxnDetails.Amount,
+					Date:   testTxnDetails.Date,
+					UserID: "user-01",
+				})).Return(nil).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+		"with a transaction with an image that fails the image check": {
+			txnDetails: testImgTxnDetails,
+			user:       "user-02",
+			expectationsFn: func(ma *mock_app.App) {
+				// can't assert the file exactly, so use any
+				ma.MockImages.EXPECT().Validate(gomock.Any()).Return(false, nil).Times(1)
+			},
+			wantCode: http.StatusUnprocessableEntity,
+			withImg:  true,
+		},
+		"with a transaction with an image that passes the image check and successfully uploads": {
+			txnDetails: testImgTxnDetails,
+			user:       "user-02",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockImages.EXPECT().Validate(gomock.Any()).Return(true, nil).Times(1)
+				ma.MockImages.EXPECT().Upload(gomock.Any(), gomock.Any()).Return(testImgTxnDetails.ImageKey, nil)
+				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.TransactionDetails{
+					Name:     testImgTxnDetails.Name,
+					Amount:   testImgTxnDetails.Amount,
+					Date:     testImgTxnDetails.Date,
+					ImageKey: testImgTxnDetails.ImageKey,
+					UserID:   "user-02",
+				})).Times(1)
+			},
+			withImg:  true,
+			wantCode: http.StatusAccepted,
+		},
+	}
 
-		request := AddUserCookieAndContext(NewCreateTransactionRequest(values), TestSeanUser.ID)
-		response := httptest.NewRecorder()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
-		handler := http.HandlerFunc(app.CreateTransaction)
-		handler.ServeHTTP(response, request)
+			var payload map[string]io.Reader
+			if tc.withImg {
+				testFile, err := os.CreateTemp("", "example-file")
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer testFile.Close()
+				defer os.Remove(testFile.Name())
 
-		// the invalid image store will return this error if the image is invalid
-		assert.Equal(t, http.StatusUnprocessableEntity, response.Code)
-		assert.Len(t, images.uploadCalls, 0)
-	})
+				payload = map[string]io.Reader{
+					"transactionName": strings.NewReader(testImgTxnDetails.Name),
+					"amount":          strings.NewReader("123"),
+					"date":            strings.NewReader("123456"),
+					"image":           testFile,
+				}
+			} else {
+				payload = app.MakeCreateTransactionRequestPayload(tc.txnDetails)
+			}
 
-	t.Run("if an image is provided and the image check is successful, the image is uploaded and an transaction is created with an image key", func(t *testing.T) {
-		store := StubTransactionStore{
-			transactions: map[string]Transaction{},
-		}
-		images := StubImageStore{}
-		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &images)
-		userID := TestSeanUser.ID
+			req := app.NewCreateTransactionRequest(payload)
+			req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, tc.user))
+			response := httptest.NewRecorder()
 
-		f, transactionName, values := prepareFileAndInfo(t)
-		defer f.Close()
-		defer os.Remove(f.Name())
+			handler := http.HandlerFunc(a.CreateTransaction)
+			handler.ServeHTTP(response, req)
 
-		request := AddUserCookieAndContext(NewCreateTransactionRequest(values), userID)
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.CreateTransaction)
-		handler.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusAccepted, response.Code)
-		assert.Len(t, images.uploadCalls, 1)
-		assert.Len(t, store.recordTransactionCalls, 1)
-		got := store.recordTransactionCalls[0]
-		want := TransactionDetails{
-			Name:     transactionName,
-			UserID:   userID,
-			ImageKey: testImageKey,
-			Amount:   testAmountInt64,
-			Date:     testDateInt64,
-		}
-		assert.Equal(t, want, got)
-	})
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
 }
 
-func TestGetAllTransactions(t *testing.T) {
-	t.Run("gets all transactions with one transaction", func(t *testing.T) {
-		wantedTransactions := []Transaction{
-			TestTomomiTransaction,
-		}
-		store := StubTransactionStore{
-			users: []User{},
-			transactions: map[string]Transaction{
-				"9281": TestTomomiTransaction,
+func TestDeleteTransaction(t *testing.T) {
+	// testTransaction := app.Transaction{}
+
+	tests := map[string]struct {
+		transactionId  string
+		user           string
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+	}{
+		"calls the store function to delete the transaction": {
+			transactionId: "test-transaction-id",
+			user:          "test-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().DeleteTransaction(gomock.Eq("test-transaction-id"), gomock.Eq("test-user")).Return(nil).Times(1)
 			},
-		}
-		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+			wantCode: http.StatusAccepted,
+		},
+	}
 
-		request := NewGetAllTransactionsRequest()
-		response := httptest.NewRecorder()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
 
-		handler := http.HandlerFunc(app.GetAllTransactions)
-		handler.ServeHTTP(response, request)
+			req := app.NewDeleteTransactionRequest(tc.transactionId)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
+			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.transactionId)
 
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
+			req = req.WithContext(ctx)
+			response := httptest.NewRecorder()
+			handler := http.HandlerFunc(a.DeleteTransaction)
+			handler.ServeHTTP(response, req)
 
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, len(wantedTransactions), len(got))
-		assert.ElementsMatch(t, got, wantedTransactions)
-	})
-
-	t.Run("gets all transactions with more than one transaction", func(t *testing.T) {
-		wantedTransactions := []Transaction{
-			TestSeanTransaction, TestTomomiTransaction, TestTomomiTransaction2,
-		}
-		store := StubTransactionStore{
-			users: []User{},
-			transactions: map[string]Transaction{
-				"1":     TestSeanTransaction,
-				"9281":  TestTomomiTransaction,
-				"14928": TestTomomiTransaction2,
-			},
-		}
-		app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
-
-		request := NewGetAllTransactionsRequest()
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.GetAllTransactions)
-		handler.ServeHTTP(response, request)
-
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
-
-		assert.Equal(t, jsonContentType, response.Result().Header.Get("content-type"))
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.Equal(t, len(wantedTransactions), len(got))
-		assert.ElementsMatch(t, got, wantedTransactions)
-	})
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
 }

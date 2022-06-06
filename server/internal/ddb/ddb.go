@@ -60,6 +60,9 @@ func userItemToUser(ui UserItem) app.User {
 func (d *dynamoDB) GetUser(id string) (app.User, error) {
 	ui, err := d.users.Get(id)
 	if err != nil {
+		if err == table.ErrItemNotFound {
+			return app.User{}, app.ErrDBItemNotFound
+		}
 		return app.User{}, err
 	}
 

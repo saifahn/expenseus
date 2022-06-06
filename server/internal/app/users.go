@@ -68,15 +68,20 @@ func (a *App) GetUser(rw http.ResponseWriter, r *http.Request) {
 func (a *App) GetSelf(rw http.ResponseWriter, r *http.Request) {
 	id, err := a.sessions.GetUserID(r)
 
-	// TODO: add case for non-existent user
 	// TODO: handle non-valid session
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	user, err := a.store.GetUser(id)
 	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
+		if err == ErrDBItemNotFound {
+			http.Error(rw, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	rw.Header().Set("content-type", jsonContentType)

@@ -1,158 +1,134 @@
-package app
+package app_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/saifahn/expenseus/internal/app"
+	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestOauthLogin(t *testing.T) {
-	store := StubTransactionStore{}
-	oauth := StubOauthConfig{}
-	app := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
+	assert := assert.New(t)
+	oauthProviderURL := "test-oauth-url"
 
-	request, err := http.NewRequest(http.MethodGet, "/api/v1/login_google", nil)
-	if err != nil {
-		t.Fatalf("request could not be created, %v", err)
+	expectFn := func(ma *mock_app.App) {
+		ma.MockAuth.EXPECT().AuthCodeURL(gomock.Any()).Return(oauthProviderURL).Times(1)
 	}
+	a := mock_app.SetUp(t, expectFn)
+
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/login_google", nil)
 	response := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(app.OauthLogin)
-	handler.ServeHTTP(response, request)
+	handler := http.HandlerFunc(a.OauthLogin)
+	handler.ServeHTTP(response, req)
 
-	assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
-	// are these even good assertions to have?
-	expectedURL := fmt.Sprintf("/api/v1/%s", oauthProviderMockURL)
-	assert.Equal(t, expectedURL, response.Header().Get("Location"))
-	// assert AuthCodeURL was called
-	assert.Len(t, oauth.AuthCodeURLCalls, 1)
+	assert.Equal(http.StatusTemporaryRedirect, response.Code)
+	wantURL := fmt.Sprintf("/api/v1/%s", oauthProviderURL)
+	assert.Equal(wantURL, response.Header().Get("Location"))
 }
 
 func TestOauthCallback(t *testing.T) {
-	t.Run("creates a user when user doesn't exist yet and creates a new session with the user", func(t *testing.T) {
-		store := StubTransactionStore{users: []User{}}
-		oauth := StubOauthConfig{}
-		sessions := StubSessionManager{}
-		frontend := "http://a.test"
-		app := New(&store, &oauth, &sessions, frontend, &StubImageStore{})
+	newUser := app.User{
+		Username: "a-new-user",
+		ID:       "a-new-user-id",
+	}
 
-		request := NewGoogleCallbackRequest()
-		response := httptest.NewRecorder()
+	tests := map[string]struct {
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"when the user does not exist yet in the db": {
+			expectFn: func(ma *mock_app.App) {
+				ma.MockAuth.EXPECT().GetInfoAndGenerateUser(gomock.Any(), gomock.Any()).Return(newUser, nil).Times(1)
+				ma.MockStore.EXPECT().GetUser(newUser.ID).Return(app.User{}, app.ErrDBItemNotFound).Times(1)
+				ma.MockStore.EXPECT().CreateUser(newUser).Times(1)
+				ma.MockSessions.EXPECT().Save(gomock.Any(), gomock.Any()).Times(1)
+			},
+			wantCode: http.StatusTemporaryRedirect,
+		},
+		"when the user exists in the db": {
+			expectFn: func(ma *mock_app.App) {
+				ma.MockAuth.EXPECT().GetInfoAndGenerateUser(gomock.Any(), gomock.Any()).Return(newUser, nil).Times(1)
+				ma.MockStore.EXPECT().GetUser(newUser.ID).Return(app.User{Username: newUser.Username, ID: newUser.ID}, nil).Times(1)
+				ma.MockSessions.EXPECT().Save(gomock.Any(), gomock.Any()).Times(1)
+			},
+			wantCode: http.StatusTemporaryRedirect,
+		},
+	}
 
-		handler := http.HandlerFunc(app.OauthCallback)
-		handler.ServeHTTP(response, request)
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
 
-		// expect a new user to be added to the store, GetInfoAndGenerateUser has been stubbed to generate TestSeanUser
-		expected := []User{TestSeanUser}
-		assert.Len(t, store.users, 1)
-		assert.ElementsMatch(t, expected, store.users)
+			req := app.NewGoogleCallbackRequest()
+			response := httptest.NewRecorder()
 
-		assert.Len(t, sessions.saveCalls, 1)
-		assert.Equal(t, sessions.saveCalls[0], TestSeanUser.ID)
+			handler := http.HandlerFunc(a.OauthCallback)
+			handler.ServeHTTP(response, req)
 
-		// get routed to the base page for now
-		url, err := response.Result().Location()
-		if err != nil {
-			t.Fatalf("url couldn't be found: %v", err)
-		}
-		assert.Equal(t, frontend, url.String())
-	})
-
-	t.Run("doesn't create a new user when the user already exists, and saves the session with the user in the context", func(t *testing.T) {
-		store := StubTransactionStore{users: []User{TestSeanUser}}
-		oauth := StubOauthConfig{}
-		sessions := StubSessionManager{}
-		frontend := "http://another.test"
-		app := New(&store, &oauth, &sessions, frontend, &StubImageStore{})
-
-		request := NewGoogleCallbackRequest()
-		response := httptest.NewRecorder()
-
-		handler := http.HandlerFunc(app.OauthCallback)
-		handler.ServeHTTP(response, request)
-
-		expected := []User{TestSeanUser}
-		assert.Len(t, store.users, 1)
-		assert.ElementsMatch(t, expected, store.users)
-
-		assert.Len(t, sessions.saveCalls, 1)
-		// the callback will add a context of the appropriate user id
-		assert.Equal(t, sessions.saveCalls[0], TestSeanUser.ID)
-
-		// expect to get routed to the main welcome page
-		url, err := response.Result().Location()
-		if err != nil {
-			t.Fatalf("url couldn't be found: %v", err)
-		}
-		assert.Equal(t, frontend, url.String())
-	})
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
 }
 
+// tests that the middleware will either pass on the response or return a 401
 func TestVerifyUser(t *testing.T) {
-	t.Run("returns a 401 response when the user is not authorized", func(t *testing.T) {
-		store := StubTransactionStore{}
-		oauth := StubOauthConfig{}
-		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
+	tests := map[string]struct {
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"when the user's session cannot be validated": {
+			expectFn: func(ma *mock_app.App) {
+				ma.MockSessions.EXPECT().Validate(gomock.Any()).Return(false).Times(1)
+			},
+			wantCode: http.StatusUnauthorized,
+		},
+		"when the user's session is successfully validated": {
+			expectFn: func(ma *mock_app.App) {
+				ma.MockSessions.EXPECT().Validate(gomock.Any()).Return(true).Times(1)
+				ma.MockSessions.EXPECT().GetUserID(gomock.Any()).Return("a-user-id", nil).Times(1)
+				ma.MockStore.EXPECT().GetAllUsers().Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
 
-		request := NewGetAllTransactionsRequest()
-		response := httptest.NewRecorder()
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
 
-		handler := a.VerifyUser(http.HandlerFunc(a.GetAllTransactions))
-		handler.ServeHTTP(response, request)
+			req := app.NewGetAllUsersRequest()
+			response := httptest.NewRecorder()
 
-		assert.Equal(t, http.StatusUnauthorized, response.Code)
-	})
+			handler := a.VerifyUser(http.HandlerFunc(a.ListUsers))
+			handler.ServeHTTP(response, req)
 
-	t.Run("returns a 200 response when the user is authorized, and passes the request with the user ID in the context to the appropriate route", func(t *testing.T) {
-		store := StubTransactionStore{transactions: map[string]Transaction{"1": TestSeanTransaction}}
-		oauth := StubOauthConfig{}
-		a := New(&store, &oauth, &StubSessionManager{}, "", &StubImageStore{})
-
-		request := NewGetAllTransactionsRequest()
-		// simulate a cookie session storage here
-		request.AddCookie(&ValidCookie)
-		response := httptest.NewRecorder()
-
-		handler := a.VerifyUser(http.HandlerFunc(a.GetAllTransactions))
-		handler.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusOK, response.Code)
-
-		var got []Transaction
-		err := json.NewDecoder(response.Body).Decode(&got)
-		if err != nil {
-			t.Fatalf("error parsing response from server %q into slice of Transactions, '%v'", response.Body, err)
-		}
-
-		assert.ElementsMatch(t, got, []Transaction{TestSeanTransaction})
-	})
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
 }
 
 func TestLogOut(t *testing.T) {
 	t.Run("session manager calls remove", func(t *testing.T) {
-		store := StubTransactionStore{users: []User{TestSeanUser}}
-		oauth := StubOauthConfig{}
-		sessions := StubSessionManager{}
-		frontend := "http://test.base"
-		a := New(&store, &oauth, &sessions, frontend, &StubImageStore{})
+		assert := assert.New(t)
+		expectFn := func(ma *mock_app.App) {
+			ma.MockSessions.EXPECT().Remove(gomock.Any(), gomock.Any()).Times(1)
+		}
+		a := mock_app.SetUp(t, expectFn)
 
-		request, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/logout", nil)
 		response := httptest.NewRecorder()
 
 		handler := http.HandlerFunc(a.LogOut)
-		handler.ServeHTTP(response, request)
+		handler.ServeHTTP(response, req)
 
-		assert.Equal(t, 1, sessions.removeCalls)
-		assert.Equal(t, http.StatusTemporaryRedirect, response.Code)
-
-		url, err := response.Result().Location()
-		if err != nil {
-			t.Fatalf("url couldn't be found: %v", err)
-		}
-		assert.Equal(t, frontend, url.String())
+		assert.Equal(http.StatusTemporaryRedirect, response.Code)
 	})
 }

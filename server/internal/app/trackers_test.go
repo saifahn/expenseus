@@ -1,79 +1,72 @@
-package app
+package app_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/saifahn/expenseus/internal/app"
+	mock_app "github.com/saifahn/expenseus/internal/app/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateTracker(t *testing.T) {
-	assert := assert.New(t)
-	store := StubTransactionStore{}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
+var testTracker = app.Tracker{
+	Name:  "test-tracker",
+	Users: []string{"test-user"},
+}
 
-	testTrackerDetails := Tracker{
-		Name:  "Test Tracker",
-		Users: []string{TestSeanUser.ID},
+func TestCreateTracker(t *testing.T) {
+	expectFn := func(ma *mock_app.App) {
+		ma.MockStore.EXPECT().CreateTracker(testTracker).Return(nil).Times(1)
 	}
-	req := NewCreateTrackerRequest(t, testTrackerDetails)
-	req = req.WithContext(context.WithValue(req.Context(), CtxKeyUserID, TestSeanUser.ID))
+
+	assert := assert.New(t)
+	a := mock_app.SetUp(t, expectFn)
+
+	req := app.NewCreateTrackerRequest(t, testTracker)
+	req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, "test-user"))
 	response := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(app.CreateTracker)
+	handler := http.HandlerFunc(a.CreateTracker)
 	handler.ServeHTTP(response, req)
 
 	assert.Equal(http.StatusAccepted, response.Code)
-	assert.Len(store.trackers, 1)
 }
 
 func TestGetTrackerByID(t *testing.T) {
-	assert := assert.New(t)
-	store := StubTransactionStore{
-		trackers: []Tracker{TestTracker},
+	expectFn := func(ma *mock_app.App) {
+		ma.MockStore.EXPECT().GetTracker(testTracker.ID).Return(testTracker, nil).Times(1)
 	}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request := NewGetTrackerByIDRequest(TestTracker.ID)
+	assert := assert.New(t)
+	a := mock_app.SetUp(t, expectFn)
+
+	req := app.NewGetTrackerByIDRequest(testTracker.ID)
+	req = req.WithContext(context.WithValue(req.Context(), app.CtxKeyUserID, "test-user"))
 	response := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(app.GetTrackerByID)
-	handler.ServeHTTP(response, request)
+	handler := http.HandlerFunc(a.GetTrackerByID)
+	handler.ServeHTTP(response, req)
 
-	var got Tracker
-	err := json.NewDecoder(response.Body).Decode(&got)
-	if err != nil {
-		t.Fatalf("error parsing response from server %q into Tracker: '%v'", response.Body, err)
-	}
-
-	assert.Equal(jsonContentType, response.Result().Header.Get("content-type"))
 	assert.Equal(http.StatusOK, response.Code)
-	assert.Equal(TestTracker, got)
+	// TODO: table test for non-existent
 }
 
 func TestGetTrackersByUser(t *testing.T) {
-	assert := assert.New(t)
-	store := StubTransactionStore{
-		trackers: []Tracker{TestTracker},
+	expectFn := func(ma *mock_app.App) {
+		ma.MockStore.EXPECT().GetTrackersByUser("test-user").Return([]app.Tracker{testTracker}, nil).Times(1)
 	}
-	app := New(&store, &StubOauthConfig{}, &StubSessionManager{}, "", &StubImageStore{})
 
-	request := NewGetTrackerByUserRequest(TestSeanUser.ID)
+	assert := assert.New(t)
+	a := mock_app.SetUp(t, expectFn)
+
+	request := app.NewGetTrackerByUserRequest("test-user")
 	response := httptest.NewRecorder()
 
-	handler := http.HandlerFunc(app.GetTrackersByUser)
+	handler := http.HandlerFunc(a.GetTrackersByUser)
 	handler.ServeHTTP(response, request)
 
-	var got []Tracker
-	err := json.NewDecoder(response.Body).Decode(&got)
-	if err != nil {
-		t.Fatalf("error parsing response from %q into slice of Trackers: '%v'", response.Body, err)
-	}
-
-	assert.Equal(jsonContentType, response.Result().Header.Get("content-type"))
 	assert.Equal(http.StatusOK, response.Code)
-	assert.Contains(got, TestTracker)
+	// TODO: table test for non-existent
 }

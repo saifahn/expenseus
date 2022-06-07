@@ -257,6 +257,20 @@ func (mr *MockStoreMockRecorder) SettleTxns(txns interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SettleTxns", reflect.TypeOf((*MockStore)(nil).SettleTxns), txns)
 }
 
+// UpdateTransaction mocks base method.
+func (m *MockStore) UpdateTransaction(txn app.Transaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTransaction", txn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTransaction indicates an expected call of UpdateTransaction.
+func (mr *MockStoreMockRecorder) UpdateTransaction(txn interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTransaction", reflect.TypeOf((*MockStore)(nil).UpdateTransaction), txn)
+}
+
 // MockAuth is a mock of Auth interface.
 type MockAuth struct {
 	ctrl     *gomock.Controller

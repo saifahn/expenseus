@@ -236,7 +236,7 @@ func TestCreateTransaction(t *testing.T) {
 					"image":           testFile,
 				}
 			} else {
-				payload = app.MakeCreateTransactionRequestPayload(tc.txnDetails)
+				payload = app.MakeTxnRequestPayload(tc.txnDetails)
 			}
 
 			req := app.NewCreateTransactionRequest(payload)
@@ -252,8 +252,6 @@ func TestCreateTransaction(t *testing.T) {
 }
 
 func TestDeleteTransaction(t *testing.T) {
-	// testTransaction := app.Transaction{}
-
 	tests := map[string]struct {
 		transactionId  string
 		user           string
@@ -284,6 +282,55 @@ func TestDeleteTransaction(t *testing.T) {
 			handler := http.HandlerFunc(a.DeleteTransaction)
 			handler.ServeHTTP(response, req)
 
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
+func TestUpdateTransaction(t *testing.T) {
+	updateTxnInput := app.Transaction{
+		Name:   "test-transaction-name",
+		Amount: 123,
+		Date:   123456,
+	}
+
+	tests := map[string]struct {
+		user           string
+		txnID          string
+		txnDetails     app.Transaction
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+	}{
+		"calls the store function to update the transaction": {
+			user:       "test-user",
+			txnID:      "test-transaction-id",
+			txnDetails: updateTxnInput,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().UpdateTransaction(app.Transaction{
+					ID:     "test-transaction-id",
+					UserID: "test-user",
+					Name:   updateTxnInput.Name,
+					Amount: updateTxnInput.Amount,
+					Date:   updateTxnInput.Date,
+				}).Return(nil).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewUpdateTransactionRequest(tc.txnDetails)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
+			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.txnID)
+			req = req.WithContext(ctx)
+
+			response := httptest.NewRecorder()
+			handler := http.HandlerFunc(a.UpdateTransaction)
+			handler.ServeHTTP(response, req)
 			assert.Equal(tc.wantCode, response.Code)
 		})
 	}

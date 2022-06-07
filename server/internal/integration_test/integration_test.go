@@ -93,7 +93,7 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 }
 
 func createTestTransaction(t *testing.T, r http.Handler, td app.Transaction, userid string) {
-	payload := app.MakeCreateTransactionRequestPayload(td)
+	payload := app.MakeTxnRequestPayload(td)
 	request := app.NewCreateTransactionRequest(payload)
 	request.AddCookie(CreateCookie(userid))
 	response := httptest.NewRecorder()

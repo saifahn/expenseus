@@ -23,14 +23,20 @@ const (
 )
 
 type Store interface {
+	// Transactions
 	GetTransaction(txnID string) (Transaction, error)
 	GetTransactionsByUser(userID string) ([]Transaction, error)
 	GetAllTransactions() ([]Transaction, error)
 	CreateTransaction(txn Transaction) error
+	UpdateTransaction(txn Transaction) error
 	DeleteTransaction(txnID, userID string) error
+
+	// Users
 	CreateUser(user User) error
 	GetUser(id string) (User, error)
 	GetAllUsers() ([]User, error)
+
+	// SharedTxns
 	CreateTracker(tracker Tracker) error
 	GetTracker(trackerID string) (Tracker, error)
 	GetTrackersByUser(userID string) ([]Tracker, error)

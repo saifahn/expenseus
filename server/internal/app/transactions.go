@@ -198,6 +198,104 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusAccepted)
 }
 
+// UpdateTransaction handles a HTTP request to update a transaction.
+func (a *App) UpdateTransaction(rw http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(CtxKeyUserID).(string)
+	if !ok {
+		http.Error(rw, ErrUserNotInCtx.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	txnID, ok := r.Context().Value(CtxKeyTransactionID).(string)
+	if !ok {
+		http.Error(rw, ErrTxnIDNotInCtx.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := r.ParseMultipartForm(1024 * 1024 * 5)
+	if err != nil {
+		if err == multipart.ErrMessageTooLarge {
+			http.Error(rw, "image size too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	transactionName := r.FormValue("transactionName")
+	if transactionName == "" {
+		http.Error(rw, "transaction name not found", http.StatusBadRequest)
+		return
+	}
+
+	amount := r.FormValue("amount")
+	if amount == "" {
+		http.Error(rw, "amount not present", http.StatusBadRequest)
+		return
+	}
+
+	amountParsed, err := strconv.ParseInt(amount, 10, 64)
+	if err != nil {
+		http.Error(rw, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
+	}
+
+	date := r.FormValue("date")
+	if date == "" {
+		http.Error(rw, "date not present", http.StatusBadRequest)
+		return
+	}
+
+	dateParsed, err := strconv.ParseInt(date, 10, 64)
+	if err != nil {
+		http.Error(rw, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	file, header, err := r.FormFile("image")
+	// don't error on missing file - it's ok not to have an image
+	if err != nil && err != http.ErrMissingFile {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var imageKey string
+	// upload the image only if one was supplied
+	if file != nil {
+		// check image is OK
+		ok, err := a.images.Validate(file)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !ok {
+			http.Error(rw, "image invalid", http.StatusUnprocessableEntity)
+			return
+		}
+
+		imageKey, err = a.images.Upload(file, *header)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err = a.store.UpdateTransaction(Transaction{
+		ID:       txnID,
+		Name:     transactionName,
+		UserID:   userID,
+		ImageKey: imageKey,
+		Amount:   amountParsed,
+		Date:     dateParsed,
+	})
+
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	rw.WriteHeader(http.StatusAccepted)
+}
+
 // DeleteTransaction handles a HTTP request to delete a transaction with the given ID.
 func (a *App) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 	user, ok := r.Context().Value(CtxKeyUserID).(string)
@@ -208,7 +306,7 @@ func (a *App) DeleteTransaction(w http.ResponseWriter, r *http.Request) {
 
 	txnID, ok := r.Context().Value(CtxKeyTransactionID).(string)
 	if !ok {
-		http.Error(w, "transaction ID not found in context", http.StatusBadRequest)
+		http.Error(w, ErrTxnIDNotInCtx.Error(), http.StatusBadRequest)
 		return
 	}
 

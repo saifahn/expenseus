@@ -14,6 +14,8 @@ import (
 	"testing"
 )
 
+// #region TRANSACTIONS
+
 // NewGetTransactionRequest creates a request to be used in tests get an transaction
 // by ID, with ID in the request context.
 func NewGetTransactionRequest(id string) *http.Request {
@@ -22,9 +24,9 @@ func NewGetTransactionRequest(id string) *http.Request {
 	return req.WithContext(ctx)
 }
 
-// MakeCreateTransactionRequestPayload generates the payload to be given to
+// MakeTxnRequestPayload generates the payload to be given to
 // NewCreateTransactionRequest
-func MakeCreateTransactionRequestPayload(txn Transaction) map[string]io.Reader {
+func MakeTxnRequestPayload(txn Transaction) map[string]io.Reader {
 	return map[string]io.Reader{
 		"transactionName": strings.NewReader(txn.Name),
 		"amount":          strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
@@ -35,8 +37,10 @@ func MakeCreateTransactionRequestPayload(txn Transaction) map[string]io.Reader {
 // NewCreateTransactionRequest creates a request to be used in tests to create a
 // transaction, simulating data submitted from a form
 func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
+	// TODO: refactor this and update to use similar logic
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
+	defer w.Close()
 	for key, r := range values {
 		var fw io.Writer
 		var err error
@@ -59,9 +63,43 @@ func NewCreateTransactionRequest(values map[string]io.Reader) *http.Request {
 			fmt.Println(err.Error())
 		}
 	}
-	w.Close()
 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions", &b)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	return req
+}
+
+// NewUpdateTransactionRequest creates a request to be used in tests to update a
+// transaction.
+func NewUpdateTransactionRequest(txn Transaction) *http.Request {
+	values := MakeTxnRequestPayload(txn)
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	defer w.Close()
+	for key, r := range values {
+		var fw io.Writer
+		var err error
+		if x, ok := r.(io.Closer); ok {
+			defer x.Close()
+		}
+		if x, ok := r.(*os.File); ok {
+			fw, err = w.CreateFormFile(key, x.Name())
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		} else {
+			// non-file values
+			fw, err = w.CreateFormField(key)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
+		if _, err := io.Copy(fw, r); err != nil {
+			fmt.Println(err.Error())
+		}
+	}
+
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/transactions/%s", txn.ID), &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	return req
 }
@@ -87,6 +125,10 @@ func NewGetAllTransactionsRequest() *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, "/api/v1/transactions", nil)
 	return req
 }
+
+// #endregion TRANSACTIONS
+
+// #region USERS
 
 // NewGetUserRequest creates a request to be used in tests to get a user by ID,
 // with the ID in the request context.
@@ -116,12 +158,9 @@ func NewGetAllUsersRequest() *http.Request {
 	return req
 }
 
-// NewGoogleCallbackRequest creates a request to be used in tests to call the
-// Google callback route.
-func NewGoogleCallbackRequest() *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
-	return req
-}
+// #endregion USERS
+
+// #region SHARED_TXNS
 
 // NewCreateTrackerRequest creates a request to be used in tests to create a new tracker.
 func NewCreateTrackerRequest(t testing.TB, trackerDetails Tracker) *http.Request {
@@ -231,5 +270,14 @@ func NewSettleTxnsRequest(t testing.TB, txns []SharedTransaction) *http.Request 
 	}
 
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/transactions/shared/settle", bytes.NewBuffer(transactionsJSON))
+	return req
+}
+
+// #endregion SHARED_TXNS
+
+// NewGoogleCallbackRequest creates a request to be used in tests to call the
+// Google callback route.
+func NewGoogleCallbackRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/callback_google", nil)
 	return req
 }

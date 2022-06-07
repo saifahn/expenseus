@@ -14,49 +14,6 @@ import (
 	"testing"
 )
 
-var (
-	TestSeanUser = User{
-		Username: "saifahn",
-		Name:     "Sean Li",
-		ID:       "sean_id",
-	}
-	TestTomomiUser = User{
-		Username: "tomochi",
-		Name:     "Tomomi Kinoshita",
-		ID:       "tomomi_id",
-	}
-
-	TestSeanTransaction = Transaction{
-		ID:     "1",
-		Name:   "Transaction 1",
-		UserID: TestSeanUser.ID,
-		Amount: 123,
-		Date:   1644085875,
-	}
-
-	TestTomomiTransaction = Transaction{
-		ID:     "2",
-		Name:   "Transaction 2",
-		UserID: TestTomomiUser.ID,
-		Amount: 456,
-		Date:   1644085876,
-	}
-
-	TestTomomiTransaction2 = Transaction{
-		ID:     "3",
-		Name:   "Transaction 3",
-		UserID: TestTomomiUser.ID,
-		Amount: 789,
-		Date:   1644085877,
-	}
-
-	TestTracker = Tracker{
-		Name:  "Test Tracker",
-		Users: []string{TestSeanUser.ID},
-		ID:    "test-id",
-	}
-)
-
 // NewGetTransactionRequest creates a request to be used in tests get an transaction
 // by ID, with ID in the request context.
 func NewGetTransactionRequest(id string) *http.Request {

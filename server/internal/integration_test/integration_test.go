@@ -174,8 +174,8 @@ func TestCreatingUsersAndRetrievingThem(t *testing.T) {
 	})
 }
 
-func createTestTransaction(t *testing.T, r http.Handler, ed app.TransactionDetails, userid string) {
-	payload := app.MakeCreateTransactionRequestPayload(ed)
+func createTestTransaction(t *testing.T, r http.Handler, td app.Transaction, userid string) {
+	payload := app.MakeCreateTransactionRequestPayload(td)
 	request := app.NewCreateTransactionRequest(payload)
 	request.AddCookie(createCookie(userid))
 	response := httptest.NewRecorder()
@@ -193,7 +193,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		createUser(t, app.TestSeanUser, router)
 
 		// create a transaction and store it
-		wantedTransactionDetails := app.TestSeanTransactionDetails
+		wantedTransactionDetails := app.TestSeanTransaction
 		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
 		// try and get it
@@ -210,7 +210,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 		assert.Equal(http.StatusOK, response.Code)
 		assert.Len(transactionsGot, 1)
-		assert.Equal(wantedTransactionDetails, transactionsGot[0].TransactionDetails)
+		assert.Equal(wantedTransactionDetails, transactionsGot[0])
 	})
 
 	t.Run("transactions can be retrieved by ID", func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert := assert.New(t)
 		createUser(t, app.TestSeanUser, router)
 
-		wantedTransactionDetails := app.TestSeanTransactionDetails
+		wantedTransactionDetails := app.TestSeanTransaction
 		createTestTransaction(t, router, wantedTransactionDetails, wantedTransactionDetails.UserID)
 
 		request := app.NewGetAllTransactionsRequest()
@@ -249,7 +249,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 			t.Errorf("error parsing response from server %q into Transaction struct: %v", response.Body, err)
 		}
 
-		assert.Equal(wantedTransactionDetails, got.TransactionDetails)
+		assert.Equal(wantedTransactionDetails, got)
 		assert.Equal(transactionsGot[0], got)
 	})
 
@@ -259,7 +259,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		assert := assert.New(t)
 		createUser(t, app.TestSeanUser, router)
 
-		wantedTransactionDetails := app.TestSeanTransactionDetails
+		wantedTransactionDetails := app.TestSeanTransaction
 		createTestTransaction(t, router, wantedTransactionDetails, app.TestSeanUser.ID)
 
 		request := app.NewGetTransactionsByUserRequest(app.TestSeanUser.ID)
@@ -275,18 +275,18 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		}
 
 		assert.Len(transactionsGot, 1)
-		assert.Equal(wantedTransactionDetails, transactionsGot[0].TransactionDetails)
+		assert.Equal(wantedTransactionDetails, transactionsGot[0])
 	})
 }
 
 func TestDeletingTransactions(t *testing.T) {
 	tests := map[string]struct {
-		td       app.TransactionDetails
+		td       app.Transaction
 		user     string
 		wantCode int
 	}{
 		"with a valid cookie, the transaction is deleted": {
-			td:       app.TestSeanTransactionDetails,
+			td:       app.TestSeanTransaction,
 			user:     app.TestSeanUser.ID,
 			wantCode: http.StatusAccepted,
 		},

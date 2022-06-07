@@ -67,17 +67,17 @@ func (mr *MockStoreMockRecorder) CreateTracker(tracker interface{}) *gomock.Call
 }
 
 // CreateTransaction mocks base method.
-func (m *MockStore) CreateTransaction(transactionDetails app.TransactionDetails) error {
+func (m *MockStore) CreateTransaction(txn app.Transaction) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTransaction", transactionDetails)
+	ret := m.ctrl.Call(m, "CreateTransaction", txn)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateTransaction indicates an expected call of CreateTransaction.
-func (mr *MockStoreMockRecorder) CreateTransaction(transactionDetails interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) CreateTransaction(txn interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransaction", reflect.TypeOf((*MockStore)(nil).CreateTransaction), transactionDetails)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransaction", reflect.TypeOf((*MockStore)(nil).CreateTransaction), txn)
 }
 
 // CreateUser mocks base method.

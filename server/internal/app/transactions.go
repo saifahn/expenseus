@@ -8,16 +8,12 @@ import (
 	"strconv"
 )
 
-type TransactionDetails struct {
+type Transaction struct {
 	Name     string `json:"name"`
 	UserID   string `json:"userId"`
 	Amount   int64  `json:"amount"`
 	Date     int64  `json:"date"`
 	ImageKey string `json:"imageKey,omitempty"`
-}
-
-type Transaction struct {
-	TransactionDetails
 	ID       string `json:"id"`
 	ImageURL string `json:"imageUrl,omitempty"`
 }
@@ -186,7 +182,7 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = a.store.CreateTransaction(TransactionDetails{
+	err = a.store.CreateTransaction(Transaction{
 		Name:     transactionName,
 		UserID:   userID,
 		ImageKey: imageKey,

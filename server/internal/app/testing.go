@@ -26,46 +26,28 @@ var (
 		ID:       "tomomi_id",
 	}
 
-	TestSeanTransactionDetails = TransactionDetails{
+	TestSeanTransaction = Transaction{
+		ID:     "1",
 		Name:   "Transaction 1",
 		UserID: TestSeanUser.ID,
 		Amount: 123,
 		Date:   1644085875,
 	}
-	TestSeanTransaction = Transaction{
-		ID:                 "1",
-		TransactionDetails: TestSeanTransactionDetails,
-	}
 
-	TestTomomiTransactionDetails = TransactionDetails{
+	TestTomomiTransaction = Transaction{
+		ID:     "2",
 		Name:   "Transaction 2",
 		UserID: TestTomomiUser.ID,
 		Amount: 456,
 		Date:   1644085876,
 	}
-	TestTomomiTransaction = Transaction{
-		ID:                 "2",
-		TransactionDetails: TestTomomiTransactionDetails,
-	}
 
-	TestTomomiTransaction2Details = TransactionDetails{
+	TestTomomiTransaction2 = Transaction{
+		ID:     "3",
 		Name:   "Transaction 3",
 		UserID: TestTomomiUser.ID,
 		Amount: 789,
 		Date:   1644085877,
-	}
-	TestTomomiTransaction2 = Transaction{
-		ID:                 "3",
-		TransactionDetails: TestTomomiTransaction2Details,
-	}
-
-	TestTransactionWithImage = Transaction{
-		ID: "123",
-		TransactionDetails: TransactionDetails{
-			Name:     "TransactionWithImage",
-			UserID:   "an_ID",
-			ImageKey: "test-image-key",
-		},
 	}
 
 	TestTracker = Tracker{
@@ -85,11 +67,11 @@ func NewGetTransactionRequest(id string) *http.Request {
 
 // MakeCreateTransactionRequestPayload generates the payload to be given to
 // NewCreateTransactionRequest
-func MakeCreateTransactionRequestPayload(td TransactionDetails) map[string]io.Reader {
+func MakeCreateTransactionRequestPayload(txn Transaction) map[string]io.Reader {
 	return map[string]io.Reader{
-		"transactionName": strings.NewReader(td.Name),
-		"amount":          strings.NewReader(strconv.FormatInt(td.Amount, 10)),
-		"date":            strings.NewReader(strconv.FormatInt(td.Date, 10)),
+		"transactionName": strings.NewReader(txn.Name),
+		"amount":          strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		"date":            strings.NewReader(strconv.FormatInt(txn.Date, 10)),
 	}
 }
 

@@ -82,8 +82,8 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
-func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
-	userIDKey := makeUserIDKey(td.UserID)
+func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
+	userIDKey := makeUserIDKey(txn.UserID)
 	// generate an ID for the transaction
 	transactionID := uuid.New().String()
 	transactionIDKey := makeTxnIDKey(transactionID)
@@ -93,10 +93,10 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 		SK:         transactionIDKey,
 		EntityType: txnEntityType,
 		ID:         transactionID,
-		UserID:     td.UserID,
-		Name:       td.Name,
-		Amount:     td.Amount,
-		Date:       td.Date,
+		UserID:     txn.UserID,
+		Name:       txn.Name,
+		Amount:     txn.Amount,
+		Date:       txn.Date,
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
 	}
@@ -111,13 +111,11 @@ func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
 
 func txnItemToTxn(ti TransactionItem) app.Transaction {
 	return app.Transaction{
-		ID: ti.ID,
-		TransactionDetails: app.TransactionDetails{
-			UserID: ti.UserID,
-			Name:   ti.Name,
-			Amount: ti.Amount,
-			Date:   ti.Date,
-		},
+		ID:     ti.ID,
+		UserID: ti.UserID,
+		Name:   ti.Name,
+		Amount: ti.Amount,
+		Date:   ti.Date,
 	}
 }
 

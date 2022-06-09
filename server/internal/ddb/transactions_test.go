@@ -93,11 +93,13 @@ func TestUpdateItem(t *testing.T) {
 		"updating a non-existent item will give an error": {
 			initialItem: initialItem,
 			itemToUpdate: &TransactionItem{
-				PK:     "new-item",
-				SK:     "new-item",
-				GSI1PK: "new-item",
-				GSI1SK: "new-item",
+				PK:     "user#a-different-user",
+				SK:     "txn#a-different-item",
+				GSI1PK: "transactions",
+				GSI1SK: "txn#a-different-item",
 				ID:     "a-different-item",
+				UserID: "different-user-id",
+				Name:   "not-the-original",
 			},
 			finalItem: initialItem,
 			wantErr:   ErrAttrNotExists,
@@ -126,7 +128,12 @@ func TestUpdateItem(t *testing.T) {
 				assert.ErrorIs(err, ErrAttrNotExists)
 			}
 
-			got, err := transactions.Get(tc.initialItem.ID)
+			got, err := transactions.GetOne(
+				GetTxnInput{
+					UserID: tc.initialItem.UserID,
+					ID:     tc.initialItem.ID,
+				},
+			)
 			assert.NoError(err)
 			assert.Equal(tc.finalItem, got)
 		})

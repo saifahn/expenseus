@@ -28,8 +28,14 @@ type TransactionItem struct {
 	GSI1SK     string `json:"GSI1SK"`
 }
 
+type GetTxnInput struct {
+	ID     string
+	UserID string
+}
+
 type TxnRepository interface {
 	Get(transactionID string) (*TransactionItem, error)
+	GetOne(input GetTxnInput) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
 	GetByUserID(id string) ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
@@ -75,6 +81,18 @@ func (t *txnRepo) Get(txnID string) (*TransactionItem, error) {
 	}
 
 	return &items[0], nil
+}
+
+func (t *txnRepo) GetOne(input GetTxnInput) (*TransactionItem, error) {
+	userIDKey := makeUserIDKey(input.UserID)
+	txnIDKey := makeTxnIDKey(input.ID)
+
+	item := &TransactionItem{}
+	err := t.table.GetItem(attributes.String(userIDKey), attributes.String(txnIDKey), item)
+	if err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 func (t *txnRepo) PutIfNotExists(item TransactionItem) error {

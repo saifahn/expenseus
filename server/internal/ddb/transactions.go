@@ -34,6 +34,7 @@ type TxnRepository interface {
 	GetByUserID(id string) ([]TransactionItem, error)
 	PutIfNotExists(item TransactionItem) error
 	Put(item TransactionItem) error
+	Update(item TransactionItem) error
 	Delete(userID, transactionID string) error
 }
 
@@ -90,6 +91,15 @@ func (t *txnRepo) PutIfNotExists(item TransactionItem) error {
 
 func (t *txnRepo) Put(item TransactionItem) error {
 	return t.table.PutItem(item)
+}
+
+func (t *txnRepo) Update(item TransactionItem) error {
+	err := t.table.PutItem(item, option.PutCondition("attribute_exists(SK)"))
+	if err != nil {
+		return attrNotExistsOrErr(err)
+	}
+
+	return nil
 }
 
 func (t *txnRepo) Delete(txnID, userID string) error {

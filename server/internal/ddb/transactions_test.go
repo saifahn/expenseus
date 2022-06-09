@@ -63,3 +63,54 @@ func TestTransactionTable(t *testing.T) {
 	_, err = transactions.Get(item.ID)
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 }
+
+func TestUpdateItem(t *testing.T) {
+	initialItem := &TransactionItem{
+		PK:     "user#test-user-id",
+		SK:     "txn#test-txn-id",
+		ID:     "test-txn-id",
+		UserID: "test-user-id",
+		GSI1PK: "transactions",
+		GSI1SK: "txn#test-txn-id",
+	}
+
+	tests := map[string]struct {
+		initialItem  *TransactionItem
+		itemToUpdate *TransactionItem
+		finalItem    *TransactionItem
+	}{
+		"updating a non existent item will give an error": {
+			initialItem: initialItem,
+			itemToUpdate: &TransactionItem{
+				PK:     "new-item",
+				SK:     "new-item",
+				GSI1PK: "new-item",
+				GSI1SK: "new-item",
+				ID:     "a-different-item",
+			},
+			finalItem: initialItem,
+		},
+	}
+
+	for name, tc := range tests {
+		assert := assert.New(t)
+		DeleteTable(NewDynamoDBLocalAPI(), "test-txn-update-items")
+		tbl, teardown := SetUpTestTable(t, "test-txn-update-items")
+		defer teardown()
+		transactions := NewTxnRepository(tbl)
+
+		t.Run(name, func(t *testing.T) {
+			err := transactions.Put(*tc.initialItem)
+			assert.NoError(err)
+
+			err = transactions.Update(*tc.itemToUpdate)
+			assert.ErrorIs(err, ErrAttrNotExists)
+
+			got, _ := transactions.Get(tc.initialItem.ID)
+			assert.Equal(tc.finalItem, got)
+		})
+	}
+
+	// update item shouldn't be possible if the item doesn't exist
+	// update item should be possible if the item does exist
+}

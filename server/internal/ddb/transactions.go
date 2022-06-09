@@ -34,7 +34,6 @@ type GetTxnInput struct {
 }
 
 type TxnRepository interface {
-	Get(transactionID string) (*TransactionItem, error)
 	GetOne(input GetTxnInput) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
 	GetByUserID(id string) ([]TransactionItem, error)
@@ -51,35 +50,6 @@ func NewTxnRepository(t *table.Table) TxnRepository {
 	t.WithHashKey(tablePrimaryKey, dynamodb.ScalarAttributeTypeS)
 	t.WithRangeKey(tableSortKey, dynamodb.ScalarAttributeTypeS)
 	return &txnRepo{table: t}
-}
-
-func (t *txnRepo) Get(txnID string) (*TransactionItem, error) {
-	txnIDKey := makeTxnIDKey(txnID)
-
-	options := []option.QueryInput{
-		option.Index("GSI1"),
-		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
-		option.QueryExpressionAttributeName(gsi1SortKey, "#GSI1SK"),
-		option.QueryExpressionAttributeValue(":allTransactionsKey", attributes.String(allTxnKey)),
-		option.QueryExpressionAttributeValue(":transactionID", attributes.String(txnIDKey)),
-		option.QueryKeyConditionExpression("#GSI1PK = :allTransactionsKey AND #GSI1SK = :transactionID"),
-	}
-
-	var items []TransactionItem
-
-	_, err := t.table.Query(&items, options...)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(items) == 0 {
-		return nil, table.ErrItemNotFound
-	}
-	if len(items) > 1 {
-		return nil, ErrUnexpected
-	}
-
-	return &items[0], nil
 }
 
 func (t *txnRepo) GetOne(input GetTxnInput) (*TransactionItem, error) {

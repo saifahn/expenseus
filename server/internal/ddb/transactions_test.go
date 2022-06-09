@@ -16,7 +16,10 @@ func TestTransactionTable(t *testing.T) {
 	transactions := NewTxnRepository(tbl)
 
 	// retrieving a non-existent item will give an error
-	_, err := transactions.Get("non-existent-item")
+	_, err := transactions.GetOne(GetTxnInput{
+		UserID: "non-existent-user-id",
+		ID:     "non-existent-item-id",
+	})
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	item := &TransactionItem{
@@ -38,7 +41,10 @@ func TestTransactionTable(t *testing.T) {
 	assert.EqualError(err, ErrConflict.Error())
 
 	// the item is successfully retrieved
-	got, err := transactions.Get(item.ID)
+	got, err := transactions.GetOne(GetTxnInput{
+		UserID: item.UserID,
+		ID:     item.ID,
+	})
 	assert.NoError(err)
 	assert.Equal(item, got)
 
@@ -56,8 +62,11 @@ func TestTransactionTable(t *testing.T) {
 	// the item is successfully deleted
 	err = transactions.Delete(item.ID, item.UserID)
 	assert.NoError(err)
-	_, err = transactions.Get(item.ID)
-	assert.EqualError(err, table.ErrItemNotFound.Error())
+	_, err = transactions.GetOne(GetTxnInput{
+		UserID: item.UserID,
+		ID:     item.ID,
+	})
+	assert.ErrorIs(err, table.ErrItemNotFound)
 }
 
 func TestUpdateItem(t *testing.T) {

@@ -262,10 +262,10 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 // SettleTxns takes a list of transactions and calls the repository to mark
 // the database items that are related as settled.
 func (d *dynamoDB) SettleTxns(txns []app.SharedTransaction) error {
-	var input []SettleTxnInputItem
+	var input []SettleTxnInput
 
 	for _, t := range txns {
-		input = append(input, SettleTxnInputItem{
+		input = append(input, SettleTxnInput{
 			ID:           t.ID,
 			TrackerID:    t.Tracker,
 			Participants: t.Participants,

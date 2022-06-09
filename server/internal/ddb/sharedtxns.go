@@ -28,7 +28,7 @@ type SharedTxnItem struct {
 	Participants []string `json:"Participants"`
 	Unsettled    string   `json:"Unsettled,omitempty"`
 }
-type SettleTxnInputItem struct {
+type SettleTxnInput struct {
 	ID           string
 	TrackerID    string
 	Participants []string
@@ -38,7 +38,7 @@ type SharedTxnsRepository interface {
 	Create(txnID string, input app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
-	Settle(input []SettleTxnInputItem) error
+	Settle(input []SettleTxnInput) error
 }
 
 type sharedTxnsRepo struct {
@@ -136,9 +136,9 @@ func (r *sharedTxnsRepo) GetUnsettledFromTracker(trackerID string) ([]SharedTxnI
 	return items, nil
 }
 
-// Settle takes a slice of SettleTxnPayload and removes the "Unsettled"
+// Settle takes a slice of SettleTxnInputs and removes the "Unsettled"
 // attribute from the database items that correspond to the transactions
-func (r *sharedTxnsRepo) Settle(txns []SettleTxnInputItem) error {
+func (r *sharedTxnsRepo) Settle(txns []SettleTxnInput) error {
 	var updateOpts []option.UpdateItemInput
 	updateOpts = append(updateOpts, option.UpdateExpressionAttributeName("Unsettled", "#unsettled"))
 	updateOpts = append(updateOpts, option.UpdateExpression("REMOVE #unsettled"))

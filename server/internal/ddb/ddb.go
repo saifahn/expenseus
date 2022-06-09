@@ -100,7 +100,7 @@ func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
 	}
-	err := d.transactions.PutIfNotExists(*item)
+	err := d.transactions.Create(*item)
 	if err != nil {
 		return err
 	}

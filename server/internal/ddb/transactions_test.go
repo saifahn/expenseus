@@ -30,15 +30,11 @@ func TestTransactionTable(t *testing.T) {
 	}
 
 	// no error raised the first time
-	err = transactions.PutIfNotExists(*item)
-	assert.NoError(err)
-
-	// it is possible to overwrite with Put
-	err = transactions.Put(*item)
+	err = transactions.Create(*item)
 	assert.NoError(err)
 
 	// it will now raise an error as the item exists
-	err = transactions.PutIfNotExists(*item)
+	err = transactions.Create(*item)
 	assert.EqualError(err, ErrConflict.Error())
 
 	// the item is successfully retrieved
@@ -120,7 +116,7 @@ func TestUpdateItem(t *testing.T) {
 		transactions := NewTxnRepository(tbl)
 
 		t.Run(name, func(t *testing.T) {
-			err := transactions.Put(*tc.initialItem)
+			err := transactions.Create(*tc.initialItem)
 			assert.NoError(err)
 
 			err = transactions.Update(*tc.itemToUpdate)

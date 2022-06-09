@@ -38,8 +38,7 @@ type TxnRepository interface {
 	GetOne(input GetTxnInput) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
 	GetByUserID(id string) ([]TransactionItem, error)
-	PutIfNotExists(item TransactionItem) error
-	Put(item TransactionItem) error
+	Create(item TransactionItem) error
 	Update(item TransactionItem) error
 	Delete(userID, transactionID string) error
 }
@@ -95,7 +94,7 @@ func (t *txnRepo) GetOne(input GetTxnInput) (*TransactionItem, error) {
 	return item, nil
 }
 
-func (t *txnRepo) PutIfNotExists(item TransactionItem) error {
+func (t *txnRepo) Create(item TransactionItem) error {
 	err := t.table.PutItem(
 		item,
 		option.PutCondition("attribute_not_exists(SK)"),
@@ -107,11 +106,9 @@ func (t *txnRepo) PutIfNotExists(item TransactionItem) error {
 	return nil
 }
 
-func (t *txnRepo) Put(item TransactionItem) error {
-	return t.table.PutItem(item)
-}
-
 func (t *txnRepo) Update(item TransactionItem) error {
+	// this condition is a stand in for the item existing, as the primary key
+	// and index keys must be present for a item to exist
 	err := t.table.PutItem(item, option.PutCondition("attribute_exists(SK)"))
 	if err != nil {
 		return attrNotExistsOrErr(err)

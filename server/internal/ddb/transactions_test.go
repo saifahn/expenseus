@@ -68,18 +68,29 @@ func TestUpdateItem(t *testing.T) {
 	initialItem := &TransactionItem{
 		PK:     "user#test-user-id",
 		SK:     "txn#test-txn-id",
-		ID:     "test-txn-id",
-		UserID: "test-user-id",
 		GSI1PK: "transactions",
 		GSI1SK: "txn#test-txn-id",
+		ID:     "test-txn-id",
+		UserID: "test-user-id",
+		Name:   "original-transaction",
+	}
+	updatedItem := &TransactionItem{
+		PK:     initialItem.PK,
+		SK:     initialItem.SK,
+		GSI1PK: initialItem.GSI1PK,
+		GSI1SK: initialItem.GSI1SK,
+		ID:     initialItem.ID,
+		UserID: initialItem.UserID,
+		Name:   "transaction-name-changed",
 	}
 
 	tests := map[string]struct {
 		initialItem  *TransactionItem
 		itemToUpdate *TransactionItem
 		finalItem    *TransactionItem
+		wantErr      error
 	}{
-		"updating a non existent item will give an error": {
+		"updating a non-existent item will give an error": {
 			initialItem: initialItem,
 			itemToUpdate: &TransactionItem{
 				PK:     "new-item",
@@ -89,6 +100,13 @@ func TestUpdateItem(t *testing.T) {
 				ID:     "a-different-item",
 			},
 			finalItem: initialItem,
+			wantErr:   ErrAttrNotExists,
+		},
+		"updating an existing item will update it as expected": {
+			initialItem:  initialItem,
+			itemToUpdate: updatedItem,
+			finalItem:    updatedItem,
+			wantErr:      nil,
 		},
 	}
 
@@ -104,13 +122,13 @@ func TestUpdateItem(t *testing.T) {
 			assert.NoError(err)
 
 			err = transactions.Update(*tc.itemToUpdate)
-			assert.ErrorIs(err, ErrAttrNotExists)
+			if tc.wantErr != nil {
+				assert.ErrorIs(err, ErrAttrNotExists)
+			}
 
-			got, _ := transactions.Get(tc.initialItem.ID)
+			got, err := transactions.Get(tc.initialItem.ID)
+			assert.NoError(err)
 			assert.Equal(tc.finalItem, got)
 		})
 	}
-
-	// update item shouldn't be possible if the item doesn't exist
-	// update item should be possible if the item does exist
 }

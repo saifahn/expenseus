@@ -20,8 +20,7 @@ import (
 // by ID, with ID in the request context.
 func NewGetTransactionRequest(id string) *http.Request {
 	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/%s", id), nil)
-	ctx := context.WithValue(req.Context(), CtxKeyTransactionID, id)
-	return req.WithContext(ctx)
+	return req
 }
 
 // MakeTxnRequestPayload generates the payload to be given to

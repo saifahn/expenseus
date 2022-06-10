@@ -18,6 +18,7 @@ import (
 
 func TestGetTransaction(t *testing.T) {
 	testTxnID := "test-txn-id"
+	testUserID := "test-user-id"
 
 	txnWithImageKey := app.Transaction{
 		ID:       testTxnID,
@@ -39,7 +40,7 @@ func TestGetTransaction(t *testing.T) {
 		"calls the store function to get the transaction": {
 			txnID: testTxnID,
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
+				ma.MockStore.EXPECT().GetTransaction(testUserID, gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
 			},
 			wantTxn:  &app.Transaction{ID: testTxnID},
 			wantCode: http.StatusOK,
@@ -47,7 +48,7 @@ func TestGetTransaction(t *testing.T) {
 		"with a txnID of a transaction with an image": {
 			txnID: testTxnID,
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(txnWithImageKey, nil).Times(1)
+				ma.MockStore.EXPECT().GetTransaction(testUserID, gomock.Eq(testTxnID)).Return(txnWithImageKey, nil).Times(1)
 				ma.MockImages.EXPECT().AddImageToTransaction(gomock.Eq(txnWithImageKey)).Return(txnWithImageURL, nil)
 			},
 			wantTxn:  &txnWithImageURL,
@@ -56,7 +57,7 @@ func TestGetTransaction(t *testing.T) {
 		"returns 404 on a non-existent transaction": {
 			txnID: "non-existent-txn",
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetTransaction(gomock.Eq("non-existent-txn")).Return(app.Transaction{}, app.ErrDBItemNotFound).Times(1)
+				ma.MockStore.EXPECT().GetTransaction(testUserID, gomock.Eq("non-existent-txn")).Return(app.Transaction{}, app.ErrDBItemNotFound).Times(1)
 			},
 			wantTxn:  nil,
 			wantCode: http.StatusNotFound,
@@ -69,6 +70,9 @@ func TestGetTransaction(t *testing.T) {
 			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			req := app.NewGetTransactionRequest(tc.txnID)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, testUserID)
+			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.txnID)
+			req = req.WithContext(ctx)
 			response := httptest.NewRecorder()
 
 			handler := http.HandlerFunc(a.GetTransaction)

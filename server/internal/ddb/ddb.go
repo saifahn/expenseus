@@ -119,8 +119,11 @@ func txnItemToTxn(ti TransactionItem) app.Transaction {
 	}
 }
 
-func (d *dynamoDB) GetTransaction(transactionID string) (app.Transaction, error) {
-	ti, err := d.transactions.Get(transactionID)
+func (d *dynamoDB) GetTransaction(userID, txnID string) (app.Transaction, error) {
+	ti, err := d.transactions.GetOne(GetTxnInput{
+		ID:     txnID,
+		UserID: userID,
+	})
 	if err != nil {
 		return app.Transaction{}, err
 	}
@@ -140,6 +143,11 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	}
 
 	return transactions, nil
+}
+
+func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {
+	return nil
+	// return d.transactions.Update(txn)
 }
 
 func (d *dynamoDB) DeleteTransaction(txnID, user string) error {

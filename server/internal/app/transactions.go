@@ -20,9 +20,10 @@ type Transaction struct {
 
 // GetTransaction handles a HTTP request to get an transaction by ID, returning the transaction.
 func (a *App) GetTransaction(rw http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
 	transactionID := r.Context().Value(CtxKeyTransactionID).(string)
 
-	transaction, err := a.store.GetTransaction(transactionID)
+	transaction, err := a.store.GetTransaction(userID, transactionID)
 
 	if err != nil {
 		if err == ErrDBItemNotFound {

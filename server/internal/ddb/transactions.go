@@ -34,7 +34,7 @@ type GetTxnInput struct {
 }
 
 type TxnRepository interface {
-	GetOne(input GetTxnInput) (*TransactionItem, error)
+	Get(input GetTxnInput) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
 	GetByUserID(id string) ([]TransactionItem, error)
 	Create(item TransactionItem) error
@@ -52,7 +52,7 @@ func NewTxnRepository(t *table.Table) TxnRepository {
 	return &txnRepo{table: t}
 }
 
-func (t *txnRepo) GetOne(input GetTxnInput) (*TransactionItem, error) {
+func (t *txnRepo) Get(input GetTxnInput) (*TransactionItem, error) {
 	userIDKey := makeUserIDKey(input.UserID)
 	txnIDKey := makeTxnIDKey(input.ID)
 

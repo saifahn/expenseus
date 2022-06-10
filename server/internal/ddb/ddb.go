@@ -120,7 +120,7 @@ func txnItemToTxn(ti TransactionItem) app.Transaction {
 }
 
 func (d *dynamoDB) GetTransaction(userID, txnID string) (app.Transaction, error) {
-	ti, err := d.transactions.GetOne(GetTxnInput{
+	ti, err := d.transactions.Get(GetTxnInput{
 		ID:     txnID,
 		UserID: userID,
 	})

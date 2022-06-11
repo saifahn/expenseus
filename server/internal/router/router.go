@@ -37,6 +37,7 @@ func Init(a *app.App) *chi.Mux {
 			r.Post("/transactions", a.CreateTransaction)
 			r.With(userIDCtx).Get("/transactions/user/{userID}", a.GetTransactionsByUser)
 			r.With(transactionIDCtx).Get("/transactions/{transactionID}", a.GetTransaction)
+			r.With(transactionIDCtx).Put("/transactions/{transactionID}", a.UpdateTransaction)
 			r.With(transactionIDCtx).Delete("/transactions/{transactionID}", a.DeleteTransaction)
 			r.Post("/transactions/shared/settle", a.SettleTxns)
 

@@ -290,6 +290,11 @@ func (a *App) UpdateTransaction(rw http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		if err == ErrDBItemNotFound {
+			http.Error(rw, err.Error(), http.StatusNotFound)
+			return
+		}
+
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		return
 	}

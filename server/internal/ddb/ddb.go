@@ -1,7 +1,7 @@
 package ddb
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
@@ -82,17 +82,15 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
-func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
+func txnToTxnItem(txn app.Transaction) TransactionItem {
 	userIDKey := makeUserIDKey(txn.UserID)
-	// generate an ID for the transaction
-	transactionID := uuid.New().String()
-	transactionIDKey := makeTxnIDKey(transactionID)
+	transactionIDKey := makeTxnIDKey(txn.ID)
 
-	item := &TransactionItem{
+	return TransactionItem{
 		PK:         userIDKey,
 		SK:         transactionIDKey,
 		EntityType: txnEntityType,
-		ID:         transactionID,
+		ID:         txn.ID,
 		UserID:     txn.UserID,
 		Name:       txn.Name,
 		Amount:     txn.Amount,
@@ -100,12 +98,19 @@ func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
 	}
-	err := d.transactions.Create(*item)
+}
+
+func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
+	fmt.Printf("transaction: %+v", txn)
+	transactionID := uuid.New().String()
+	txn.ID = transactionID
+
+	fmt.Printf("transaction: %+v", txn)
+	err := d.transactions.Create(txnToTxnItem(txn))
 	if err != nil {
 		return err
 	}
 
-	log.Println("transaction successfully created")
 	return nil
 }
 
@@ -146,8 +151,15 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 }
 
 func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {
+	err := d.transactions.Update(txnToTxnItem(txn))
+	if err != nil {
+		if err == ErrAttrNotExists {
+			return app.ErrDBItemNotFound
+		}
+		return err
+	}
+
 	return nil
-	// return d.transactions.Update(txn)
 }
 
 func (d *dynamoDB) DeleteTransaction(txnID, user string) error {

@@ -198,6 +198,74 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 	})
 }
 
+func TestUpdateTransactions(t *testing.T) {
+	initialDetails := app.Transaction{
+		Name:   "test-transaction",
+		ID:     "test-id",
+		UserID: TestSeanUser.ID,
+		Amount: 100,
+		Date:   333333,
+	}
+	tests := map[string]struct {
+		initialTxnDetails app.Transaction
+		updateDetails     app.Transaction
+		user              app.User
+		wantCode          int
+	}{
+		"attempting to update a non-existent transaction returns a 404": {
+			initialTxnDetails: initialDetails,
+			updateDetails:     app.Transaction{},
+			user:              TestSeanUser,
+			wantCode:          http.StatusNotFound,
+		},
+		"an existing transaction can be updated": {
+			initialTxnDetails: initialDetails,
+			updateDetails: app.Transaction{
+				Name:   "new-name",
+				UserID: initialDetails.UserID,
+				Amount: 999,
+				Date:   129384,
+			},
+			user:     TestSeanUser,
+			wantCode: http.StatusAccepted,
+		},
+		// TODO: don't allow a different user to update the details
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			CreateUser(t, test.user, router)
+			createTestTransaction(t, router, test.initialTxnDetails, test.user.ID)
+
+			// get all transactions to get the transaction that was just added
+			request := app.NewGetAllTransactionsRequest()
+			request.AddCookie(CreateCookie(test.user.ID))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			var transactionsGot []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&transactionsGot)
+			assert.NoError(err)
+			assert.Len(transactionsGot, 1)
+
+			if test.updateDetails.Name != "" {
+				test.updateDetails.ID = transactionsGot[0].ID
+			}
+			// update the transaction
+			request = app.NewUpdateTransactionRequest(test.updateDetails)
+			request.AddCookie(CreateCookie(test.user.ID))
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			assert.Equal(test.wantCode, response.Code)
+
+			// TODO: potentially get the initial transaction and see if it matches tc.wantTxnDetails
+		})
+	}
+}
+
 func TestDeletingTransactions(t *testing.T) {
 	tests := map[string]struct {
 		td       app.Transaction

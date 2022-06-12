@@ -9,14 +9,14 @@ import (
 )
 
 type Transaction struct {
-	Name     string `json:"name"`
-	UserID   string `json:"userId"`
-	Amount   int64  `json:"amount"`
-	Date     int64  `json:"date"`
-	ImageKey string `json:"imageKey,omitempty"`
 	ID       string `json:"id"`
+	Name     string `json:"name"`
+	UserID   string `json:"userId" validate:"required"`
+	Amount   int64  `json:"amount" validate:"required"`
+	Date     int64  `json:"date" validate:"required"`
+	Category string `json:"category" validate:"required"`
+	ImageKey string `json:"imageKey,omitempty"`
 	ImageURL string `json:"imageUrl,omitempty"`
-	Category string `json:"category"`
 }
 
 // GetTransaction handles a HTTP request to get an transaction by ID, returning the transaction.
@@ -122,28 +122,14 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 	}
 
 	transactionName := r.FormValue("transactionName")
-	if transactionName == "" {
-		http.Error(w, "transaction name not found", http.StatusBadRequest)
-		return nil
-	}
 
 	amount := r.FormValue("amount")
-	if amount == "" {
-		http.Error(w, "amount not present", http.StatusBadRequest)
-		return nil
-	}
-
 	amountParsed, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
 		http.Error(w, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
 	}
 
 	date := r.FormValue("date")
-	if date == "" {
-		http.Error(w, "date not present", http.StatusBadRequest)
-		return nil
-	}
-
 	dateParsed, err := strconv.ParseInt(date, 10, 64)
 	if err != nil {
 		http.Error(w, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
@@ -151,10 +137,6 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 	}
 
 	category := r.FormValue("category")
-	if category == "" {
-		http.Error(w, "category not present", http.StatusBadRequest)
-		return nil
-	}
 
 	return &Transaction{
 		Name:     transactionName,
@@ -172,6 +154,12 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	txn := parseTxnForm(r, rw)
+	txn.UserID = userID
+	err := a.validate.Struct(txn)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	file, header, err := r.FormFile("image")
 	// don't error on missing file - it's ok not to have an image
@@ -202,7 +190,6 @@ func (a *App) CreateTransaction(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	txn.ImageKey = imageKey
-	txn.UserID = userID
 
 	err = a.store.CreateTransaction(*txn)
 
@@ -231,9 +218,13 @@ func (a *App) UpdateTransaction(rw http.ResponseWriter, r *http.Request) {
 	txn := parseTxnForm(r, rw)
 	txn.ID = txnID
 	txn.UserID = userID
+	err := a.validate.Struct(txn)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	err := a.store.UpdateTransaction(*txn)
-
+	err = a.store.UpdateTransaction(*txn)
 	if err != nil {
 		if err == ErrDBItemNotFound {
 			http.Error(rw, err.Error(), http.StatusNotFound)

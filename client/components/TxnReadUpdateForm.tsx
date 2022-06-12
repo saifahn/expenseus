@@ -1,5 +1,7 @@
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { Transaction } from 'pages/personal';
+import { useSWRConfig } from 'swr';
+import { useUserContext } from '../context/user';
 
 interface TxnReadUpdateFormProps {
   txn: Transaction;
@@ -7,23 +9,61 @@ interface TxnReadUpdateFormProps {
   onCancel: () => void;
 }
 
+type Inputs = {
+  txnID: string;
+  transactionName: string;
+  amount: number;
+  date: string;
+};
+
+async function updateTransaction(data: Inputs) {
+  const formData = new FormData();
+  formData.append('transactionName', data.transactionName);
+  formData.append('amount', data.amount.toString());
+
+  const unixDate = new Date(data.date).getTime();
+  formData.append('date', unixDate.toString());
+
+  await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${data.txnID}`,
+    {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+      body: formData,
+    },
+  );
+}
+
 export default function TxnReadUpdateForm({
   txn,
   onApply,
   onCancel,
 }: TxnReadUpdateFormProps) {
-  const { register, formState } = useForm({
+  const { user } = useUserContext();
+  const { mutate } = useSWRConfig();
+  const { register, formState, handleSubmit } = useForm({
     shouldUseNativeValidation: true,
     defaultValues: {
       transactionName: txn.name,
       amount: txn.amount,
       date: new Date(txn.date).toISOString().split('T')[0],
-      image: null,
     },
   });
 
+  const submitCallback: SubmitHandler<Inputs> = (data) => {
+    data.txnID = txn.id;
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
+      updateTransaction(data),
+    );
+    onApply();
+  };
+
   return (
-    <form onSubmit={(e) => e.preventDefault()} className="border-4 p-6 mt-4">
+    <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6 mt-4">
       <h3 className="text-lg font-semibold">Update Transaction</h3>
       <div className="mt-4">
         <label className="block font-semibold" htmlFor="name">
@@ -62,19 +102,6 @@ export default function TxnReadUpdateForm({
           id="date"
         />
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="addPicture">
-          Add a picture?
-        </label>
-        <input
-          {...register('image')}
-          id="addPicture"
-          type="file"
-          role="button"
-          aria-label="Add picture"
-          accept="image/*"
-        />
-      </div>
       <div className="mt-4 flex justify-end">
         {formState.isDirty ? (
           <>
@@ -86,7 +113,7 @@ export default function TxnReadUpdateForm({
             </button>
             <button
               className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
-              onClick={() => onApply()}
+              type="submit"
             >
               Apply
             </button>

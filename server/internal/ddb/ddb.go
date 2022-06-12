@@ -1,8 +1,6 @@
 package ddb
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
 	"github.com/nabeken/aws-go-dynamodb/table"
@@ -101,11 +99,9 @@ func txnToTxnItem(txn app.Transaction) TransactionItem {
 }
 
 func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
-	fmt.Printf("transaction: %+v", txn)
 	transactionID := uuid.New().String()
 	txn.ID = transactionID
 
-	fmt.Printf("transaction: %+v", txn)
 	err := d.transactions.Create(txnToTxnItem(txn))
 	if err != nil {
 		return err

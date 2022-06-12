@@ -73,7 +73,13 @@ export default function TxnCreateForm() {
           Amount
         </label>
         <input
-          {...register('amount', { required: 'Please input an amount' })}
+          {...register('amount', {
+            min: {
+              value: 1,
+              message: 'Please input a positive amount',
+            },
+            required: 'Please input an amount',
+          })}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="text"
           inputMode="numeric"

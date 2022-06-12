@@ -134,6 +134,19 @@ func (d *dynamoDB) GetTransaction(userID, txnID string) (app.Transaction, error)
 	return txnItemToTxn(*ti), nil
 }
 
+func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
+	items, err := d.transactions.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := []app.Transaction{}
+	for _, ti := range items {
+		transactions = append(transactions, txnItemToTxn(ti))
+	}
+	return transactions, nil
+}
+
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	transactionItems, err := d.transactions.GetAll()
 	if err != nil {
@@ -162,19 +175,6 @@ func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {
 
 func (d *dynamoDB) DeleteTransaction(txnID, user string) error {
 	return d.transactions.Delete(txnID, user)
-}
-
-func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
-	items, err := d.transactions.GetByUserID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	transactions := []app.Transaction{}
-	for _, ti := range items {
-		transactions = append(transactions, txnItemToTxn(ti))
-	}
-	return transactions, nil
 }
 
 // CreateTracker calls the repository to create a new tracker item.

@@ -99,18 +99,18 @@ func TestCreatingTxns(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		txnDetails *app.Transaction
-		wantTxn    *app.Transaction
+		txnDetails app.Transaction
+		wantTxns   []app.Transaction
 		wantCode   int
 	}{
 		"with a txn that has no category": {
-			txnDetails: &txnWithoutCategory,
-			wantTxn:    nil,
+			txnDetails: txnWithoutCategory,
+			wantTxns:   []app.Transaction{},
 			wantCode:   http.StatusBadRequest,
 		},
 		"with a txn that has a category": {
-			txnDetails: &txnWithCategory,
-			wantTxn:    &txnWithCategory,
+			txnDetails: txnWithCategory,
+			wantTxns:   []app.Transaction{txnWithCategory},
 			wantCode:   http.StatusOK,
 		},
 	}
@@ -122,19 +122,19 @@ func TestCreatingTxns(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, TestSeanUser, router)
-			CreateTestTxn(t, router, *tc.txnDetails, TestSeanUser.ID)
+			CreateTestTxn(t, router, tc.txnDetails, TestSeanUser.ID)
 			request := app.NewGetTransactionsByUserRequest(TestSeanUser.ID)
 			request.AddCookie(CreateCookie(TestSeanUser.ID))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 			assert.Equal(http.StatusOK, response.Code)
 
-			if tc.wantTxn != nil {
+			if len(tc.wantTxns) != 0 {
 				var transactionsGot []app.Transaction
 				err := json.NewDecoder(response.Body).Decode(&transactionsGot)
 				assert.NoError(err)
-				assert.Len(transactionsGot, 1)
-				AssertEqualTxnDetails(t, *tc.wantTxn, transactionsGot[0])
+				assert.Len(transactionsGot, len(tc.wantTxns))
+				AssertEqualTxnDetails(t, tc.wantTxns[0], transactionsGot[0])
 			}
 		})
 	}

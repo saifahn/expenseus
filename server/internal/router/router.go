@@ -13,6 +13,7 @@ import (
 func Init(a *app.App) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
@@ -29,39 +30,22 @@ func Init(a *app.App) *chi.Mux {
 	r.Handle("/*", fs)
 
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Route("/transactions", func(r chi.Router) {
-			r.Use(a.VerifyUser)
-			r.Get("/", a.GetAllTransactions)
-			r.Post("/", a.CreateTransaction)
-
-			r.Route("/user/{userID}", func(r chi.Router) {
-				r.Use(userIDCtx)
-				r.Get("/", a.GetTransactionsByUser)
-			})
-
-			r.Route("/{transactionID}", func(r chi.Router) {
-				r.Use(transactionIDCtx)
-				r.Get("/", a.GetTransaction)
-				r.Delete("/", a.DeleteTransaction)
-			})
-
-			r.Post("/shared/settle", a.SettleTxns)
-		})
-
-		r.Route("/users", func(r chi.Router) {
-			r.Use(a.VerifyUser)
-			r.Get("/", a.ListUsers)
-			r.Post("/", a.CreateUser)
-			r.Get("/self", a.GetSelf)
-
-			r.Route("/{userID}", func(r chi.Router) {
-				r.Use(userIDCtx)
-				r.Get("/", a.GetUser)
-			})
-		})
-
 		r.Group(func(r chi.Router) {
 			r.Use(a.VerifyUser)
+
+			r.Get("/transactions", a.GetAllTransactions)
+			r.Post("/transactions", a.CreateTransaction)
+			r.With(userIDCtx).Get("/transactions/user/{userID}", a.GetTransactionsByUser)
+			r.With(transactionIDCtx).Get("/transactions/{transactionID}", a.GetTransaction)
+			r.With(transactionIDCtx).Put("/transactions/{transactionID}", a.UpdateTransaction)
+			r.With(transactionIDCtx).Delete("/transactions/{transactionID}", a.DeleteTransaction)
+			r.Post("/transactions/shared/settle", a.SettleTxns)
+
+			r.Get("/users", a.ListUsers)
+			r.Get("/users/self", a.GetSelf)
+			r.Post("/users", a.CreateUser)
+			r.With(userIDCtx).Get("/users/{userID}", a.GetUser)
+
 			r.Post("/trackers", a.CreateTracker)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)

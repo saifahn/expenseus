@@ -1,7 +1,7 @@
 package ddb
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
@@ -82,47 +82,53 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
-func (d *dynamoDB) CreateTransaction(td app.TransactionDetails) error {
-	userIDKey := makeUserIDKey(td.UserID)
-	// generate an ID for the transaction
-	transactionID := uuid.New().String()
-	transactionIDKey := makeTxnIDKey(transactionID)
+func txnToTxnItem(txn app.Transaction) TransactionItem {
+	userIDKey := makeUserIDKey(txn.UserID)
+	transactionIDKey := makeTxnIDKey(txn.ID)
 
-	item := &TransactionItem{
+	return TransactionItem{
 		PK:         userIDKey,
 		SK:         transactionIDKey,
 		EntityType: txnEntityType,
-		ID:         transactionID,
-		UserID:     td.UserID,
-		Name:       td.Name,
-		Amount:     td.Amount,
-		Date:       td.Date,
+		ID:         txn.ID,
+		UserID:     txn.UserID,
+		Name:       txn.Name,
+		Amount:     txn.Amount,
+		Date:       txn.Date,
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
 	}
-	err := d.transactions.PutIfNotExists(*item)
+}
+
+func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
+	fmt.Printf("transaction: %+v", txn)
+	transactionID := uuid.New().String()
+	txn.ID = transactionID
+
+	fmt.Printf("transaction: %+v", txn)
+	err := d.transactions.Create(txnToTxnItem(txn))
 	if err != nil {
 		return err
 	}
 
-	log.Println("transaction successfully created")
 	return nil
 }
 
 func txnItemToTxn(ti TransactionItem) app.Transaction {
 	return app.Transaction{
-		ID: ti.ID,
-		TransactionDetails: app.TransactionDetails{
-			UserID: ti.UserID,
-			Name:   ti.Name,
-			Amount: ti.Amount,
-			Date:   ti.Date,
-		},
+		ID:     ti.ID,
+		UserID: ti.UserID,
+		Name:   ti.Name,
+		Amount: ti.Amount,
+		Date:   ti.Date,
 	}
 }
 
-func (d *dynamoDB) GetTransaction(transactionID string) (app.Transaction, error) {
-	ti, err := d.transactions.Get(transactionID)
+func (d *dynamoDB) GetTransaction(userID, txnID string) (app.Transaction, error) {
+	ti, err := d.transactions.Get(GetTxnInput{
+		ID:     txnID,
+		UserID: userID,
+	})
 	if err != nil {
 		return app.Transaction{}, err
 	}
@@ -142,6 +148,18 @@ func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
 	}
 
 	return transactions, nil
+}
+
+func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {
+	err := d.transactions.Update(txnToTxnItem(txn))
+	if err != nil {
+		if err == ErrAttrNotExists {
+			return app.ErrDBItemNotFound
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (d *dynamoDB) DeleteTransaction(txnID, user string) error {
@@ -264,10 +282,10 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 // SettleTxns takes a list of transactions and calls the repository to mark
 // the database items that are related as settled.
 func (d *dynamoDB) SettleTxns(txns []app.SharedTransaction) error {
-	var input []SettleTxnInputItem
+	var input []SettleTxnInput
 
 	for _, t := range txns {
-		input = append(input, SettleTxnInputItem{
+		input = append(input, SettleTxnInput{
 			ID:           t.ID,
 			TrackerID:    t.Tracker,
 			Participants: t.Participants,

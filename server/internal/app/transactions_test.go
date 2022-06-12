@@ -18,18 +18,17 @@ import (
 
 func TestGetTransaction(t *testing.T) {
 	testTxnID := "test-txn-id"
+	testUserID := "test-user-id"
 
 	txnWithImageKey := app.Transaction{
-		ID: testTxnID,
-		TransactionDetails: app.TransactionDetails{
-			ImageKey: "test-image-key",
-		},
+		ID:       testTxnID,
+		ImageKey: "test-image-key",
 	}
 
 	txnWithImageURL := app.Transaction{
-		ID:                 txnWithImageKey.ID,
-		ImageURL:           "test-image-url",
-		TransactionDetails: txnWithImageKey.TransactionDetails,
+		ID:       txnWithImageKey.ID,
+		ImageURL: "test-image-url",
+		ImageKey: txnWithImageKey.ImageKey,
 	}
 
 	tests := map[string]struct {
@@ -41,7 +40,7 @@ func TestGetTransaction(t *testing.T) {
 		"calls the store function to get the transaction": {
 			txnID: testTxnID,
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
+				ma.MockStore.EXPECT().GetTransaction(testUserID, gomock.Eq(testTxnID)).Return(app.Transaction{ID: testTxnID}, nil).Times(1)
 			},
 			wantTxn:  &app.Transaction{ID: testTxnID},
 			wantCode: http.StatusOK,
@@ -49,7 +48,7 @@ func TestGetTransaction(t *testing.T) {
 		"with a txnID of a transaction with an image": {
 			txnID: testTxnID,
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetTransaction(gomock.Eq(testTxnID)).Return(txnWithImageKey, nil).Times(1)
+				ma.MockStore.EXPECT().GetTransaction(testUserID, gomock.Eq(testTxnID)).Return(txnWithImageKey, nil).Times(1)
 				ma.MockImages.EXPECT().AddImageToTransaction(gomock.Eq(txnWithImageKey)).Return(txnWithImageURL, nil)
 			},
 			wantTxn:  &txnWithImageURL,
@@ -58,7 +57,7 @@ func TestGetTransaction(t *testing.T) {
 		"returns 404 on a non-existent transaction": {
 			txnID: "non-existent-txn",
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetTransaction(gomock.Eq("non-existent-txn")).Return(app.Transaction{}, app.ErrDBItemNotFound).Times(1)
+				ma.MockStore.EXPECT().GetTransaction(testUserID, gomock.Eq("non-existent-txn")).Return(app.Transaction{}, app.ErrDBItemNotFound).Times(1)
 			},
 			wantTxn:  nil,
 			wantCode: http.StatusNotFound,
@@ -71,6 +70,9 @@ func TestGetTransaction(t *testing.T) {
 			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			req := app.NewGetTransactionRequest(tc.txnID)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, testUserID)
+			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.txnID)
+			req = req.WithContext(ctx)
 			response := httptest.NewRecorder()
 
 			handler := http.HandlerFunc(a.GetTransaction)
@@ -91,13 +93,13 @@ func TestGetTransaction(t *testing.T) {
 func TestGetTxnsByUser(t *testing.T) {
 	testTxn := app.Transaction{ID: "txn-01"}
 	testTxnWithImageKey := app.Transaction{
-		ID:                 "txn-image-key",
-		TransactionDetails: app.TransactionDetails{ImageKey: "test-image-key"},
+		ID:       "txn-image-key",
+		ImageKey: "test-image-key",
 	}
 	testTxnWithImageURL := app.Transaction{
-		ID:                 testTxnWithImageKey.ID,
-		ImageURL:           "test-image-url",
-		TransactionDetails: testTxnWithImageKey.TransactionDetails,
+		ID:       testTxnWithImageKey.ID,
+		ImageURL: "test-image-url",
+		ImageKey: testTxnWithImageKey.ImageKey,
 	}
 
 	tests := map[string]struct {
@@ -155,13 +157,13 @@ func TestGetTxnsByUser(t *testing.T) {
 }
 
 func TestCreateTransaction(t *testing.T) {
-	testTxnDetails := app.TransactionDetails{
+	testTxnDetails := app.Transaction{
 		Name:   "test-txn",
 		Amount: 123,
 		Date:   123456,
 	}
 
-	testImgTxnDetails := app.TransactionDetails{
+	testImgTxnDetails := app.Transaction{
 		Name:     "test-txn",
 		Amount:   123,
 		Date:     123456,
@@ -169,7 +171,7 @@ func TestCreateTransaction(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		txnDetails     app.TransactionDetails
+		txnDetails     app.Transaction
 		user           string
 		expectationsFn mock_app.MockAppFn
 		wantCode       int
@@ -179,7 +181,7 @@ func TestCreateTransaction(t *testing.T) {
 			txnDetails: testTxnDetails,
 			user:       "user-01",
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.TransactionDetails{
+				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.Transaction{
 					Name:   testTxnDetails.Name,
 					Amount: testTxnDetails.Amount,
 					Date:   testTxnDetails.Date,
@@ -204,7 +206,7 @@ func TestCreateTransaction(t *testing.T) {
 			expectationsFn: func(ma *mock_app.App) {
 				ma.MockImages.EXPECT().Validate(gomock.Any()).Return(true, nil).Times(1)
 				ma.MockImages.EXPECT().Upload(gomock.Any(), gomock.Any()).Return(testImgTxnDetails.ImageKey, nil)
-				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.TransactionDetails{
+				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.Transaction{
 					Name:     testImgTxnDetails.Name,
 					Amount:   testImgTxnDetails.Amount,
 					Date:     testImgTxnDetails.Date,
@@ -238,7 +240,7 @@ func TestCreateTransaction(t *testing.T) {
 					"image":           testFile,
 				}
 			} else {
-				payload = app.MakeCreateTransactionRequestPayload(tc.txnDetails)
+				payload = app.MakeTxnRequestPayload(tc.txnDetails)
 			}
 
 			req := app.NewCreateTransactionRequest(payload)
@@ -254,8 +256,6 @@ func TestCreateTransaction(t *testing.T) {
 }
 
 func TestDeleteTransaction(t *testing.T) {
-	// testTransaction := app.Transaction{}
-
 	tests := map[string]struct {
 		transactionId  string
 		user           string
@@ -286,6 +286,55 @@ func TestDeleteTransaction(t *testing.T) {
 			handler := http.HandlerFunc(a.DeleteTransaction)
 			handler.ServeHTTP(response, req)
 
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
+func TestUpdateTransaction(t *testing.T) {
+	updateTxnInput := app.Transaction{
+		Name:   "test-transaction-name",
+		Amount: 123,
+		Date:   123456,
+	}
+
+	tests := map[string]struct {
+		user           string
+		txnID          string
+		txnDetails     app.Transaction
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+	}{
+		"calls the store function to update the transaction": {
+			user:       "test-user",
+			txnID:      "test-transaction-id",
+			txnDetails: updateTxnInput,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().UpdateTransaction(app.Transaction{
+					ID:     "test-transaction-id",
+					UserID: "test-user",
+					Name:   updateTxnInput.Name,
+					Amount: updateTxnInput.Amount,
+					Date:   updateTxnInput.Date,
+				}).Return(nil).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewUpdateTransactionRequest(tc.txnDetails)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
+			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.txnID)
+			req = req.WithContext(ctx)
+
+			response := httptest.NewRecorder()
+			handler := http.HandlerFunc(a.UpdateTransaction)
+			handler.ServeHTTP(response, req)
 			assert.Equal(tc.wantCode, response.Code)
 		})
 	}

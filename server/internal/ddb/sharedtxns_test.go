@@ -91,13 +91,13 @@ func TestSharedTxns(t *testing.T) {
 		err := sharedTxns.Create(unsettledID, testUnsettledInput)
 		assert.NoError(err)
 
-		testSettleTxnPayload := SettleTxnInputItem{
+		testSettleTxnPayload := SettleTxnInput{
 			ID:           unsettledID,
 			TrackerID:    "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
 
-		err = sharedTxns.Settle([]SettleTxnInputItem{testSettleTxnPayload})
+		err = sharedTxns.Settle([]SettleTxnInput{testSettleTxnPayload})
 		assert.NoError(err)
 
 		got, err := sharedTxns.GetUnsettledFromTracker("test-tracker-id")

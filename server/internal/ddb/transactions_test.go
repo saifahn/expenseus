@@ -16,7 +16,10 @@ func TestTransactionTable(t *testing.T) {
 	transactions := NewTxnRepository(tbl)
 
 	// retrieving a non-existent item will give an error
-	_, err := transactions.Get("non-existent-item")
+	_, err := transactions.Get(GetTxnInput{
+		UserID: "non-existent-user-id",
+		ID:     "non-existent-item-id",
+	})
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
 	item := &TransactionItem{
@@ -30,19 +33,18 @@ func TestTransactionTable(t *testing.T) {
 	}
 
 	// no error raised the first time
-	err = transactions.PutIfNotExists(*item)
-	assert.NoError(err)
-
-	// it is possible to overwrite with Put
-	err = transactions.Put(*item)
+	err = transactions.Create(*item)
 	assert.NoError(err)
 
 	// it will now raise an error as the item exists
-	err = transactions.PutIfNotExists(*item)
+	err = transactions.Create(*item)
 	assert.EqualError(err, ErrConflict.Error())
 
 	// the item is successfully retrieved
-	got, err := transactions.Get(item.ID)
+	got, err := transactions.Get(GetTxnInput{
+		UserID: item.UserID,
+		ID:     item.ID,
+	})
 	assert.NoError(err)
 	assert.Equal(item, got)
 
@@ -60,6 +62,85 @@ func TestTransactionTable(t *testing.T) {
 	// the item is successfully deleted
 	err = transactions.Delete(item.ID, item.UserID)
 	assert.NoError(err)
-	_, err = transactions.Get(item.ID)
-	assert.EqualError(err, table.ErrItemNotFound.Error())
+	_, err = transactions.Get(GetTxnInput{
+		UserID: item.UserID,
+		ID:     item.ID,
+	})
+	assert.ErrorIs(err, table.ErrItemNotFound)
+}
+
+func TestUpdateItem(t *testing.T) {
+	initialItem := &TransactionItem{
+		PK:     "user#test-user-id",
+		SK:     "txn#test-txn-id",
+		GSI1PK: "transactions",
+		GSI1SK: "txn#test-txn-id",
+		ID:     "test-txn-id",
+		UserID: "test-user-id",
+		Name:   "original-transaction",
+	}
+	updatedItem := &TransactionItem{
+		PK:     initialItem.PK,
+		SK:     initialItem.SK,
+		GSI1PK: initialItem.GSI1PK,
+		GSI1SK: initialItem.GSI1SK,
+		ID:     initialItem.ID,
+		UserID: initialItem.UserID,
+		Name:   "transaction-name-changed",
+	}
+
+	tests := map[string]struct {
+		initialItem  *TransactionItem
+		itemToUpdate *TransactionItem
+		finalItem    *TransactionItem
+		wantErr      error
+	}{
+		"updating a non-existent item will give an error": {
+			initialItem: initialItem,
+			itemToUpdate: &TransactionItem{
+				PK:     "user#a-different-user",
+				SK:     "txn#a-different-item",
+				GSI1PK: "transactions",
+				GSI1SK: "txn#a-different-item",
+				ID:     "a-different-item",
+				UserID: "different-user-id",
+				Name:   "not-the-original",
+			},
+			finalItem: initialItem,
+			wantErr:   ErrAttrNotExists,
+		},
+		"updating an existing item will update it as expected": {
+			initialItem:  initialItem,
+			itemToUpdate: updatedItem,
+			finalItem:    updatedItem,
+			wantErr:      nil,
+		},
+	}
+
+	for name, tc := range tests {
+		assert := assert.New(t)
+		DeleteTable(NewDynamoDBLocalAPI(), "test-txn-update-items")
+		tbl, teardown := SetUpTestTable(t, "test-txn-update-items")
+		defer teardown()
+		transactions := NewTxnRepository(tbl)
+
+		t.Run(name, func(t *testing.T) {
+			err := transactions.Create(*tc.initialItem)
+			assert.NoError(err)
+
+			err = transactions.Update(*tc.itemToUpdate)
+			if tc.wantErr != nil {
+				assert.ErrorIs(err, ErrAttrNotExists)
+			}
+
+			got, err := transactions.Get(
+				GetTxnInput{
+					UserID: tc.initialItem.UserID,
+					ID:     tc.initialItem.ID,
+				},
+			)
+			assert.NoError(err)
+			assert.Equal(tc.finalItem, got)
+		})
+	}
 }

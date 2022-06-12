@@ -1,53 +1,70 @@
-import { useUserContext } from 'context/user';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { Transaction } from 'pages/personal';
 import { useSWRConfig } from 'swr';
+import { useUserContext } from '../context/user';
+
+interface TxnReadUpdateFormProps {
+  txn: Transaction;
+  onApply: () => void;
+  onCancel: () => void;
+}
 
 type Inputs = {
+  txnID: string;
   transactionName: string;
   amount: number;
   date: string;
-  image: File;
 };
 
-async function createTransaction(data: Inputs) {
+async function updateTransaction(data: Inputs) {
   const formData = new FormData();
   formData.append('transactionName', data.transactionName);
   formData.append('amount', data.amount.toString());
-  formData.append('image', data.image);
 
   const unixDate = new Date(data.date).getTime();
   formData.append('date', unixDate.toString());
 
-  await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
+  await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${data.txnID}`,
+    {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+      body: formData,
     },
-    credentials: 'include',
-    body: formData,
-  });
+  );
 }
 
-export default function TransactionSubmitForm() {
+export default function TxnReadUpdateForm({
+  txn,
+  onApply,
+  onCancel,
+}: TxnReadUpdateFormProps) {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
-  const { register, handleSubmit, setValue } = useForm({
+  const { register, formState, handleSubmit } = useForm({
     shouldUseNativeValidation: true,
+    defaultValues: {
+      transactionName: txn.name,
+      amount: txn.amount,
+      date: new Date(txn.date).toISOString().split('T')[0],
+    },
   });
 
   const submitCallback: SubmitHandler<Inputs> = (data) => {
+    data.txnID = txn.id;
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
-      createTransaction(data),
+      updateTransaction(data),
     );
-    setValue('transactionName', '');
-    setValue('amount', 0);
-    setValue('image', null);
+    onApply();
   };
 
   return (
-    <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6">
-      <h3 className="text-lg font-semibold">Create Transaction</h3>
+    <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6 mt-4">
+      <h3 className="text-lg font-semibold">Update Transaction</h3>
       <div className="mt-4">
         <label className="block font-semibold" htmlFor="name">
           Name
@@ -68,7 +85,9 @@ export default function TransactionSubmitForm() {
         <input
           {...register('amount', { required: 'Please input an amount' })}
           className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           id="amount"
         />
       </div>
@@ -83,23 +102,30 @@ export default function TransactionSubmitForm() {
           id="date"
         />
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="addPicture">
-          Add a picture?
-        </label>
-        <input
-          {...register('image')}
-          id="addPicture"
-          type="file"
-          role="button"
-          aria-label="Add picture"
-          accept="image/*"
-        />
-      </div>
       <div className="mt-4 flex justify-end">
-        <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring">
-          Create transaction
-        </button>
+        {formState.isDirty ? (
+          <>
+            <button
+              className="hover:bg-slate-200 font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
+              onClick={() => onCancel()}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
+              type="submit"
+            >
+              Apply
+            </button>
+          </>
+        ) : (
+          <button
+            className="hover:bg-slate-200 font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
+            onClick={() => onCancel()}
+          >
+            Close
+          </button>
+        )}
       </div>
     </form>
   );

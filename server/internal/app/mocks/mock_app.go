@@ -67,17 +67,17 @@ func (mr *MockStoreMockRecorder) CreateTracker(tracker interface{}) *gomock.Call
 }
 
 // CreateTransaction mocks base method.
-func (m *MockStore) CreateTransaction(transactionDetails app.TransactionDetails) error {
+func (m *MockStore) CreateTransaction(txn app.Transaction) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTransaction", transactionDetails)
+	ret := m.ctrl.Call(m, "CreateTransaction", txn)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateTransaction indicates an expected call of CreateTransaction.
-func (mr *MockStoreMockRecorder) CreateTransaction(transactionDetails interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) CreateTransaction(txn interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransaction", reflect.TypeOf((*MockStore)(nil).CreateTransaction), transactionDetails)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTransaction", reflect.TypeOf((*MockStore)(nil).CreateTransaction), txn)
 }
 
 // CreateUser mocks base method.
@@ -169,18 +169,18 @@ func (mr *MockStoreMockRecorder) GetTrackersByUser(userID interface{}) *gomock.C
 }
 
 // GetTransaction mocks base method.
-func (m *MockStore) GetTransaction(txnID string) (app.Transaction, error) {
+func (m *MockStore) GetTransaction(userID, txnID string) (app.Transaction, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransaction", txnID)
+	ret := m.ctrl.Call(m, "GetTransaction", userID, txnID)
 	ret0, _ := ret[0].(app.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransaction indicates an expected call of GetTransaction.
-func (mr *MockStoreMockRecorder) GetTransaction(txnID interface{}) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetTransaction(userID, txnID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockStore)(nil).GetTransaction), txnID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockStore)(nil).GetTransaction), userID, txnID)
 }
 
 // GetTransactionsByUser mocks base method.
@@ -255,6 +255,20 @@ func (m *MockStore) SettleTxns(txns []app.SharedTransaction) error {
 func (mr *MockStoreMockRecorder) SettleTxns(txns interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SettleTxns", reflect.TypeOf((*MockStore)(nil).SettleTxns), txns)
+}
+
+// UpdateTransaction mocks base method.
+func (m *MockStore) UpdateTransaction(txn app.Transaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateTransaction", txn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateTransaction indicates an expected call of UpdateTransaction.
+func (mr *MockStoreMockRecorder) UpdateTransaction(txn interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTransaction", reflect.TypeOf((*MockStore)(nil).UpdateTransaction), txn)
 }
 
 // MockAuth is a mock of Auth interface.

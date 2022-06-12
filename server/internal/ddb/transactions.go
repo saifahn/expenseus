@@ -28,12 +28,17 @@ type TransactionItem struct {
 	GSI1SK     string `json:"GSI1SK"`
 }
 
+type GetTxnInput struct {
+	ID     string
+	UserID string
+}
+
 type TxnRepository interface {
-	Get(transactionID string) (*TransactionItem, error)
+	Get(input GetTxnInput) (*TransactionItem, error)
 	GetAll() ([]TransactionItem, error)
 	GetByUserID(id string) ([]TransactionItem, error)
-	PutIfNotExists(item TransactionItem) error
-	Put(item TransactionItem) error
+	Create(item TransactionItem) error
+	Update(item TransactionItem) error
 	Delete(userID, transactionID string) error
 }
 
@@ -47,36 +52,19 @@ func NewTxnRepository(t *table.Table) TxnRepository {
 	return &txnRepo{table: t}
 }
 
-func (t *txnRepo) Get(txnID string) (*TransactionItem, error) {
-	txnIDKey := makeTxnIDKey(txnID)
+func (t *txnRepo) Get(input GetTxnInput) (*TransactionItem, error) {
+	userIDKey := makeUserIDKey(input.UserID)
+	txnIDKey := makeTxnIDKey(input.ID)
 
-	options := []option.QueryInput{
-		option.Index("GSI1"),
-		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
-		option.QueryExpressionAttributeName(gsi1SortKey, "#GSI1SK"),
-		option.QueryExpressionAttributeValue(":allTransactionsKey", attributes.String(allTxnKey)),
-		option.QueryExpressionAttributeValue(":transactionID", attributes.String(txnIDKey)),
-		option.QueryKeyConditionExpression("#GSI1PK = :allTransactionsKey AND #GSI1SK = :transactionID"),
-	}
-
-	var items []TransactionItem
-
-	_, err := t.table.Query(&items, options...)
+	item := &TransactionItem{}
+	err := t.table.GetItem(attributes.String(userIDKey), attributes.String(txnIDKey), item)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(items) == 0 {
-		return nil, table.ErrItemNotFound
-	}
-	if len(items) > 1 {
-		return nil, ErrUnexpected
-	}
-
-	return &items[0], nil
+	return item, nil
 }
 
-func (t *txnRepo) PutIfNotExists(item TransactionItem) error {
+func (t *txnRepo) Create(item TransactionItem) error {
 	err := t.table.PutItem(
 		item,
 		option.PutCondition("attribute_not_exists(SK)"),
@@ -88,8 +76,15 @@ func (t *txnRepo) PutIfNotExists(item TransactionItem) error {
 	return nil
 }
 
-func (t *txnRepo) Put(item TransactionItem) error {
-	return t.table.PutItem(item)
+func (t *txnRepo) Update(item TransactionItem) error {
+	// this condition is a stand in for the item existing, as the primary key
+	// and index keys must be present for a item to exist
+	err := t.table.PutItem(item, option.PutCondition("attribute_exists(SK)"))
+	if err != nil {
+		return attrNotExistsOrErr(err)
+	}
+
+	return nil
 }
 
 func (t *txnRepo) Delete(txnID, userID string) error {

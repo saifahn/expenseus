@@ -28,7 +28,7 @@ async function createTransaction(data: Inputs) {
   });
 }
 
-export default function TransactionSubmitForm() {
+export default function TxnCreateForm() {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
   const { register, handleSubmit, setValue } = useForm({
@@ -83,19 +83,6 @@ export default function TransactionSubmitForm() {
           className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
           type="date"
           id="date"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="addPicture">
-          Add a picture?
-        </label>
-        <input
-          {...register('image')}
-          id="addPicture"
-          type="file"
-          role="button"
-          aria-label="Add picture"
-          accept="image/*"
         />
       </div>
       <div className="mt-4 flex justify-end">

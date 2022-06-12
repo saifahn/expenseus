@@ -1,4 +1,4 @@
-import TransactionSubmitForm from 'components/TransactionSubmitForm';
+import TxnCreateForm from 'components/TxnCreateForm';
 import TxnReadUpdateForm from 'components/TxnReadUpdateForm';
 import { useUserContext } from 'context/user';
 import { useState } from 'react';
@@ -51,7 +51,7 @@ export default function Personal() {
       ) : (
         <>
           <div className="mt-4">
-            <TransactionSubmitForm />
+            <TxnCreateForm />
           </div>
           <div className="mt-4 p-4">
             <h2 className="text-2xl">Personal transactions</h2>

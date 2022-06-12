@@ -158,9 +158,10 @@ func TestGetTxnsByUser(t *testing.T) {
 
 func TestCreateTransaction(t *testing.T) {
 	testTxnDetails := app.Transaction{
-		Name:   "test-txn",
-		Amount: 123,
-		Date:   123456,
+		Name:     "test-txn",
+		Amount:   123,
+		Date:     123456,
+		Category: "test.category",
 	}
 
 	testImgTxnDetails := app.Transaction{
@@ -168,6 +169,7 @@ func TestCreateTransaction(t *testing.T) {
 		Amount:   123,
 		Date:     123456,
 		ImageKey: "test-image-key",
+		Category: "test.category",
 	}
 
 	tests := map[string]struct {
@@ -182,10 +184,11 @@ func TestCreateTransaction(t *testing.T) {
 			user:       "user-01",
 			expectationsFn: func(ma *mock_app.App) {
 				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.Transaction{
-					Name:   testTxnDetails.Name,
-					Amount: testTxnDetails.Amount,
-					Date:   testTxnDetails.Date,
-					UserID: "user-01",
+					Name:     testTxnDetails.Name,
+					Amount:   testTxnDetails.Amount,
+					Date:     testTxnDetails.Date,
+					Category: testTxnDetails.Category,
+					UserID:   "user-01",
 				})).Return(nil).Times(1)
 			},
 			wantCode: http.StatusAccepted,
@@ -211,6 +214,7 @@ func TestCreateTransaction(t *testing.T) {
 					Amount:   testImgTxnDetails.Amount,
 					Date:     testImgTxnDetails.Date,
 					ImageKey: testImgTxnDetails.ImageKey,
+					Category: testImgTxnDetails.Category,
 					UserID:   "user-02",
 				})).Times(1)
 			},
@@ -237,6 +241,7 @@ func TestCreateTransaction(t *testing.T) {
 					"transactionName": strings.NewReader(testImgTxnDetails.Name),
 					"amount":          strings.NewReader("123"),
 					"date":            strings.NewReader("123456"),
+					"category":        strings.NewReader(testImgTxnDetails.Category),
 					"image":           testFile,
 				}
 			} else {
@@ -293,9 +298,10 @@ func TestDeleteTransaction(t *testing.T) {
 
 func TestUpdateTransaction(t *testing.T) {
 	updateTxnInput := app.Transaction{
-		Name:   "test-transaction-name",
-		Amount: 123,
-		Date:   123456,
+		Name:     "test-transaction-name",
+		Amount:   123,
+		Date:     123456,
+		Category: "test.category",
 	}
 
 	tests := map[string]struct {
@@ -311,11 +317,12 @@ func TestUpdateTransaction(t *testing.T) {
 			txnDetails: updateTxnInput,
 			expectationsFn: func(ma *mock_app.App) {
 				ma.MockStore.EXPECT().UpdateTransaction(app.Transaction{
-					ID:     "test-transaction-id",
-					UserID: "test-user",
-					Name:   updateTxnInput.Name,
-					Amount: updateTxnInput.Amount,
-					Date:   updateTxnInput.Date,
+					ID:       "test-transaction-id",
+					UserID:   "test-user",
+					Name:     updateTxnInput.Name,
+					Amount:   updateTxnInput.Amount,
+					Date:     updateTxnInput.Date,
+					Category: updateTxnInput.Category,
 				}).Return(nil).Times(1)
 			},
 			wantCode: http.StatusAccepted,

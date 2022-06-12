@@ -95,6 +95,7 @@ func txnToTxnItem(txn app.Transaction) TransactionItem {
 		Date:       txn.Date,
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
+		Category:   txn.Category,
 	}
 }
 
@@ -112,11 +113,12 @@ func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
 
 func txnItemToTxn(ti TransactionItem) app.Transaction {
 	return app.Transaction{
-		ID:     ti.ID,
-		UserID: ti.UserID,
-		Name:   ti.Name,
-		Amount: ti.Amount,
-		Date:   ti.Date,
+		ID:       ti.ID,
+		UserID:   ti.UserID,
+		Name:     ti.Name,
+		Amount:   ti.Amount,
+		Date:     ti.Date,
+		Category: ti.Category,
 	}
 }
 

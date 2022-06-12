@@ -16,6 +16,7 @@ type Transaction struct {
 	ImageKey string `json:"imageKey,omitempty"`
 	ID       string `json:"id"`
 	ImageURL string `json:"imageUrl,omitempty"`
+	Category string `json:"category"`
 }
 
 // GetTransaction handles a HTTP request to get an transaction by ID, returning the transaction.
@@ -149,10 +150,17 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 		return nil
 	}
 
+	category := r.FormValue("category")
+	if category == "" {
+		http.Error(w, "category not present", http.StatusBadRequest)
+		return nil
+	}
+
 	return &Transaction{
-		Name:   transactionName,
-		Amount: amountParsed,
-		Date:   dateParsed,
+		Name:     transactionName,
+		Amount:   amountParsed,
+		Date:     dateParsed,
+		Category: category,
 	}
 }
 

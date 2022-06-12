@@ -21,7 +21,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 		// create a transaction and store it
 		wantTxnDetails := TestSeanTxnDetails
-		createTestTransaction(t, router, wantTxnDetails, wantTxnDetails.UserID)
+		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
 
 		// try and get it
 		request := app.NewGetAllTransactionsRequest()
@@ -48,7 +48,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		CreateUser(t, TestSeanUser, router)
 
 		wantTxnDetails := TestSeanTxnDetails
-		createTestTransaction(t, router, wantTxnDetails, wantTxnDetails.UserID)
+		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
 
 		request := app.NewGetAllTransactionsRequest()
 		request.AddCookie(CreateCookie(TestSeanUser.ID))
@@ -80,40 +80,74 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		AssertEqualTxnDetails(t, wantTxnDetails, got)
 		assert.Equal(transactionsGot[0], got)
 	})
+}
 
-	t.Run("transactions can be retrieved by user ID", func(t *testing.T) {
-		router, tearDownDB := SetUpTestServer(t)
-		defer tearDownDB(t)
-		assert := assert.New(t)
-		CreateUser(t, TestSeanUser, router)
+func TestCreatingTxns(t *testing.T) {
+	txnWithoutCategory := app.Transaction{
+		Name:   "test-transaction",
+		UserID: TestSeanUser.ID,
+		Amount: 200,
+		Date:   8972813,
+	}
 
-		wantTxnDetails := TestSeanTxnDetails
-		createTestTransaction(t, router, wantTxnDetails, TestSeanUser.ID)
+	txnWithCategory := app.Transaction{
+		Name:     "test-transaction-with-category",
+		UserID:   TestSeanUser.ID,
+		Amount:   200,
+		Date:     8972813,
+		Category: "other.other",
+	}
 
-		request := app.NewGetTransactionsByUserRequest(TestSeanUser.ID)
-		request.AddCookie(CreateCookie(TestSeanUser.ID))
-		response := httptest.NewRecorder()
-		router.ServeHTTP(response, request)
-		assert.Equal(http.StatusOK, response.Code)
+	tests := map[string]struct {
+		txnDetails *app.Transaction
+		wantTxn    *app.Transaction
+		wantCode   int
+	}{
+		"with a txn that has no category": {
+			txnDetails: &txnWithoutCategory,
+			wantTxn:    nil,
+			wantCode:   http.StatusBadRequest,
+		},
+		"with a txn that has a category": {
+			txnDetails: &txnWithCategory,
+			wantTxn:    &txnWithCategory,
+			wantCode:   http.StatusOK,
+		},
+	}
 
-		var transactionsGot []app.Transaction
-		err := json.NewDecoder(response.Body).Decode(&transactionsGot)
-		if err != nil {
-			t.Logf("error parsing response from server %q into slice of Transactions: %v", response.Body, err)
-		}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
 
-		assert.Len(transactionsGot, 1)
-		AssertEqualTxnDetails(t, wantTxnDetails, transactionsGot[0])
-	})
+			CreateUser(t, TestSeanUser, router)
+			CreateTestTxn(t, router, *tc.txnDetails, TestSeanUser.ID)
+			request := app.NewGetTransactionsByUserRequest(TestSeanUser.ID)
+			request.AddCookie(CreateCookie(TestSeanUser.ID))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			assert.Equal(http.StatusOK, response.Code)
+
+			if tc.wantTxn != nil {
+				var transactionsGot []app.Transaction
+				err := json.NewDecoder(response.Body).Decode(&transactionsGot)
+				assert.NoError(err)
+				assert.Len(transactionsGot, 1)
+				AssertEqualTxnDetails(t, *tc.wantTxn, transactionsGot[0])
+			}
+		})
+	}
 }
 
 func TestUpdateTransactions(t *testing.T) {
 	initialDetails := app.Transaction{
-		Name:   "test-transaction",
-		ID:     "test-id",
-		UserID: TestSeanUser.ID,
-		Amount: 100,
-		Date:   333333,
+		Name:     "test-transaction",
+		ID:       "test-id",
+		UserID:   TestSeanUser.ID,
+		Amount:   100,
+		Date:     333333,
+		Category: "test.category",
 	}
 	tests := map[string]struct {
 		initialTxnDetails app.Transaction
@@ -130,10 +164,11 @@ func TestUpdateTransactions(t *testing.T) {
 		"an existing transaction can be updated": {
 			initialTxnDetails: initialDetails,
 			updateDetails: app.Transaction{
-				Name:   "new-name",
-				UserID: initialDetails.UserID,
-				Amount: 999,
-				Date:   129384,
+				Name:     "new-name",
+				UserID:   initialDetails.UserID,
+				Amount:   999,
+				Date:     129384,
+				Category: "new.category",
 			},
 			user:     TestSeanUser,
 			wantCode: http.StatusAccepted,
@@ -148,7 +183,7 @@ func TestUpdateTransactions(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, test.user, router)
-			createTestTransaction(t, router, test.initialTxnDetails, test.user.ID)
+			CreateTestTxn(t, router, test.initialTxnDetails, test.user.ID)
 
 			// get all transactions to get the transaction that was just added
 			request := app.NewGetAllTransactionsRequest()
@@ -195,7 +230,7 @@ func TestDeletingTransactions(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, TestSeanUser, router)
-			createTestTransaction(t, router, tc.td, tc.user)
+			CreateTestTxn(t, router, tc.td, tc.user)
 
 			request := app.NewGetTransactionsByUserRequest(tc.user)
 			request.AddCookie(CreateCookie(tc.user))

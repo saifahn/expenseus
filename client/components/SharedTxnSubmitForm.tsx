@@ -1,14 +1,15 @@
+import { CategoryKey } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 
 type Inputs = {
-  // file: File[];
   shop: string;
   amount: number;
   date: string;
-  unsettled?: boolean;
+  settled?: boolean;
   participants: string;
+  category: CategoryKey;
 };
 
 async function createSharedTxn(data: Inputs, tracker: Tracker) {
@@ -16,7 +17,7 @@ async function createSharedTxn(data: Inputs, tracker: Tracker) {
   formData.append('participants', tracker.users.join(','));
   formData.append('shop', data.shop);
   formData.append('amount', data.amount.toString());
-  if (data.unsettled) formData.append('unsettled', 'true');
+  if (!data.settled) formData.append('unsettled', 'true');
 
   const unixDate = new Date(data.date).getTime();
   formData.append('date', unixDate.toString());
@@ -40,8 +41,15 @@ interface Props {
 
 export default function SharedTxnSubmitForm({ tracker }: Props) {
   const { mutate } = useSWRConfig();
-  const { register, handleSubmit, setValue } = useForm({
+  const { register, handleSubmit, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
+    defaultValues: {
+      shop: '',
+      amount: 0,
+      date: new Date().toISOString().split('T')[0],
+      settled: false,
+      participants: '',
+    },
   });
 
   const submitCallback: SubmitHandler<Inputs> = (data) => {
@@ -62,7 +70,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
         </label>
         <input
           {...register('shop', { required: 'Please input a shop name' })}
-          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
+          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="text"
           id="shop"
         />
@@ -73,7 +81,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
         </label>
         <input
           {...register('amount', { required: 'Please input an amount' })}
-          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
+          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -86,19 +94,19 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
         </label>
         <input
           {...register('date', { required: 'Please input a date' })}
-          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
+          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="date"
           id="date"
         />
       </div>
       <div className="mt-4">
-        <label className="block font-semibold" htmlFor="unsettled">
-          Unsettled?
+        <label className="block font-semibold" htmlFor="settled">
+          Settled?
         </label>
-        <input {...register('unsettled')} type="checkbox" id="unsettled" />
+        <input {...register('settled')} type="checkbox" id="settled" />
       </div>
       <div className="mt-4 flex justify-end">
-        <button className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring">
+        <button className="rounded bg-indigo-500 py-2 px-4 font-bold text-white hover:bg-indigo-700 focus:outline-none focus:ring">
           Create transaction
         </button>
       </div>

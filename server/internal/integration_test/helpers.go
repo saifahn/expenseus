@@ -140,15 +140,8 @@ func AssertEqualTxnDetails(t testing.TB, want, got app.Transaction) {
 
 // RemoveSharedTxnID returns a  shared transaction without the ID
 func RemoveSharedTxnID(txn app.SharedTransaction) app.SharedTransaction {
-	return app.SharedTransaction{
-		Participants: txn.Participants,
-		Shop:         txn.Shop,
-		Amount:       txn.Amount,
-		Date:         txn.Date,
-		Tracker:      txn.Tracker,
-		Category:     txn.Category,
-		Unsettled:    txn.Unsettled,
-	}
+	txn.ID = ""
+	return txn
 }
 
 func CreateTestTxn(t *testing.T, r http.Handler, td app.Transaction, userid string) {

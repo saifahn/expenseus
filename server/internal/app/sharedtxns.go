@@ -14,7 +14,7 @@ type SharedTransaction struct {
 	Shop         string   `json:"shop" validate:"required"`
 	Amount       int64    `json:"amount" validate:"required"`
 	Category     string   `json:"category" validate:"required"`
-	Payer        string   `json:"payer"`
+	Payer        string   `json:"payer" validate:"required"`
 	Participants []string `json:"participants" validate:"required,min=1"`
 	Unsettled    bool     `json:"unsettled"`
 	Tracker      string   `json:"tracker" validate:"required"`

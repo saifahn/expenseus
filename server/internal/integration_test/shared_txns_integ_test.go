@@ -183,6 +183,7 @@ func TestCreateSharedTxn(t *testing.T) {
 		Date:         123456,
 		Tracker:      "test-tracker",
 		Category:     "test-category",
+		Payer:        "user-01",
 	}
 	assert := assert.New(t)
 	tests := map[string]struct {
@@ -266,6 +267,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 		Date:         123456,
 		Tracker:      "test-tracker-01",
 		Category:     "test-category",
+		Payer:        "user-01",
 	}
 
 	assert := assert.New(t)
@@ -327,6 +329,7 @@ var testUnsettledTxn = app.SharedTransaction{
 	Tracker:      "test-tracker-01",
 	Unsettled:    true,
 	Category:     "test-category",
+	Payer:        "user-01",
 }
 
 func TestGetUnsettledTxnsFromTracker(t *testing.T) {

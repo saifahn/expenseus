@@ -245,6 +245,7 @@ func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
 		Unsettled:    item.Unsettled == unsettledFlagTrue,
 		Shop:         item.Shop,
 		Category:     item.Category,
+		Payer:        item.Payer,
 	}
 }
 

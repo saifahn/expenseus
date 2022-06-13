@@ -215,6 +215,7 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 		"participants": strings.NewReader(participants),
 		"unsettled":    strings.NewReader(unsettled),
 		"category":     strings.NewReader(txn.Category),
+		"payer":        strings.NewReader(txn.Payer),
 	}
 }
 

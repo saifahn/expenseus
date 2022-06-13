@@ -1,4 +1,4 @@
-import { CategoryKey } from 'data/categories';
+import { CategoryKey, enUSCategories } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
@@ -49,6 +49,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
       date: new Date().toISOString().split('T')[0],
       settled: false,
       participants: '',
+      category: 'unspecified.unspecified',
     },
   });
 
@@ -59,6 +60,9 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
     );
     setValue('shop', '');
     setValue('amount', 0);
+    setValue('settled', false);
+    setValue('participants', '');
+    setValue('category', 'unspecified.unspecified');
   };
 
   return (
@@ -104,6 +108,19 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
           Settled?
         </label>
         <input {...register('settled')} type="checkbox" id="settled" />
+      </div>
+      <div className="mt-4">
+        <label className="block font-semibold">Category</label>
+        <select
+          {...register('category')}
+          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
+        >
+          {enUSCategories.map((category) => (
+            <option key={category.key} value={category.key}>
+              {category.value}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="mt-4 flex justify-end">
         <button className="rounded bg-indigo-500 py-2 px-4 font-bold text-white hover:bg-indigo-700 focus:outline-none focus:ring">

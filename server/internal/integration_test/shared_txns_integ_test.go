@@ -197,17 +197,19 @@ func TestCreateSharedTxn(t *testing.T) {
 			cookie:      http.Cookie{Name: "invalid"},
 			wantCode:    http.StatusUnauthorized,
 		},
-		"with a valid cookie but an invalid transaction": {
-			transaction: app.SharedTransaction{},
-			wantTxns:    nil,
-			cookie:      *CreateCookie(TestSeanUser.ID),
-			wantCode:    http.StatusBadRequest,
-		},
 		"with a valid cookie, but the user is not in the participants field": {
 			transaction: validTxn,
 			wantTxns:    nil,
 			cookie:      *CreateCookie("not-in-participants"),
 			wantCode:    http.StatusForbidden,
+		},
+		"with a valid cookie, and the user is part of the participants field, but the rest is missing": {
+			transaction: app.SharedTransaction{
+				Participants: []string{"user-01", "user-02"},
+			},
+			wantTxns: nil,
+			cookie:   *CreateCookie("user-01"),
+			wantCode: http.StatusBadRequest,
 		},
 		"with a valid cookie and a valid transaction": {
 			transaction: validTxn,
@@ -263,6 +265,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 		Amount:       123,
 		Date:         123456,
 		Tracker:      "test-tracker-01",
+		Category:     "test-category",
 	}
 
 	assert := assert.New(t)
@@ -323,6 +326,7 @@ var testUnsettledTxn = app.SharedTransaction{
 	Date:         123456,
 	Tracker:      "test-tracker-01",
 	Unsettled:    true,
+	Category:     "test-category",
 }
 
 func TestGetUnsettledTxnsFromTracker(t *testing.T) {

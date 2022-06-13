@@ -10,14 +10,14 @@ import (
 
 type SharedTransaction struct {
 	ID           string   `json:"id"`
-	Date         int64    `json:"date"`
-	Shop         string   `json:"shop"`
-	Amount       int64    `json:"amount"`
-	Category     string   `json:"category"`
+	Date         int64    `json:"date" validate:"required"`
+	Shop         string   `json:"shop" validate:"required"`
+	Amount       int64    `json:"amount" validate:"required"`
+	Category     string   `json:"category" validate:"required"`
 	Payer        string   `json:"payer"`
-	Participants []string `json:"participants"`
+	Participants []string `json:"participants" validate:"required,min=1"`
 	Unsettled    bool     `json:"unsettled"`
-	Tracker      string   `json:"tracker"`
+	Tracker      string   `json:"tracker" validate:"required"`
 }
 
 // GetTxnsByTracker handles a HTTP request to get a list of transactions belonging
@@ -57,39 +57,19 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	participants := r.FormValue("participants")
-	if participants == "" {
-		http.Error(w, "participants must be provided", http.StatusBadRequest)
-		return
-	}
 	if !strings.Contains(participants, userID) {
 		http.Error(w, "users cannot create a transaction that they are not part of", http.StatusForbidden)
 		return
 	}
 	splitParticipants := strings.Split(participants, ",")
 
-	shop := r.FormValue("shop")
-	if shop == "" {
-		http.Error(w, "shop must be provided", http.StatusBadRequest)
-		return
-	}
-
 	amount := r.FormValue("amount")
-	if amount == "0" {
-		http.Error(w, "amount must be provided", http.StatusBadRequest)
-		return
-	}
-
 	amountParsed, err := strconv.ParseInt(amount, 10, 64)
 	if err != nil {
 		http.Error(w, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
 	}
 
 	date := r.FormValue("date")
-	if date == "0" {
-		http.Error(w, "date must be provided", http.StatusBadRequest)
-		return
-	}
-
 	dateParsed, err := strconv.ParseInt(date, 10, 64)
 	if err != nil {
 		http.Error(w, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
@@ -97,9 +77,11 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	unsettled := r.FormValue("unsettled") == "true"
+	shop := r.FormValue("shop")
 	category := r.FormValue("category")
+	payer := r.FormValue("payer")
 
-	err = a.store.CreateSharedTxn(SharedTransaction{
+	txn := SharedTransaction{
 		Participants: splitParticipants,
 		Shop:         shop,
 		Amount:       amountParsed,
@@ -107,7 +89,15 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 		Tracker:      tracker,
 		Unsettled:    unsettled,
 		Category:     category,
-	})
+		Payer:        payer,
+	}
+	err = a.validate.Struct(txn)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = a.store.CreateSharedTxn(txn)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -176,41 +176,44 @@ func TestGetTrackersByUser(t *testing.T) {
 }
 
 func TestCreateSharedTxn(t *testing.T) {
+	validTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Shop:         "test-shop",
+		Amount:       123,
+		Date:         123456,
+		Tracker:      "test-tracker",
+		Category:     "test-category",
+	}
 	assert := assert.New(t)
 	tests := map[string]struct {
 		transaction app.SharedTransaction
+		wantTxns    []app.SharedTransaction
 		cookie      http.Cookie
 		wantCode    int
 	}{
 		"without a valid cookie": {
-			transaction: app.SharedTransaction{},
+			transaction: validTxn,
+			wantTxns:    nil,
 			cookie:      http.Cookie{Name: "invalid"},
 			wantCode:    http.StatusUnauthorized,
 		},
 		"with a valid cookie but an invalid transaction": {
 			transaction: app.SharedTransaction{},
+			wantTxns:    nil,
 			cookie:      *CreateCookie(TestSeanUser.ID),
 			wantCode:    http.StatusBadRequest,
 		},
 		"with a valid cookie, but the user is not in the participants field": {
-			transaction: app.SharedTransaction{
-				Participants: []string{"user-01", "user-02"},
-				Shop:         "test-shop",
-				Amount:       123,
-				Date:         123456,
-			},
-			cookie:   *CreateCookie("not-in-participants"),
-			wantCode: http.StatusForbidden,
+			transaction: validTxn,
+			wantTxns:    nil,
+			cookie:      *CreateCookie("not-in-participants"),
+			wantCode:    http.StatusForbidden,
 		},
 		"with a valid cookie and a valid transaction": {
-			transaction: app.SharedTransaction{
-				Participants: []string{"user-01", "user-02"},
-				Shop:         "test-shop",
-				Amount:       123,
-				Date:         123456,
-			},
-			cookie:   *CreateCookie("user-01"),
-			wantCode: http.StatusAccepted,
+			transaction: validTxn,
+			wantTxns:    []app.SharedTransaction{validTxn},
+			cookie:      *CreateCookie("user-01"),
+			wantCode:    http.StatusAccepted,
 		},
 	}
 
@@ -224,6 +227,24 @@ func TestCreateSharedTxn(t *testing.T) {
 			router.ServeHTTP(response, request)
 
 			assert.Equal(tc.wantCode, response.Code)
+
+			if tc.wantTxns != nil {
+				request := app.NewGetTxnsByTrackerRequest(tc.transaction.Tracker)
+				request.AddCookie(&tc.cookie)
+				response := httptest.NewRecorder()
+				router.ServeHTTP(response, request)
+
+				var gotTxns []app.SharedTransaction
+				err := json.NewDecoder(response.Body).Decode(&gotTxns)
+				assert.NoError(err)
+				assert.Len(gotTxns, len(tc.wantTxns))
+
+				var gotTxnsNoID []app.SharedTransaction
+				for _, gt := range gotTxns {
+					gotTxnsNoID = append(gotTxnsNoID, RemoveSharedTxnID(gt))
+				}
+				assert.ElementsMatch(tc.wantTxns, gotTxnsNoID)
+			}
 		})
 	}
 }

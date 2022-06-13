@@ -97,6 +97,7 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	unsettled := r.FormValue("unsettled") == "true"
+	category := r.FormValue("category")
 
 	err = a.store.CreateSharedTxn(SharedTransaction{
 		Participants: splitParticipants,
@@ -105,6 +106,7 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 		Date:         dateParsed,
 		Tracker:      tracker,
 		Unsettled:    unsettled,
+		Category:     category,
 	})
 
 	if err != nil {

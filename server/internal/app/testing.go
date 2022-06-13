@@ -214,6 +214,7 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
 		"participants": strings.NewReader(participants),
 		"unsettled":    strings.NewReader(unsettled),
+		"category":     strings.NewReader(txn.Category),
 	}
 }
 

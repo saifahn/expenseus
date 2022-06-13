@@ -25,6 +25,7 @@ type SharedTxnItem struct {
 	Amount       int64    `json:"Amount"`
 	Shop         string   `json:"Shop"`
 	Tracker      string   `json:"Tracker"`
+	Category     string   `json:"Category"`
 	Participants []string `json:"Participants"`
 	Unsettled    string   `json:"Unsettled,omitempty"`
 }
@@ -66,6 +67,7 @@ func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error
 			SK:           txnIDKey,
 			EntityType:   sharedTxnEntityType,
 			ID:           txnID,
+			Category:     input.Category,
 			Tracker:      input.Tracker,
 			Participants: input.Participants,
 			Unsettled:    unsettledVal,
@@ -83,6 +85,7 @@ func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error
 		SK:           txnIDKey,
 		EntityType:   sharedTxnEntityType,
 		ID:           txnID,
+		Category:     input.Category,
 		Tracker:      input.Tracker,
 		Participants: input.Participants,
 		Unsettled:    unsettledVal,

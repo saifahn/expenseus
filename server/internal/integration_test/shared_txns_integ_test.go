@@ -287,13 +287,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 			// remove the ID from the got transactions to account for randomly generated
 			var gotWithoutID []app.SharedTransaction
 			for _, txn := range got {
-				gotWithoutID = append(gotWithoutID, app.SharedTransaction{
-					Participants: txn.Participants,
-					Shop:         txn.Shop,
-					Amount:       txn.Amount,
-					Date:         txn.Date,
-					Tracker:      txn.Tracker,
-				})
+				gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
 			}
 
 			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
@@ -352,14 +346,7 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			// remove the ID from the got transactions to account for randomly generated
 			var gotWithoutID []app.SharedTransaction
 			for _, txn := range got {
-				gotWithoutID = append(gotWithoutID, app.SharedTransaction{
-					Participants: txn.Participants,
-					Shop:         txn.Shop,
-					Amount:       txn.Amount,
-					Date:         txn.Date,
-					Tracker:      txn.Tracker,
-					Unsettled:    txn.Unsettled,
-				})
+				gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
 			}
 
 			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)

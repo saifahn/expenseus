@@ -11,6 +11,7 @@ export interface Transaction {
   amount: number;
   imageUrl?: string;
   date: string;
+  category: string;
 }
 
 async function deleteTransaction(txnId: string) {
@@ -23,6 +24,44 @@ async function deleteTransaction(txnId: string) {
   });
 }
 
+type TxnOneProps = {
+  txn: Transaction;
+  onTxnClick: (txn: Transaction) => void;
+};
+
+function TxnOne({ txn, onTxnClick }: TxnOneProps) {
+  const { user } = useUserContext();
+
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
+      deleteTransaction(txn.id),
+    );
+  }
+
+  return (
+    <article
+      className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"
+      key={txn.id}
+      onClick={() => onTxnClick(txn)}
+    >
+      <div className="flex justify-between">
+        <h3 className="text-lg">{txn.name}</h3>
+        <button
+          className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-blue-300"
+          onClick={handleDelete}
+        >
+          Delete
+        </button>
+      </div>
+      <p>{txn.amount}</p>
+      <p>{txn.category}</p>
+      <p>{new Date(txn.date).toDateString()}</p>
+    </article>
+  );
+}
+
 export default function Personal() {
   const { user } = useUserContext();
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
@@ -31,13 +70,6 @@ export default function Personal() {
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`
       : null,
   );
-
-  function handleDelete(txnId: string) {
-    mutate(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
-      deleteTransaction(txnId),
-    );
-  }
 
   return (
     <>
@@ -64,25 +96,7 @@ export default function Personal() {
             )}
             {transactions &&
               transactions.map((txn) => (
-                <article
-                  className="p-2 border-2 mt-4 hover:bg-slate-200 active:bg-slate-300 cursor-pointer"
-                  key={txn.id}
-                  onClick={() => setSelectedTxn(txn)}
-                >
-                  <div className="flex justify-between">
-                    <h3 className="text-lg">{txn.name}</h3>
-                    <button
-                      className="bg-red-500 hover:bg-red-700 active:bg-blue-300 text-white font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
-                      onClick={() => handleDelete(txn.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  <p>{txn.amount}</p>
-                  <p>{txn.userId}</p>
-                  <p>{txn.id}</p>
-                  <p>{new Date(txn.date).toDateString()}</p>
-                </article>
+                <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
               ))}
           </div>
         </>

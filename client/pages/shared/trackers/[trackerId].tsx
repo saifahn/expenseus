@@ -1,5 +1,5 @@
 import SharedLayout from 'components/SharedLayout';
-import SharedTxnSubmitForm from 'components/SharedTxnSubmitForm';
+import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import { Tracker } from '.';
@@ -11,6 +11,7 @@ interface SharedTxn {
   date: string;
   unsettled?: boolean;
   tracker: string;
+  category: string;
 }
 
 export default function TrackerPage() {
@@ -29,7 +30,7 @@ export default function TrackerPage() {
       {!error && !tracker && <div>Loading tracker information...</div>}
       {tracker && (
         <>
-          <h2 className="text-2xl mt-8">{tracker.name}</h2>
+          <h2 className="mt-8 text-2xl">{tracker.name}</h2>
           <h3 className="mt-2">{tracker.id}</h3>
           {tracker.users.map((user) => (
             <p key={user}>{user}</p>
@@ -37,10 +38,10 @@ export default function TrackerPage() {
         </>
       )}
       <div className="mt-8">
-        <SharedTxnSubmitForm tracker={tracker} />
+        <SharedTxnCreateForm tracker={tracker} />
       </div>
       <div className="mt-8">
-        <h3 className="text-2xl mt-4">Transactions</h3>
+        <h3 className="mt-4 text-2xl">Transactions</h3>
         {sharedTxnsError && <div>Failed to load</div>}
         {sharedTxns === null && <div>Loading list of transactions...</div>}
         {sharedTxns && sharedTxns.length === 0 && (
@@ -48,10 +49,11 @@ export default function TrackerPage() {
         )}
         {sharedTxns &&
           sharedTxns.map((txn) => (
-            <article className="p-2 border-2 mt-4" key={txn.id}>
+            <article className="mt-4 border-2 p-2" key={txn.id}>
               <h3 className="text-lg">{txn.shop}</h3>
               <p>{txn.amount}</p>
-              <p>{txn.date}</p>
+              <p>{txn.category}</p>
+              <p>{new Date(txn.date).toDateString()}</p>
               <p>{txn.tracker}</p>
             </article>
           ))}

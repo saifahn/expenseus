@@ -95,6 +95,7 @@ func txnToTxnItem(txn app.Transaction) TransactionItem {
 		Date:       txn.Date,
 		GSI1PK:     allTxnKey,
 		GSI1SK:     transactionIDKey,
+		Category:   txn.Category,
 	}
 }
 
@@ -112,11 +113,12 @@ func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
 
 func txnItemToTxn(ti TransactionItem) app.Transaction {
 	return app.Transaction{
-		ID:     ti.ID,
-		UserID: ti.UserID,
-		Name:   ti.Name,
-		Amount: ti.Amount,
-		Date:   ti.Date,
+		ID:       ti.ID,
+		UserID:   ti.UserID,
+		Name:     ti.Name,
+		Amount:   ti.Amount,
+		Date:     ti.Date,
+		Category: ti.Category,
 	}
 }
 
@@ -130,6 +132,19 @@ func (d *dynamoDB) GetTransaction(userID, txnID string) (app.Transaction, error)
 	}
 
 	return txnItemToTxn(*ti), nil
+}
+
+func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
+	items, err := d.transactions.GetByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	transactions := []app.Transaction{}
+	for _, ti := range items {
+		transactions = append(transactions, txnItemToTxn(ti))
+	}
+	return transactions, nil
 }
 
 func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
@@ -160,19 +175,6 @@ func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {
 
 func (d *dynamoDB) DeleteTransaction(txnID, user string) error {
 	return d.transactions.Delete(txnID, user)
-}
-
-func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, error) {
-	items, err := d.transactions.GetByUserID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	transactions := []app.Transaction{}
-	for _, ti := range items {
-		transactions = append(transactions, txnItemToTxn(ti))
-	}
-	return transactions, nil
 }
 
 // CreateTracker calls the repository to create a new tracker item.
@@ -242,6 +244,8 @@ func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
 		Tracker:      item.Tracker,
 		Unsettled:    item.Unsettled == unsettledFlagTrue,
 		Shop:         item.Shop,
+		Category:     item.Category,
+		Payer:        item.Payer,
 	}
 }
 

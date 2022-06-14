@@ -1,54 +1,73 @@
 import { useUserContext } from 'context/user';
+import { CategoryKey, enUSCategories } from 'data/categories';
+import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
-import { CategoryKey, enUSCategories } from 'data/categories';
 
 type Inputs = {
-  transactionName: string;
+  shop: string;
   amount: number;
   date: string;
+  settled?: boolean;
+  participants: string;
+  payer: string;
   category: CategoryKey;
 };
 
-async function createTransaction(data: Inputs) {
+async function createSharedTxn(data: Inputs, tracker: Tracker) {
   const formData = new FormData();
-  formData.append('transactionName', data.transactionName);
+  formData.append('participants', tracker.users.join(','));
+  formData.append('shop', data.shop);
   formData.append('amount', data.amount.toString());
+  if (!data.settled) formData.append('unsettled', 'true');
   formData.append('category', data.category);
+  formData.append('payer', data.payer);
 
   const unixDate = new Date(data.date).getTime();
   formData.append('date', unixDate.toString());
 
-  await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
+  await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
+    {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+      body: formData,
     },
-    credentials: 'include',
-    body: formData,
-  });
+  );
 }
 
-export default function TxnCreateForm() {
+interface Props {
+  tracker: Tracker;
+}
+
+export default function SharedTxnCreateForm({ tracker }: Props) {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
   const { register, handleSubmit, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
-      transactionName: '',
+      shop: '',
       amount: 0,
       date: new Date().toISOString().split('T')[0],
+      settled: false,
+      payer: user.id,
+      participants: '',
       category: 'unspecified.unspecified',
     },
   });
 
   const submitCallback: SubmitHandler<Inputs> = (data) => {
     mutate(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
-      createTransaction(data),
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
+      createSharedTxn(data, tracker),
     );
-    setValue('transactionName', '');
+    setValue('shop', '');
     setValue('amount', 0);
+    setValue('settled', false);
+    setValue('participants', '');
     setValue('category', 'unspecified.unspecified');
   };
 
@@ -56,16 +75,14 @@ export default function TxnCreateForm() {
     <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6">
       <h3 className="text-lg font-semibold">Create Transaction</h3>
       <div className="mt-4">
-        <label className="block font-semibold" htmlFor="name">
-          Name
+        <label className="block font-semibold" htmlFor="shop">
+          Shop
         </label>
         <input
-          {...register('transactionName', {
-            required: 'Please input a transaction name',
-          })}
+          {...register('shop', { required: 'Please input a shop name' })}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="text"
-          id="transactionName"
+          id="shop"
         />
       </div>
       <div className="mt-4">
@@ -73,13 +90,7 @@ export default function TxnCreateForm() {
           Amount
         </label>
         <input
-          {...register('amount', {
-            min: {
-              value: 1,
-              message: 'Please input a positive amount',
-            },
-            required: 'Please input an amount',
-          })}
+          {...register('amount', { required: 'Please input an amount' })}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="text"
           inputMode="numeric"
@@ -97,6 +108,24 @@ export default function TxnCreateForm() {
           type="date"
           id="date"
         />
+      </div>
+      {/* TODO: make a select, based on the users in the tracker */}
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="payer">
+          Payer
+        </label>
+        <input
+          {...register('payer', { required: 'Please input a payer' })}
+          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          type="text"
+          id="payer"
+        />
+      </div>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="settled">
+          Settled?
+        </label>
+        <input {...register('settled')} type="checkbox" id="settled" />
       </div>
       <div className="mt-4">
         <label className="block font-semibold">Category</label>

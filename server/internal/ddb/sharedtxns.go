@@ -25,7 +25,9 @@ type SharedTxnItem struct {
 	Amount       int64    `json:"Amount"`
 	Shop         string   `json:"Shop"`
 	Tracker      string   `json:"Tracker"`
+	Category     string   `json:"Category"`
 	Participants []string `json:"Participants"`
+	Payer        string   `json:"Payer"`
 	Unsettled    string   `json:"Unsettled,omitempty"`
 }
 type SettleTxnInput struct {
@@ -66,12 +68,14 @@ func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error
 			SK:           txnIDKey,
 			EntityType:   sharedTxnEntityType,
 			ID:           txnID,
+			Category:     input.Category,
 			Tracker:      input.Tracker,
 			Participants: input.Participants,
 			Unsettled:    unsettledVal,
 			Date:         input.Date,
 			Amount:       input.Amount,
 			Shop:         input.Shop,
+			Payer:        input.Payer,
 		})
 		if err != nil {
 			return err
@@ -83,12 +87,14 @@ func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error
 		SK:           txnIDKey,
 		EntityType:   sharedTxnEntityType,
 		ID:           txnID,
+		Category:     input.Category,
 		Tracker:      input.Tracker,
 		Participants: input.Participants,
 		Unsettled:    unsettledVal,
 		Date:         input.Date,
 		Amount:       input.Amount,
 		Shop:         input.Shop,
+		Payer:        input.Payer,
 	})
 	return err
 }

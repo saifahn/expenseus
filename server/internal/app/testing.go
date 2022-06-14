@@ -30,6 +30,7 @@ func MakeTxnRequestPayload(txn Transaction) map[string]io.Reader {
 		"transactionName": strings.NewReader(txn.Name),
 		"amount":          strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
 		"date":            strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+		"category":        strings.NewReader(txn.Category),
 	}
 }
 
@@ -213,6 +214,8 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
 		"participants": strings.NewReader(participants),
 		"unsettled":    strings.NewReader(unsettled),
+		"category":     strings.NewReader(txn.Category),
+		"payer":        strings.NewReader(txn.Payer),
 	}
 }
 

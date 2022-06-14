@@ -26,6 +26,7 @@ type TransactionItem struct {
 	Date       int64  `json:"Date"`
 	GSI1PK     string `json:"GSI1PK"`
 	GSI1SK     string `json:"GSI1SK"`
+	Category   string `json:"Category"`
 }
 
 type GetTxnInput struct {

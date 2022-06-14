@@ -85,6 +85,8 @@ func TestCreateSharedTxn(t *testing.T) {
 		Date:         123456,
 		Shop:         "test-shop",
 		Tracker:      "test-tracker-1",
+		Category:     "test-category",
+		Payer:        "user1",
 	}
 
 	tests := map[string]struct {

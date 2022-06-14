@@ -1,3 +1,4 @@
+import { useUserContext } from 'context/user';
 import { CategoryKey, enUSCategories } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -9,6 +10,7 @@ type Inputs = {
   date: string;
   settled?: boolean;
   participants: string;
+  payer: string;
   category: CategoryKey;
 };
 
@@ -18,6 +20,8 @@ async function createSharedTxn(data: Inputs, tracker: Tracker) {
   formData.append('shop', data.shop);
   formData.append('amount', data.amount.toString());
   if (!data.settled) formData.append('unsettled', 'true');
+  formData.append('category', data.category);
+  formData.append('payer', data.payer);
 
   const unixDate = new Date(data.date).getTime();
   formData.append('date', unixDate.toString());
@@ -40,6 +44,7 @@ interface Props {
 }
 
 export default function SharedTxnSubmitForm({ tracker }: Props) {
+  const { user } = useUserContext();
   const { mutate } = useSWRConfig();
   const { register, handleSubmit, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
@@ -48,6 +53,7 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
       amount: 0,
       date: new Date().toISOString().split('T')[0],
       settled: false,
+      payer: user.id,
       participants: '',
       category: 'unspecified.unspecified',
     },
@@ -101,6 +107,18 @@ export default function SharedTxnSubmitForm({ tracker }: Props) {
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="date"
           id="date"
+        />
+      </div>
+      {/* TODO: make a select, based on the users in the tracker */}
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="payer">
+          Payer
+        </label>
+        <input
+          {...register('payer', { required: 'Please input a payer' })}
+          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          type="text"
+          id="payer"
         />
       </div>
       <div className="mt-4">

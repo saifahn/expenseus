@@ -43,7 +43,7 @@ interface Props {
   tracker: Tracker;
 }
 
-export default function SharedTxnSubmitForm({ tracker }: Props) {
+export default function SharedTxnCreateForm({ tracker }: Props) {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
   const { register, handleSubmit, setValue } = useForm<Inputs>({

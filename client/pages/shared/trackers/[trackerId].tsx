@@ -1,5 +1,5 @@
 import SharedLayout from 'components/SharedLayout';
-import SharedTxnSubmitForm from 'components/SharedTxnSubmitForm';
+import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import { Tracker } from '.';
@@ -38,7 +38,7 @@ export default function TrackerPage() {
         </>
       )}
       <div className="mt-8">
-        <SharedTxnSubmitForm tracker={tracker} />
+        <SharedTxnCreateForm tracker={tracker} />
       </div>
       <div className="mt-8">
         <h3 className="mt-4 text-2xl">Transactions</h3>

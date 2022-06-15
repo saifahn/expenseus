@@ -50,6 +50,7 @@ func Init(a *app.App) *chi.Mux {
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)
 			r.With(trackerIDCtx).Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
+			r.With(trackerIDCtx).Delete("/trackers/{trackerID}/transactions/{transactionID}", a.DeleteSharedTxn)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
 			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})

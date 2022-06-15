@@ -382,6 +382,72 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 	}
 }
 
+func TestDeleteSharedTxns(t *testing.T) {
+	assert := assert.New(t)
+	testTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Shop:         "test-shop",
+		Amount:       123,
+		Date:         123456,
+		Tracker:      "test-tracker-01",
+		Category:     "test-category",
+		Payer:        "user-01",
+	}
+
+	tests := map[string]struct {
+		initialTxns []app.SharedTransaction
+		wantTxns    []app.SharedTransaction
+		wantCode    int
+	}{
+		// TODO: "for a non-existent txn": {
+		"for a txn that exists": {
+			initialTxns: []app.SharedTransaction{testTxn},
+			wantTxns:    []app.SharedTransaction{},
+			wantCode:    http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+
+			// add the initial txns
+			for _, txn := range tc.initialTxns {
+				addTransaction(router, txn)
+			}
+
+			// get the txns to delete
+			request := app.NewGetTxnsByTrackerRequest(testTxn.Tracker)
+			request.AddCookie(CreateCookie("user-01"))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			var txns []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&txns)
+			assert.NoError(err)
+
+			// delete the txns
+			request = app.NewDeleteSharedTxnRequest(txns[0])
+			request.AddCookie(CreateCookie("user-01"))
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			assert.Equal(tc.wantCode, response.Code)
+
+			// get the txns again and make sure that they're deleted
+			request = app.NewGetTxnsByTrackerRequest(testTxn.Tracker)
+			request.AddCookie(CreateCookie("user-01"))
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			txns = []app.SharedTransaction{}
+			err = json.NewDecoder(response.Body).Decode(&txns)
+			assert.NoError(err)
+			assert.Len(txns, len(tc.wantTxns))
+		})
+	}
+}
+
 func TestSettleTxns(t *testing.T) {
 	assert := assert.New(t)
 	tests := map[string]struct {

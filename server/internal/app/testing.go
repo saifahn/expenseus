@@ -255,6 +255,18 @@ func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
 
 }
 
+func NewDeleteSharedTxnRequest(txn SharedTransaction) *http.Request {
+	input := DelSharedTxnInput{
+		Tracker:      txn.Tracker,
+		TxnID:        txn.ID,
+		Participants: txn.Participants,
+	}
+	inputJSON, _ := json.Marshal(input)
+
+	req, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/api/v1/trackers/%s/transactions/%s", input.Tracker, input.TxnID), bytes.NewBuffer(inputJSON))
+	return req
+}
+
 // NewGetUnsettledTxnsByTrackerRequest creates a request to be used in tests to
 // get unsettled transactions
 func NewGetUnsettledTxnsByTrackerRequest(trackerID string) *http.Request {

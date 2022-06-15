@@ -23,7 +23,6 @@ type SharedTransaction struct {
 // GetTxnsByTracker handles a HTTP request to get a list of transactions belonging
 // to a tracker with the given ID, returning the list of transactions
 func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
-	// TODO: should require the userID as well to check that the user is allowed to get them?
 	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
 
 	transactions, err := a.store.GetTxnsByTracker(trackerID)
@@ -99,6 +98,38 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 
 	err = a.store.CreateSharedTxn(txn)
 
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+type DelSharedTxnInput struct {
+	Tracker      string   `json:"tracker" validate:"required"`
+	TxnID        string   `json:"txnID" validate:"required"`
+	Participants []string `json:"participants" validate:"required,min=1"`
+}
+
+func (a *App) DeleteSharedTxn(w http.ResponseWriter, r *http.Request) {
+	// TODO: check that the context matches the input
+	// tracker := r.Context().Value(CtxKeyTrackerID).(string)
+	// txnID := r.Context().Value(CtxKeyTransactionID).(string)
+	var input DelSharedTxnInput
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = a.validate.Struct(input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = a.store.DeleteSharedTxn(input)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

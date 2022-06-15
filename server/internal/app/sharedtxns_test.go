@@ -164,6 +164,47 @@ func TestCreateSharedTxn(t *testing.T) {
 	}
 }
 
+func TestDeleteSharedTxn(t *testing.T) {
+	testTxn := app.SharedTransaction{
+		ID:           "test-txn-id",
+		Participants: []string{"user1", "user2"},
+		Tracker:      "test-tracker-1",
+	}
+	delTxnInput := app.DelSharedTxnInput{
+		TxnID:        testTxn.ID,
+		Participants: testTxn.Participants,
+		Tracker:      testTxn.Tracker,
+	}
+
+	tests := map[string]struct {
+		txn      app.SharedTransaction
+		expectFn mock_app.MockAppFn
+		wantCode int
+	}{
+		"calls the store function successfully": {
+			txn: testTxn,
+			expectFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().DeleteSharedTxn(delTxnInput).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectFn)
+
+			req := app.NewDeleteSharedTxnRequest(tc.txn)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.DeleteSharedTxn)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
 func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}

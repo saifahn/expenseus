@@ -104,4 +104,30 @@ func TestSharedTxns(t *testing.T) {
 		assert.NoError(err)
 		assert.Empty(got)
 	})
+
+	t.Run("deleting a transaction", func(t *testing.T) {
+		tbl, teardown := SetUpTestTable(t, testSharedTxnsTableName)
+		defer teardown()
+		sharedTxns := NewSharedTxnsRepository(tbl)
+
+		id := "test-shared-txn-id"
+		testInput := app.SharedTransaction{
+			Tracker:      "test-tracker-id",
+			Participants: []string{"test-01", "test-02"},
+		}
+		err := sharedTxns.Create(id, testInput)
+		assert.NoError(err)
+
+		testDelInput := app.DelSharedTxnInput{
+			TxnID:        id,
+			Tracker:      testInput.Tracker,
+			Participants: testInput.Participants,
+		}
+		err = sharedTxns.Delete(testDelInput)
+		assert.NoError(err)
+
+		got, err := sharedTxns.GetFromTracker(testInput.Tracker)
+		assert.NoError(err)
+		assert.Empty(got)
+	})
 }

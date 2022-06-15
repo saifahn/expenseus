@@ -279,6 +279,12 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 	return txns, nil
 }
 
+// DeleteSharedTxn calls the repository to delete a shared transaction with
+// the given information.
+func (d *dynamoDB) DeleteSharedTxn(input app.DelSharedTxnInput) error {
+	return d.sharedTxn.Delete(input)
+}
+
 // SettleTxns takes a list of transactions and calls the repository to mark
 // the database items that are related as settled.
 func (d *dynamoDB) SettleTxns(txns []app.SharedTransaction) error {

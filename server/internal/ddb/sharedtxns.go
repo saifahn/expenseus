@@ -40,6 +40,7 @@ type SharedTxnsRepository interface {
 	Create(txnID string, input app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
+	Delete(input app.DelSharedTxnInput) error
 	Settle(input []SettleTxnInput) error
 }
 
@@ -140,6 +141,21 @@ func (r *sharedTxnsRepo) GetUnsettledFromTracker(trackerID string) ([]SharedTxnI
 	}
 
 	return items, nil
+}
+
+func (r *sharedTxnsRepo) Delete(input app.DelSharedTxnInput) error {
+	trackerIDKey := makeTrackerIDKey(input.Tracker)
+	txnIDKey := makeSharedTxnIDKey(input.TxnID)
+
+	for _, p := range input.Participants {
+		userIDKey := makeUserIDKey(p)
+		err := r.table.DeleteItem(attributes.String(userIDKey), attributes.String(txnIDKey))
+		if err != nil {
+			return err
+		}
+	}
+
+	return r.table.DeleteItem(attributes.String(trackerIDKey), attributes.String(txnIDKey))
 }
 
 // Settle takes a slice of SettleTxnInputs and removes the "Unsettled"

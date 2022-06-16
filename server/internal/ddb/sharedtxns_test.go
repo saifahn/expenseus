@@ -105,6 +105,43 @@ func TestSharedTxns(t *testing.T) {
 		assert.Empty(got)
 	})
 
+	t.Run("updating an transaction", func(t *testing.T) {
+		tbl, teardown := SetUpTestTable(t, testSharedTxnsTableName)
+		defer teardown()
+		sharedTxns := NewSharedTxnsRepository(tbl)
+
+		id := "test-shared-txn-id"
+		initialTxn := app.SharedTransaction{
+			Tracker:      "test-tracker-id",
+			Participants: []string{"test-01", "test-02"},
+			Amount:       123,
+		}
+		err := sharedTxns.Create(id, initialTxn)
+		assert.NoError(err)
+
+		updatedTxn := app.SharedTransaction{
+			ID:           "test-shared-txn-id",
+			Tracker:      "test-tracker-id",
+			Participants: []string{"test-01", "test-02"},
+			Amount:       456,
+		}
+		err = sharedTxns.Update(updatedTxn)
+		assert.NoError(err)
+
+		got, err := sharedTxns.GetFromTracker(initialTxn.Tracker)
+		assert.NoError(err)
+		want := SharedTxnItem{
+			PK:           makeTrackerIDKey(updatedTxn.Tracker),
+			SK:           makeSharedTxnIDKey(updatedTxn.ID),
+			EntityType:   sharedTxnEntityType,
+			ID:           updatedTxn.ID,
+			Tracker:      updatedTxn.Tracker,
+			Participants: updatedTxn.Participants,
+			Amount:       updatedTxn.Amount,
+		}
+		assert.ElementsMatch(got, []SharedTxnItem{want})
+	})
+
 	t.Run("deleting a transaction", func(t *testing.T) {
 		tbl, teardown := SetUpTestTable(t, testSharedTxnsTableName)
 		defer teardown()

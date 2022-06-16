@@ -40,6 +40,7 @@ type SharedTxnsRepository interface {
 	Create(txnID string, input app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
+	Update(txn app.SharedTransaction) error
 	Delete(input app.DelSharedTxnInput) error
 	Settle(input []SettleTxnInput) error
 }
@@ -141,6 +142,53 @@ func (r *sharedTxnsRepo) GetUnsettledFromTracker(trackerID string) ([]SharedTxnI
 	}
 
 	return items, nil
+}
+
+func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
+	trackerIDKey := makeTrackerIDKey(txn.Tracker)
+	txnIDKey := makeSharedTxnIDKey(txn.ID)
+
+	var unsettledVal string
+	if txn.Unsettled {
+		unsettledVal = unsettledFlagTrue
+	}
+
+	for _, p := range txn.Participants {
+		userIDKey := makeUserIDKey(p)
+		err := r.table.PutItem(SharedTxnItem{
+			PK:           userIDKey,
+			SK:           txnIDKey,
+			EntityType:   sharedTxnEntityType,
+			ID:           txn.ID,
+			Category:     txn.Category,
+			Tracker:      txn.Tracker,
+			Participants: txn.Participants,
+			Unsettled:    unsettledVal,
+			Date:         txn.Date,
+			Amount:       txn.Amount,
+			Shop:         txn.Shop,
+			Payer:        txn.Payer,
+		}, option.PutCondition("attribute_exists(SK)"))
+		if err != nil {
+			return attrNotExistsOrErr(err)
+		}
+	}
+
+	err := r.table.PutItem(SharedTxnItem{
+		PK:           trackerIDKey,
+		SK:           txnIDKey,
+		EntityType:   sharedTxnEntityType,
+		ID:           txn.ID,
+		Category:     txn.Category,
+		Tracker:      txn.Tracker,
+		Participants: txn.Participants,
+		Unsettled:    unsettledVal,
+		Date:         txn.Date,
+		Amount:       txn.Amount,
+		Shop:         txn.Shop,
+		Payer:        txn.Payer,
+	})
+	return attrNotExistsOrErr(err)
 }
 
 func (r *sharedTxnsRepo) Delete(input app.DelSharedTxnInput) error {

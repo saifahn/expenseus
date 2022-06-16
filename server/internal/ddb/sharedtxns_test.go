@@ -19,11 +19,12 @@ func TestSharedTxns(t *testing.T) {
 
 		id := "test-shared-txn-id"
 		testInput := app.SharedTransaction{
+			ID:           id,
 			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
 
-		err := sharedTxns.Create(id, testInput)
+		err := sharedTxns.Create(testInput)
 		assert.NoError(err)
 
 		got, err := sharedTxns.GetFromTracker(testInput.Tracker)
@@ -45,21 +46,22 @@ func TestSharedTxns(t *testing.T) {
 		defer teardown()
 		sharedTxns := NewSharedTxnsRepository(tbl)
 
-		id := "test-shared-txn-id"
 		testInput := app.SharedTransaction{
+			ID:           "test-shared-txn-id",
 			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
-		err := sharedTxns.Create(id, testInput)
+		err := sharedTxns.Create(testInput)
 		assert.NoError(err)
 
-		unsettledID := "test-unsettled-shared-txn-id"
+		unsettledID := "test-unsettled-txn-id"
 		testUnsettledInput := app.SharedTransaction{
+			ID:           unsettledID,
 			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 			Unsettled:    true,
 		}
-		err = sharedTxns.Create(unsettledID, testUnsettledInput)
+		err = sharedTxns.Create(testUnsettledInput)
 		assert.NoError(err)
 
 		got, err := sharedTxns.GetUnsettledFromTracker("test-tracker-id")
@@ -82,17 +84,17 @@ func TestSharedTxns(t *testing.T) {
 		defer teardown()
 		sharedTxns := NewSharedTxnsRepository(tbl)
 
-		unsettledID := "test-unsettled-shared-txn-id"
 		testUnsettledInput := app.SharedTransaction{
+			ID:           "test-unsettled-shared-txn-id",
 			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 			Unsettled:    true,
 		}
-		err := sharedTxns.Create(unsettledID, testUnsettledInput)
+		err := sharedTxns.Create(testUnsettledInput)
 		assert.NoError(err)
 
 		testSettleTxnPayload := SettleTxnInput{
-			ID:           unsettledID,
+			ID:           "test-unsettled-shared-txn-id",
 			TrackerID:    "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
@@ -110,13 +112,13 @@ func TestSharedTxns(t *testing.T) {
 		defer teardown()
 		sharedTxns := NewSharedTxnsRepository(tbl)
 
-		id := "test-shared-txn-id"
 		initialTxn := app.SharedTransaction{
+			ID:           "test-shared-txn-id",
 			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 			Amount:       123,
 		}
-		err := sharedTxns.Create(id, initialTxn)
+		err := sharedTxns.Create(initialTxn)
 		assert.NoError(err)
 
 		updatedTxn := app.SharedTransaction{
@@ -149,10 +151,11 @@ func TestSharedTxns(t *testing.T) {
 
 		id := "test-shared-txn-id"
 		testInput := app.SharedTransaction{
+			ID:           id,
 			Tracker:      "test-tracker-id",
 			Participants: []string{"test-01", "test-02"},
 		}
-		err := sharedTxns.Create(id, testInput)
+		err := sharedTxns.Create(testInput)
 		assert.NoError(err)
 
 		testDelInput := app.DelSharedTxnInput{

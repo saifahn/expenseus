@@ -229,8 +229,8 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 
 // CreateSharedTxn calls the repository to create a new shared transaction.
 func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
-	id := uuid.New().String()
-	return d.sharedTxn.Create(id, txn)
+	txn.ID = uuid.New().String()
+	return d.sharedTxn.Create(txn)
 }
 
 // A helper function for converting an item in the database representing a

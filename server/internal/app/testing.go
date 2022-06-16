@@ -197,8 +197,8 @@ func NewGetTxnsByTrackerRequest(trackerID string) *http.Request {
 	return req.WithContext(ctx)
 }
 
-// MakeCreateSharedTxnRequestPayload generates the payload to be given to NewCreateSharedTxnRequest
-func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Reader {
+// MakeSharedTxnRequestPayload generates the payload to be given to NewCreateSharedTxnRequest
+func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 	// make a comma separated list of participants
 	participants := strings.Join(txn.Participants, ",")
 
@@ -207,7 +207,7 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 		unsettled = "true"
 	}
 
-	return map[string]io.Reader{
+	values := map[string]io.Reader{
 		"shop":   strings.NewReader(txn.Shop),
 		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
 		// NOTE: currently, date will never be empty, change this?
@@ -217,14 +217,8 @@ func MakeCreateSharedTxnRequestPayload(txn SharedTransaction) map[string]io.Read
 		"category":     strings.NewReader(txn.Category),
 		"payer":        strings.NewReader(txn.Payer),
 	}
-}
-
-// NewCreateSharedTxnRequest creates a request to be used in tests to create a
-// shared transaction, simulating data submitted from a form
-func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
-	values := MakeCreateSharedTxnRequestPayload(txn)
 	for key, r := range values {
 		var fw io.Writer
 		var err error
@@ -248,13 +242,32 @@ func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
 		}
 	}
 	w.Close()
+	return b, w.FormDataContentType()
+}
+
+// NewCreateSharedTxnRequest creates a request to be used in tests to create a
+// shared transaction, simulating data submitted from a form
+func NewCreateSharedTxnRequest(txn SharedTransaction) *http.Request {
+	b, contentType := MakeSharedTxnRequestPayload(txn)
 
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/trackers/%s/transactions", txn.Tracker), &b)
-	req.Header.Set("Content-Type", w.FormDataContentType())
+	req.Header.Set("Content-Type", contentType)
 	return req
 
 }
 
+// NewUpdateSharedTxnRequest creates a request to be used in tests to update a
+// shared transaction
+func NewUpdateSharedTxnRequest(txn SharedTransaction) *http.Request {
+	b, contentType := MakeSharedTxnRequestPayload(txn)
+
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("/api/v1/trackers/%s/transactions/%s", txn.Tracker, txn.ID), &b)
+	req.Header.Set("Content-Type", contentType)
+	return req
+}
+
+// NewGetSharedTxnByIDRequest creates a request to be used in tests to delete a
+// shared transaction.
 func NewDeleteSharedTxnRequest(txn SharedTransaction) *http.Request {
 	input := DelSharedTxnInput{
 		Tracker:      txn.Tracker,

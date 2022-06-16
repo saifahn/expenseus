@@ -44,16 +44,46 @@ func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransaction {
+	err := r.ParseMultipartForm(1000)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return nil
+	}
+
+	amount := r.FormValue("amount")
+	amountParsed, err := strconv.ParseInt(amount, 10, 64)
+	if err != nil {
+		http.Error(w, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
+		return nil
+	}
+
+	date := r.FormValue("date")
+	dateParsed, err := strconv.ParseInt(date, 10, 64)
+	if err != nil {
+		http.Error(w, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
+		return nil
+	}
+
+	unsettled := r.FormValue("unsettled") == "true"
+	shop := r.FormValue("shop")
+	category := r.FormValue("category")
+	payer := r.FormValue("payer")
+
+	return &SharedTransaction{
+		Shop:      shop,
+		Amount:    amountParsed,
+		Date:      dateParsed,
+		Unsettled: unsettled,
+		Category:  category,
+		Payer:     payer,
+	}
+}
+
 // CreateSharedTxn handles a HTTP request to create a shared transaction
 func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	tracker := r.Context().Value(CtxKeyTrackerID).(string)
 	userID := r.Context().Value(CtxKeyUserID).(string)
-	// TODO: refactor, use same logic for transactions and here
-	err := r.ParseMultipartForm(1024 * 1024 * 5)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	participants := r.FormValue("participants")
 	if !strings.Contains(participants, userID) {
@@ -62,42 +92,53 @@ func (a *App) CreateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	}
 	splitParticipants := strings.Split(participants, ",")
 
-	amount := r.FormValue("amount")
-	amountParsed, err := strconv.ParseInt(amount, 10, 64)
-	if err != nil {
-		http.Error(w, "error parsing amount to int: "+err.Error(), http.StatusInternalServerError)
-	}
+	txn := parseSharedTxnForm(r, w)
+	txn.Participants = splitParticipants
+	txn.Tracker = tracker
 
-	date := r.FormValue("date")
-	dateParsed, err := strconv.ParseInt(date, 10, 64)
-	if err != nil {
-		http.Error(w, "error parsing date to int: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	unsettled := r.FormValue("unsettled") == "true"
-	shop := r.FormValue("shop")
-	category := r.FormValue("category")
-	payer := r.FormValue("payer")
-
-	txn := SharedTransaction{
-		Participants: splitParticipants,
-		Shop:         shop,
-		Amount:       amountParsed,
-		Date:         dateParsed,
-		Tracker:      tracker,
-		Unsettled:    unsettled,
-		Category:     category,
-		Payer:        payer,
-	}
-	err = a.validate.Struct(txn)
+	err := a.validate.Struct(txn)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = a.store.CreateSharedTxn(txn)
+	err = a.store.CreateSharedTxn(*txn)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	w.WriteHeader(http.StatusAccepted)
+}
+
+// UpdateSharedTxn handles a HTTP request to update a shared transaction
+func (a *App) UpdateSharedTxn(w http.ResponseWriter, r *http.Request) {
+	tracker := r.Context().Value(CtxKeyTrackerID).(string)
+	userID := r.Context().Value(CtxKeyUserID).(string)
+	txnID := r.Context().Value(CtxKeyTransactionID).(string)
+
+	participants := r.FormValue("participants")
+	if !strings.Contains(participants, userID) {
+		http.Error(w, "users cannot create a transaction that they are not part of", http.StatusForbidden)
+		return
+	}
+	splitParticipants := strings.Split(participants, ",")
+
+	txn := parseSharedTxnForm(r, w)
+	if txn.ID != txnID {
+		http.Error(w, "transaction ID of route does not match transaction ID submitted", http.StatusBadRequest)
+		return
+	}
+	txn.Participants = splitParticipants
+	txn.Tracker = tracker
+
+	err := a.validate.Struct(txn)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = a.store.UpdateSharedTxn(*txn)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -112,6 +153,7 @@ type DelSharedTxnInput struct {
 	Participants []string `json:"participants" validate:"required,min=1"`
 }
 
+// DeleteSharedTxn handles a HTTP request to delete a shared transaction
 func (a *App) DeleteSharedTxn(w http.ResponseWriter, r *http.Request) {
 	// TODO: check that the context matches the input
 	// tracker := r.Context().Value(CtxKeyTrackerID).(string)

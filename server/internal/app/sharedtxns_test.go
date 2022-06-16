@@ -164,6 +164,52 @@ func TestCreateSharedTxn(t *testing.T) {
 	}
 }
 
+func TestUpdateSharedTxn(t *testing.T) {
+	validSharedTxn := app.SharedTransaction{
+		Participants: []string{"user1", "user2"},
+		Amount:       123,
+		Date:         123456,
+		Shop:         "test-shop",
+		Tracker:      "test-tracker-1",
+		Category:     "test-category",
+		Payer:        "user1",
+	}
+
+	tests := map[string]struct {
+		updatedTxn     app.SharedTransaction
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+	}{
+		"with a valid transaction, calls the store function successfully": {
+			updatedTxn: validSharedTxn,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().UpdateSharedTxn(validSharedTxn).Times(1)
+			},
+			wantCode: http.StatusAccepted,
+		},
+		// when the store returns an error
+		// with an invalid transaction
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewUpdateSharedTxnRequest(tc.updatedTxn)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.updatedTxn.Payer)
+			ctx = context.WithValue(ctx, app.CtxKeyTrackerID, tc.updatedTxn.Tracker)
+			ctx = context.WithValue(ctx, app.CtxKeyTransactionID, tc.updatedTxn.ID)
+			req = req.WithContext(ctx)
+			response := httptest.NewRecorder()
+			handler := http.HandlerFunc(a.UpdateSharedTxn)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
 func TestDeleteSharedTxn(t *testing.T) {
 	testTxn := app.SharedTransaction{
 		ID:           "test-txn-id",

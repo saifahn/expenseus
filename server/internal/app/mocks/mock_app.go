@@ -271,6 +271,20 @@ func (mr *MockStoreMockRecorder) SettleTxns(txns interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SettleTxns", reflect.TypeOf((*MockStore)(nil).SettleTxns), txns)
 }
 
+// UpdateSharedTxn mocks base method.
+func (m *MockStore) UpdateSharedTxn(txn app.SharedTransaction) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSharedTxn", txn)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateSharedTxn indicates an expected call of UpdateSharedTxn.
+func (mr *MockStoreMockRecorder) UpdateSharedTxn(txn interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSharedTxn", reflect.TypeOf((*MockStore)(nil).UpdateSharedTxn), txn)
+}
+
 // UpdateTransaction mocks base method.
 func (m *MockStore) UpdateTransaction(txn app.Transaction) error {
 	m.ctrl.T.Helper()

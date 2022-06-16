@@ -41,6 +41,7 @@ type Store interface {
 	GetTracker(trackerID string) (Tracker, error)
 	GetTrackersByUser(userID string) ([]Tracker, error)
 	CreateSharedTxn(txn SharedTransaction) error
+	UpdateSharedTxn(txn SharedTransaction) error
 	DeleteSharedTxn(input DelSharedTxnInput) error
 	GetTxnsByTracker(trackerID string) ([]SharedTransaction, error)
 	GetUnsettledTxnsByTracker(trackerID string) ([]SharedTransaction, error)

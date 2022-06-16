@@ -382,6 +382,82 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 	}
 }
 
+func TestUpdateSharedTxns(t *testing.T) {
+	assert := assert.New(t)
+	initialTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Shop:         "test-shop",
+		Amount:       123,
+		Date:         123456,
+		Tracker:      "test-tracker-01",
+		Category:     "test-category",
+		Payer:        "user-01",
+	}
+	updatedTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Shop:         "different-shop",
+		Amount:       456,
+		Date:         928371,
+		Tracker:      "test-tracker-01",
+		Category:     "different-category",
+		Payer:        "user-02",
+	}
+
+	tests := map[string]struct {
+		initTxn   app.SharedTransaction
+		updateTxn app.SharedTransaction
+		wantTxns  []app.SharedTransaction
+		wantCode  int
+	}{
+		"updating a txn that exists": {
+			initTxn:   initialTxn,
+			updateTxn: updatedTxn,
+			wantTxns:  []app.SharedTransaction{updatedTxn},
+			wantCode:  http.StatusAccepted,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			addTransaction(router, tc.initTxn)
+
+			// get the created transaction to get the ID
+			var got []app.SharedTransaction
+			request := app.NewGetTxnsByTrackerRequest(tc.initTxn.Tracker)
+			request.AddCookie(CreateCookie(TestSeanUser.ID))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			initialTxnID := got[0].ID
+
+			// update the transaction
+			tc.updateTxn.ID = initialTxnID
+
+			request = app.NewUpdateSharedTxnRequest(tc.updateTxn)
+			request.AddCookie(CreateCookie("user-01"))
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			t.Logf(response.Body.String())
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			// check that the item is successfully updated
+			got = []app.SharedTransaction{}
+			request := app.NewGetTxnsByTrackerRequest(tc.initTxn.Tracker)
+			request.AddCookie(CreateCookie(TestSeanUser.ID))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request
+			err = json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Len(got, len(tc.wantTxns))
+			assert.ElementsMatch(RemoveSharedTxnID(updatedTxn), RemoveSharedTxnID(got[0]))
+		})
+	}
+}
+
 func TestDeleteSharedTxns(t *testing.T) {
 	assert := assert.New(t)
 	testTxn := app.SharedTransaction{

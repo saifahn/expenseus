@@ -125,10 +125,7 @@ func (a *App) UpdateSharedTxn(w http.ResponseWriter, r *http.Request) {
 	splitParticipants := strings.Split(participants, ",")
 
 	txn := parseSharedTxnForm(r, w)
-	if txn.ID != txnID {
-		http.Error(w, "transaction ID of route does not match transaction ID submitted", http.StatusBadRequest)
-		return
-	}
+	txn.ID = txnID
 	txn.Participants = splitParticipants
 	txn.Tracker = tracker
 

@@ -109,17 +109,20 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
           id="date"
         />
       </div>
-      {/* TODO: make a select, based on the users in the tracker */}
       <div className="mt-4">
         <label className="block font-semibold" htmlFor="payer">
           Payer
         </label>
-        <input
-          {...register('payer', { required: 'Please input a payer' })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
-          id="payer"
-        />
+        <select
+          {...register('payer', { required: 'Please select a payer' })}
+          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
+        >
+          {tracker.users.map((userId) => (
+            <option key={userId} value={userId}>
+              {userId}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="mt-4">
         <label className="block font-semibold" htmlFor="settled">

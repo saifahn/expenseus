@@ -35,11 +35,12 @@ export default function TrackerPage() {
           {tracker.users.map((user) => (
             <p key={user}>{user}</p>
           ))}
+          <div className="mt-8">
+            <SharedTxnCreateForm tracker={tracker} />
+          </div>
         </>
       )}
-      <div className="mt-8">
-        <SharedTxnCreateForm tracker={tracker} />
-      </div>
+
       <div className="mt-8">
         <h3 className="mt-4 text-2xl">Transactions</h3>
         {sharedTxnsError && <div>Failed to load</div>}

@@ -1,6 +1,7 @@
 import TxnCreateForm from 'components/TxnCreateForm';
 import TxnReadUpdateForm from 'components/TxnReadUpdateForm';
 import { useUserContext } from 'context/user';
+import { CategoryKey } from 'data/categories';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 
@@ -11,7 +12,7 @@ export interface Transaction {
   amount: number;
   imageUrl?: string;
   date: string;
-  category: string;
+  category: CategoryKey;
 }
 
 async function deleteTransaction(txnId: string) {

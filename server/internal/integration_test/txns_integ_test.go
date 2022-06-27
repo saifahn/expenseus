@@ -84,18 +84,20 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 func TestCreatingTxns(t *testing.T) {
 	txnWithoutCategory := app.Transaction{
-		Name:   "test-transaction",
-		UserID: TestSeanUser.ID,
-		Amount: 200,
-		Date:   8972813,
+		Location: "test-location",
+		UserID:   TestSeanUser.ID,
+		Amount:   200,
+		Date:     8972813,
+		Details:  "without-category",
 	}
 
 	txnWithCategory := app.Transaction{
-		Name:     "test-transaction-with-category",
+		Location: "test-location",
 		UserID:   TestSeanUser.ID,
 		Amount:   200,
 		Date:     8972813,
 		Category: "other.other",
+		// Details:  "with-category",
 	}
 
 	tests := map[string]struct {
@@ -142,12 +144,13 @@ func TestCreatingTxns(t *testing.T) {
 
 func TestUpdateTransactions(t *testing.T) {
 	initialDetails := app.Transaction{
-		Name:     "test-transaction",
+		Location: "test-location",
 		ID:       "test-id",
 		UserID:   TestSeanUser.ID,
 		Amount:   100,
 		Date:     333333,
 		Category: "test.category",
+		Details:  "test-details",
 	}
 	tests := map[string]struct {
 		initialTxnDetails app.Transaction
@@ -164,11 +167,12 @@ func TestUpdateTransactions(t *testing.T) {
 		"an existing transaction can be updated": {
 			initialTxnDetails: initialDetails,
 			updateDetails: app.Transaction{
-				Name:     "new-name",
+				Location: "new-location",
 				UserID:   initialDetails.UserID,
 				Amount:   999,
 				Date:     129384,
 				Category: "new.category",
+				Details:  "new-details",
 			},
 			user:     TestSeanUser,
 			wantCode: http.StatusAccepted,
@@ -195,7 +199,7 @@ func TestUpdateTransactions(t *testing.T) {
 			assert.NoError(err)
 			assert.Len(transactionsGot, 1)
 
-			if test.updateDetails.Name != "" {
+			if test.updateDetails.Location != "" {
 				test.updateDetails.ID = transactionsGot[0].ID
 			}
 			// update the transaction

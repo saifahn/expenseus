@@ -27,10 +27,11 @@ func NewGetTransactionRequest(id string) *http.Request {
 // NewCreateTransactionRequest
 func MakeTxnRequestPayload(txn Transaction) map[string]io.Reader {
 	return map[string]io.Reader{
-		"transactionName": strings.NewReader(txn.Name),
-		"amount":          strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
-		"date":            strings.NewReader(strconv.FormatInt(txn.Date, 10)),
-		"category":        strings.NewReader(txn.Category),
+		"location": strings.NewReader(txn.Location),
+		"details":  strings.NewReader(txn.Details),
+		"amount":   strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		"date":     strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+		"category": strings.NewReader(txn.Category),
 	}
 }
 

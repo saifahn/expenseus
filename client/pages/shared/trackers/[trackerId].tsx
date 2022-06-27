@@ -3,8 +3,8 @@ import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
 import { CategoryKey } from 'data/categories';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
-import useSWR from 'swr';
+import React, { useState } from 'react';
+import useSWR, { mutate } from 'swr';
 import { Tracker } from '.';
 
 export interface SharedTxn {
@@ -13,8 +13,67 @@ export interface SharedTxn {
   amount: number;
   date: string;
   unsettled?: boolean;
+  participants: string[];
   tracker: string;
   category: CategoryKey;
+}
+
+async function deleteSharedTxn(txn: SharedTxn) {
+  const payload = {
+    tracker: txn.tracker,
+    txnID: txn.id,
+    participants: txn.participants,
+  };
+
+  await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${txn.tracker}/transactions/${txn.id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+type SharedTxnOneProps = {
+  txn: SharedTxn;
+  tracker: Tracker;
+  onTxnClick: (txn: SharedTxn) => void;
+};
+
+function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
+      deleteSharedTxn(txn),
+    );
+  }
+
+  return (
+    <article
+      className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"
+      onClick={() => onTxnClick(txn)}
+      key={txn.id}
+    >
+      <div className="flex justify-between">
+        <h3 className="text-lg">{txn.shop}</h3>
+        <button
+          className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-blue-300"
+          onClick={handleDelete}
+        >
+          Delete
+        </button>
+      </div>
+      <p>{txn.amount}</p>
+      <p>{txn.category}</p>
+      <p>{new Date(txn.date).toDateString()}</p>
+      <p>{txn.tracker}</p>
+    </article>
+  );
 }
 
 export default function TrackerPage() {
@@ -64,17 +123,12 @@ export default function TrackerPage() {
                 )}
                 {sharedTxns &&
                   sharedTxns.map((txn) => (
-                    <article
-                      className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"
-                      onClick={() => setSelectedTxn(txn)}
+                    <SharedTxnOne
+                      txn={txn}
+                      onTxnClick={setSelectedTxn}
                       key={txn.id}
-                    >
-                      <h3 className="text-lg">{txn.shop}</h3>
-                      <p>{txn.amount}</p>
-                      <p>{txn.category}</p>
-                      <p>{new Date(txn.date).toDateString()}</p>
-                      <p>{txn.tracker}</p>
-                    </article>
+                      tracker={tracker}
+                    />
                   ))}
               </div>
             </>

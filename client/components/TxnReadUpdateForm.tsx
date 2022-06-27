@@ -2,7 +2,8 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { Transaction } from 'pages/personal';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
-import { CategoryKey, enUSCategories } from 'data/categories';
+import { CategoryKey } from 'data/categories';
+import TxnFormBase from './TxnFormBase';
 
 interface TxnReadUpdateFormProps {
   txn: Transaction;
@@ -66,59 +67,25 @@ export default function TxnReadUpdateForm({
     onApply();
   };
 
+  const txnNameInputProps = register('transactionName', {
+    required: 'Please input a transaction name',
+  });
+  const amountInputProps = register('amount', {
+    min: { value: 1, message: 'Please input a positive amount' },
+    required: 'Please input an amount',
+  });
+  const dateInputProps = register('date', { required: 'Please input a date' });
+  const categoryInputProps = register('category');
+
   return (
-    <form onSubmit={handleSubmit(submitCallback)} className="mt-4 border-4 p-6">
-      <h3 className="text-lg font-semibold">Update Transaction</h3>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="name">
-          Name
-        </label>
-        <input
-          {...register('transactionName', {
-            required: 'Please input a transaction name',
-          })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
-          id="transactionName"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="amount">
-          Amount
-        </label>
-        <input
-          {...register('amount', { required: 'Please input an amount' })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          id="amount"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="date">
-          Date
-        </label>
-        <input
-          {...register('date', { required: 'Please input a date' })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="date"
-          id="date"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold">Category</label>
-        <select
-          {...register('category')}
-          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
-        >
-          {enUSCategories.map((category) => (
-            <option key={category.key} value={category.key}>
-              {category.value}
-            </option>
-          ))}
-        </select>
-      </div>
+    <TxnFormBase
+      title="Update Transaction"
+      txnNameInputProps={txnNameInputProps}
+      amountInputProps={amountInputProps}
+      dateInputProps={dateInputProps}
+      categoryInputProps={categoryInputProps}
+      onSubmit={handleSubmit(submitCallback)}
+    >
       <div className="mt-4 flex justify-end">
         {formState.isDirty ? (
           <>
@@ -144,6 +111,6 @@ export default function TxnReadUpdateForm({
           </button>
         )}
       </div>
-    </form>
+    </TxnFormBase>
   );
 }

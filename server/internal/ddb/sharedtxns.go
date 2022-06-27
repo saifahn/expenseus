@@ -37,9 +37,11 @@ type SettleTxnInput struct {
 }
 
 type SharedTxnsRepository interface {
-	Create(txnID string, input app.SharedTransaction) error
+	Create(txn app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
+	Update(txn app.SharedTransaction) error
+	Delete(input app.DelSharedTxnInput) error
 	Settle(input []SettleTxnInput) error
 }
 
@@ -53,29 +55,29 @@ func NewSharedTxnsRepository(t *table.Table) SharedTxnsRepository {
 	return &sharedTxnsRepo{t}
 }
 
-func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error {
-	trackerIDKey := makeTrackerIDKey(input.Tracker)
-	txnIDKey := makeSharedTxnIDKey(txnID)
+func (r *sharedTxnsRepo) Create(txn app.SharedTransaction) error {
+	trackerIDKey := makeTrackerIDKey(txn.Tracker)
+	txnIDKey := makeSharedTxnIDKey(txn.ID)
 	var unsettledVal string
-	if input.Unsettled {
+	if txn.Unsettled {
 		unsettledVal = unsettledFlagTrue
 	}
 
-	for _, p := range input.Participants {
+	for _, p := range txn.Participants {
 		userIDKey := makeUserIDKey(p)
 		err := r.table.PutItem(SharedTxnItem{
 			PK:           userIDKey,
 			SK:           txnIDKey,
 			EntityType:   sharedTxnEntityType,
-			ID:           txnID,
-			Category:     input.Category,
-			Tracker:      input.Tracker,
-			Participants: input.Participants,
+			ID:           txn.ID,
+			Category:     txn.Category,
+			Tracker:      txn.Tracker,
+			Participants: txn.Participants,
 			Unsettled:    unsettledVal,
-			Date:         input.Date,
-			Amount:       input.Amount,
-			Shop:         input.Shop,
-			Payer:        input.Payer,
+			Date:         txn.Date,
+			Amount:       txn.Amount,
+			Shop:         txn.Shop,
+			Payer:        txn.Payer,
 		})
 		if err != nil {
 			return err
@@ -86,15 +88,15 @@ func (r *sharedTxnsRepo) Create(txnID string, input app.SharedTransaction) error
 		PK:           trackerIDKey,
 		SK:           txnIDKey,
 		EntityType:   sharedTxnEntityType,
-		ID:           txnID,
-		Category:     input.Category,
-		Tracker:      input.Tracker,
-		Participants: input.Participants,
+		ID:           txn.ID,
+		Category:     txn.Category,
+		Tracker:      txn.Tracker,
+		Participants: txn.Participants,
 		Unsettled:    unsettledVal,
-		Date:         input.Date,
-		Amount:       input.Amount,
-		Shop:         input.Shop,
-		Payer:        input.Payer,
+		Date:         txn.Date,
+		Amount:       txn.Amount,
+		Shop:         txn.Shop,
+		Payer:        txn.Payer,
 	})
 	return err
 }
@@ -140,6 +142,68 @@ func (r *sharedTxnsRepo) GetUnsettledFromTracker(trackerID string) ([]SharedTxnI
 	}
 
 	return items, nil
+}
+
+func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
+	trackerIDKey := makeTrackerIDKey(txn.Tracker)
+	txnIDKey := makeSharedTxnIDKey(txn.ID)
+
+	var unsettledVal string
+	if txn.Unsettled {
+		unsettledVal = unsettledFlagTrue
+	}
+
+	for _, p := range txn.Participants {
+		userIDKey := makeUserIDKey(p)
+		err := r.table.PutItem(SharedTxnItem{
+			PK:           userIDKey,
+			SK:           txnIDKey,
+			EntityType:   sharedTxnEntityType,
+			ID:           txn.ID,
+			Category:     txn.Category,
+			Tracker:      txn.Tracker,
+			Participants: txn.Participants,
+			Unsettled:    unsettledVal,
+			Date:         txn.Date,
+			Amount:       txn.Amount,
+			Shop:         txn.Shop,
+			Payer:        txn.Payer,
+		}, option.PutCondition("attribute_exists(SK)"))
+		if err != nil {
+			return attrNotExistsOrErr(err)
+		}
+	}
+
+	err := r.table.PutItem(SharedTxnItem{
+		PK:           trackerIDKey,
+		SK:           txnIDKey,
+		EntityType:   sharedTxnEntityType,
+		ID:           txn.ID,
+		Category:     txn.Category,
+		Tracker:      txn.Tracker,
+		Participants: txn.Participants,
+		Unsettled:    unsettledVal,
+		Date:         txn.Date,
+		Amount:       txn.Amount,
+		Shop:         txn.Shop,
+		Payer:        txn.Payer,
+	})
+	return attrNotExistsOrErr(err)
+}
+
+func (r *sharedTxnsRepo) Delete(input app.DelSharedTxnInput) error {
+	trackerIDKey := makeTrackerIDKey(input.Tracker)
+	txnIDKey := makeSharedTxnIDKey(input.TxnID)
+
+	for _, p := range input.Participants {
+		userIDKey := makeUserIDKey(p)
+		err := r.table.DeleteItem(attributes.String(userIDKey), attributes.String(txnIDKey))
+		if err != nil {
+			return err
+		}
+	}
+
+	return r.table.DeleteItem(attributes.String(trackerIDKey), attributes.String(txnIDKey))
 }
 
 // Settle takes a slice of SettleTxnInputs and removes the "Unsettled"

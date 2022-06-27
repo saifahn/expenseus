@@ -1,6 +1,7 @@
 import TxnCreateForm from 'components/TxnCreateForm';
 import TxnReadUpdateForm from 'components/TxnReadUpdateForm';
 import { useUserContext } from 'context/user';
+import { CategoryKey } from 'data/categories';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 
@@ -11,7 +12,7 @@ export interface Transaction {
   amount: number;
   imageUrl?: string;
   date: string;
-  category: string;
+  category: CategoryKey;
 }
 
 async function deleteTransaction(txnId: string) {
@@ -64,7 +65,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
 
 export default function Personal() {
   const { user } = useUserContext();
-  const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+  const [selectedTxn, setSelectedTxn] = useState<Transaction>(null);
   const { data: transactions, error } = useSWR<Transaction[]>(() =>
     user
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`
@@ -75,11 +76,13 @@ export default function Personal() {
     <>
       <h1 className="text-4xl">Personal</h1>
       {selectedTxn ? (
-        <TxnReadUpdateForm
-          txn={selectedTxn}
-          onApply={() => setSelectedTxn(null)}
-          onCancel={() => setSelectedTxn(null)}
-        />
+        <div className="mt-4">
+          <TxnReadUpdateForm
+            txn={selectedTxn}
+            onApply={() => setSelectedTxn(null)}
+            onCancel={() => setSelectedTxn(null)}
+          />
+        </div>
       ) : (
         <>
           <div className="mt-4">

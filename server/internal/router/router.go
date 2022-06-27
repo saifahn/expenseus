@@ -47,9 +47,16 @@ func Init(a *app.App) *chi.Mux {
 			r.With(userIDCtx).Get("/users/{userID}", a.GetUser)
 
 			r.Post("/trackers", a.CreateTracker)
-			r.With(trackerIDCtx).Get("/trackers/{trackerID}", a.GetTrackerByID)
-			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)
-			r.With(trackerIDCtx).Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
+			r.With(trackerIDCtx).
+				Get("/trackers/{trackerID}", a.GetTrackerByID)
+			r.With(trackerIDCtx).
+				Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)
+			r.With(trackerIDCtx).
+				Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
+			r.With(transactionIDCtx).
+				With(trackerIDCtx).
+				Put("/trackers/{trackerID}/transactions/{transactionID}", a.UpdateSharedTxn)
+			r.With(trackerIDCtx).Delete("/trackers/{trackerID}/transactions/{transactionID}", a.DeleteSharedTxn)
 			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
 			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})
@@ -86,6 +93,7 @@ func trackerIDCtx(next http.Handler) http.Handler {
 		id := chi.URLParam(r, "trackerID")
 		ctx := context.WithValue(r.Context(), app.CtxKeyTrackerID, id)
 		ctx = context.WithValue(ctx, app.CtxKeyUserID, r.Context().Value(app.CtxKeyUserID))
+		ctx = context.WithValue(ctx, app.CtxKeyTransactionID, r.Context().Value(app.CtxKeyTransactionID))
 		next.ServeHTTP(rw, r.WithContext(ctx))
 	})
 }

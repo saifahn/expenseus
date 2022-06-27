@@ -229,8 +229,8 @@ func (d *dynamoDB) GetTrackersByUser(userID string) ([]app.Tracker, error) {
 
 // CreateSharedTxn calls the repository to create a new shared transaction.
 func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
-	id := uuid.New().String()
-	return d.sharedTxn.Create(id, txn)
+	txn.ID = uuid.New().String()
+	return d.sharedTxn.Create(txn)
 }
 
 // A helper function for converting an item in the database representing a
@@ -277,6 +277,16 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 		txns = append(txns, sharedTxnItemToSharedTxn(i))
 	}
 	return txns, nil
+}
+
+func (d *dynamoDB) UpdateSharedTxn(txn app.SharedTransaction) error {
+	return d.sharedTxn.Update(txn)
+}
+
+// DeleteSharedTxn calls the repository to delete a shared transaction with
+// the given information.
+func (d *dynamoDB) DeleteSharedTxn(input app.DelSharedTxnInput) error {
+	return d.sharedTxn.Delete(input)
 }
 
 // SettleTxns takes a list of transactions and calls the repository to mark

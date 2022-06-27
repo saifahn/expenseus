@@ -2,24 +2,22 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { Transaction } from 'pages/personal';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
-
-interface TxnReadUpdateFormProps {
-  txn: Transaction;
-  onApply: () => void;
-  onCancel: () => void;
-}
+import { CategoryKey } from 'data/categories';
+import TxnFormBase from './TxnFormBase';
 
 type Inputs = {
   txnID: string;
   transactionName: string;
   amount: number;
   date: string;
+  category: CategoryKey;
 };
 
 async function updateTransaction(data: Inputs) {
   const formData = new FormData();
   formData.append('transactionName', data.transactionName);
   formData.append('amount', data.amount.toString());
+  formData.append('category', data.category);
 
   const unixDate = new Date(data.date).getTime();
   formData.append('date', unixDate.toString());
@@ -37,19 +35,22 @@ async function updateTransaction(data: Inputs) {
   );
 }
 
-export default function TxnReadUpdateForm({
-  txn,
-  onApply,
-  onCancel,
-}: TxnReadUpdateFormProps) {
+interface Props {
+  txn: Transaction;
+  onApply: () => void;
+  onCancel: () => void;
+}
+
+export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
-  const { register, formState, handleSubmit } = useForm({
+  const { register, formState, handleSubmit } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
       transactionName: txn.name,
       amount: txn.amount,
       date: new Date(txn.date).toISOString().split('T')[0],
+      category: txn.category,
     },
   });
 
@@ -62,57 +63,36 @@ export default function TxnReadUpdateForm({
     onApply();
   };
 
+  const txnNameInputProps = register('transactionName', {
+    required: 'Please input a transaction name',
+  });
+  const amountInputProps = register('amount', {
+    min: { value: 1, message: 'Please input a positive amount' },
+    required: 'Please input an amount',
+  });
+  const dateInputProps = register('date', { required: 'Please input a date' });
+  const categoryInputProps = register('category');
+
   return (
-    <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6 mt-4">
-      <h3 className="text-lg font-semibold">Update Transaction</h3>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="name">
-          Name
-        </label>
-        <input
-          {...register('transactionName', {
-            required: 'Please input a transaction name',
-          })}
-          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
-          type="text"
-          id="transactionName"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="amount">
-          Amount
-        </label>
-        <input
-          {...register('amount', { required: 'Please input an amount' })}
-          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          id="amount"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="date">
-          Date
-        </label>
-        <input
-          {...register('date', { required: 'Please input a date' })}
-          className="appearance-none w-full border rounded leading-tight focus:outline-none focus:ring py-2 px-3 mt-2"
-          type="date"
-          id="date"
-        />
-      </div>
+    <TxnFormBase
+      title="Update Transaction"
+      txnNameInputProps={txnNameInputProps}
+      amountInputProps={amountInputProps}
+      dateInputProps={dateInputProps}
+      categoryInputProps={categoryInputProps}
+      onSubmit={handleSubmit(submitCallback)}
+    >
       <div className="mt-4 flex justify-end">
         {formState.isDirty ? (
           <>
             <button
-              className="hover:bg-slate-200 font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
+              className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
               onClick={() => onCancel()}
             >
               Cancel
             </button>
             <button
-              className="bg-indigo-500 hover:bg-indigo-700 text-white font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
+              className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
               type="submit"
             >
               Apply
@@ -120,13 +100,13 @@ export default function TxnReadUpdateForm({
           </>
         ) : (
           <button
-            className="hover:bg-slate-200 font-bold uppercase text-sm py-2 px-4 rounded focus:outline-none focus:ring"
+            className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
             onClick={() => onCancel()}
           >
             Close
           </button>
         )}
       </div>
-    </form>
+    </TxnFormBase>
   );
 }

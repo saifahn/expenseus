@@ -1,11 +1,12 @@
-import { useUserContext } from 'context/user';
 import { CategoryKey } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
+import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 import SharedTxnFormBase from './SharedTxnFormBase';
 
 type Inputs = {
+  id: string;
   shop: string;
   amount: number;
   date: string;
@@ -15,7 +16,7 @@ type Inputs = {
   category: CategoryKey;
 };
 
-async function createSharedTxn(data: Inputs, tracker: Tracker) {
+async function updateSharedTxn(data: Inputs, tracker: Tracker) {
   const formData = new FormData();
   formData.append('participants', tracker.users.join(','));
   formData.append('shop', data.shop);
@@ -28,9 +29,9 @@ async function createSharedTxn(data: Inputs, tracker: Tracker) {
   formData.append('date', unixDate.toString());
 
   await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions/${data.id}`,
     {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         Accept: 'application/json',
       },
@@ -41,35 +42,37 @@ async function createSharedTxn(data: Inputs, tracker: Tracker) {
 }
 
 interface Props {
+  txn: SharedTxn;
   tracker: Tracker;
+  onApply: () => void;
+  onCancel: () => void;
 }
 
-export default function SharedTxnCreateForm({ tracker }: Props) {
-  const { user } = useUserContext();
+export default function SharedTxnReadUpdateForm({
+  txn,
+  tracker,
+  onApply,
+  onCancel,
+}: Props) {
   const { mutate } = useSWRConfig();
-  const { register, handleSubmit, setValue } = useForm<Inputs>({
+  const { register, handleSubmit, formState } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
-      shop: '',
-      amount: 0,
-      date: new Date().toISOString().split('T')[0],
-      settled: false,
-      payer: user.id,
-      participants: '',
-      category: 'unspecified.unspecified',
+      shop: txn.shop,
+      amount: txn.amount,
+      date: new Date(txn.date).toISOString().split('T')[0],
+      settled: !txn.unsettled,
+      category: txn.category,
     },
   });
 
   const submitCallback: SubmitHandler<Inputs> = (data) => {
+    data.id = txn.id;
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
-      createSharedTxn(data, tracker),
+      updateSharedTxn(data, tracker),
     );
-    setValue('shop', '');
-    setValue('amount', 0);
-    setValue('settled', false);
-    setValue('participants', '');
-    setValue('category', 'unspecified.unspecified');
+    onApply();
   };
 
   const shopInputProps = register('shop', {
@@ -93,7 +96,7 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
 
   return (
     <SharedTxnFormBase
-      title="Create Shared Transaction"
+      title="Update Shared Transaction"
       shopInputProps={shopInputProps}
       amountInputProps={amountInputProps}
       dateInputProps={dateInputProps}
@@ -104,9 +107,29 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       onSubmit={handleSubmit(submitCallback)}
     >
       <div className="mt-4 flex justify-end">
-        <button className="rounded bg-indigo-500 py-2 px-4 font-bold text-white hover:bg-indigo-700 focus:outline-none focus:ring">
-          Create transaction
-        </button>
+        {formState.isDirty ? (
+          <>
+            <button
+              className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
+              onClick={() => onCancel()}
+            >
+              Cancel
+            </button>
+            <button
+              className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
+              type="submit"
+            >
+              Apply
+            </button>
+          </>
+        ) : (
+          <button
+            className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
+            onClick={() => onCancel()}
+          >
+            Close
+          </button>
+        )}
       </div>
     </SharedTxnFormBase>
   );

@@ -32,7 +32,7 @@ export default function SharedTrackers() {
           data.map((tracker) => (
             <Link href={`/shared/trackers/${tracker.id}`} key={tracker.id}>
               <a>
-                <article className="p-2 border-2 mt-4">
+                <article className="mt-4 border-2 p-2">
                   <h3>{tracker.name}</h3>
                   {tracker.users.map((user) => (
                     <p key={user}>{user}</p>

@@ -40,7 +40,7 @@ export default function Layout({ children }) {
               <li className="ml-4">
                 <a
                   href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`}
-                  className="inline-flex items-center border rounded-md px-3 py-2"
+                  className="inline-flex items-center rounded-md border px-3 py-2"
                 >
                   <span className="">Log out</span>
                 </a>
@@ -51,10 +51,10 @@ export default function Layout({ children }) {
       )}
 
       {error && error.code === 401 && (
-        <main className="container h-full mx-auto border-gray-600 mt-4">
+        <main className="container mx-auto mt-4 h-full border-gray-600">
           <a
             href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}
-            className="inline-flex items-center border rounded-md px-3 py-2 mt-4"
+            className="mt-4 inline-flex items-center rounded-md border px-3 py-2"
           >
             <img
               src="/images/google-g-logo.svg"
@@ -74,7 +74,7 @@ export default function Layout({ children }) {
       )}
 
       {!error && user && (
-        <main className="container h-full mx-auto border-4 border-gray-600 mt-4 p-8">
+        <main className="container mx-auto mt-4 h-full border-4 border-gray-600 p-8">
           {children}
         </main>
       )}

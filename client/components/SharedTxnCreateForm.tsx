@@ -1,8 +1,9 @@
 import { useUserContext } from 'context/user';
-import { CategoryKey, enUSCategories } from 'data/categories';
+import { CategoryKey } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
+import SharedTxnFormBase from './SharedTxnFormBase';
 
 type Inputs = {
   shop: string;
@@ -71,86 +72,42 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
     setValue('category', 'unspecified.unspecified');
   };
 
+  const shopInputProps = register('shop', {
+    required: 'Please input a shop name',
+  });
+  const amountInputProps = register('amount', {
+    min: {
+      value: 1,
+      message: 'Please input a positive amount',
+    },
+    required: 'Please input an amount',
+  });
+  const dateInputProps = register('date', {
+    required: 'Please input a date',
+  });
+  const payerInputProps = register('payer', {
+    required: 'Please select a payer',
+  });
+  const settledInputProps = register('settled');
+  const categoryInputProps = register('category');
+
   return (
-    <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6">
-      <h3 className="text-lg font-semibold">Create Transaction</h3>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="shop">
-          Shop
-        </label>
-        <input
-          {...register('shop', { required: 'Please input a shop name' })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
-          id="shop"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="amount">
-          Amount
-        </label>
-        <input
-          {...register('amount', {
-            min: { value: 1, message: 'Please input a positive amount' },
-            required: 'Please input an amount',
-          })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          id="amount"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="date">
-          Date
-        </label>
-        <input
-          {...register('date', { required: 'Please input a date' })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="date"
-          id="date"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="payer">
-          Payer
-        </label>
-        <select
-          {...register('payer', { required: 'Please select a payer' })}
-          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
-        >
-          {tracker.users.map((userId) => (
-            <option key={userId} value={userId}>
-              {userId}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="settled">
-          Settled?
-        </label>
-        <input {...register('settled')} type="checkbox" id="settled" />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold">Category</label>
-        <select
-          {...register('category')}
-          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
-        >
-          {enUSCategories.map((category) => (
-            <option key={category.key} value={category.key}>
-              {category.value}
-            </option>
-          ))}
-        </select>
-      </div>
+    <SharedTxnFormBase
+      title="Create Shared Transaction"
+      shopInputProps={shopInputProps}
+      amountInputProps={amountInputProps}
+      dateInputProps={dateInputProps}
+      payerInputProps={payerInputProps}
+      settledInputProps={settledInputProps}
+      categoryInputProps={categoryInputProps}
+      tracker={tracker}
+      onSubmit={handleSubmit(submitCallback)}
+    >
       <div className="mt-4 flex justify-end">
         <button className="rounded bg-indigo-500 py-2 px-4 font-bold text-white hover:bg-indigo-700 focus:outline-none focus:ring">
           Create transaction
         </button>
       </div>
-    </form>
+    </SharedTxnFormBase>
   );
 }

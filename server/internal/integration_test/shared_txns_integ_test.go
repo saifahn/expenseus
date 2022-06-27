@@ -446,14 +446,14 @@ func TestUpdateSharedTxns(t *testing.T) {
 
 			// check that the item is successfully updated
 			got = []app.SharedTransaction{}
-			request := app.NewGetTxnsByTrackerRequest(tc.initTxn.Tracker)
+			request = app.NewGetTxnsByTrackerRequest(tc.initTxn.Tracker)
 			request.AddCookie(CreateCookie(TestSeanUser.ID))
-			response := httptest.NewRecorder()
-			router.ServeHTTP(response, request
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
 			err = json.NewDecoder(response.Body).Decode(&got)
 			assert.NoError(err)
 			assert.Len(got, len(tc.wantTxns))
-			assert.ElementsMatch(RemoveSharedTxnID(updatedTxn), RemoveSharedTxnID(got[0]))
+			assert.Equal(RemoveSharedTxnID(updatedTxn), RemoveSharedTxnID(got[0]))
 		})
 	}
 }

@@ -5,12 +5,6 @@ import { useUserContext } from '../context/user';
 import { CategoryKey } from 'data/categories';
 import TxnFormBase from './TxnFormBase';
 
-interface TxnReadUpdateFormProps {
-  txn: Transaction;
-  onApply: () => void;
-  onCancel: () => void;
-}
-
 type Inputs = {
   txnID: string;
   transactionName: string;
@@ -41,11 +35,13 @@ async function updateTransaction(data: Inputs) {
   );
 }
 
-export default function TxnReadUpdateForm({
-  txn,
-  onApply,
-  onCancel,
-}: TxnReadUpdateFormProps) {
+interface Props {
+  txn: Transaction;
+  onApply: () => void;
+  onCancel: () => void;
+}
+
+export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
   const { register, formState, handleSubmit } = useForm<Inputs>({

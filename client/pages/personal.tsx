@@ -65,7 +65,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
 
 export default function Personal() {
   const { user } = useUserContext();
-  const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+  const [selectedTxn, setSelectedTxn] = useState<Transaction>(null);
   const { data: transactions, error } = useSWR<Transaction[]>(() =>
     user
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`
@@ -76,11 +76,13 @@ export default function Personal() {
     <>
       <h1 className="text-4xl">Personal</h1>
       {selectedTxn ? (
-        <TxnReadUpdateForm
-          txn={selectedTxn}
-          onApply={() => setSelectedTxn(null)}
-          onCancel={() => setSelectedTxn(null)}
-        />
+        <div className="mt-4">
+          <TxnReadUpdateForm
+            txn={selectedTxn}
+            onApply={() => setSelectedTxn(null)}
+            onCancel={() => setSelectedTxn(null)}
+          />
+        </div>
       ) : (
         <>
           <div className="mt-4">

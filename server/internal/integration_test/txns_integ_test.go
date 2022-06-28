@@ -97,7 +97,7 @@ func TestCreatingTxns(t *testing.T) {
 		Amount:   200,
 		Date:     8972813,
 		Category: "other.other",
-		// Details:  "with-category",
+		Details:  "with-category",
 	}
 
 	tests := map[string]struct {

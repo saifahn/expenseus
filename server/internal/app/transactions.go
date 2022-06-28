@@ -123,6 +123,7 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 	}
 
 	location := r.FormValue("location")
+	details := r.FormValue("details")
 
 	amount := r.FormValue("amount")
 	amountParsed, err := strconv.ParseInt(amount, 10, 64)
@@ -144,6 +145,7 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 		Amount:   amountParsed,
 		Date:     dateParsed,
 		Category: category,
+		Details:  details,
 	}
 }
 

@@ -104,34 +104,6 @@ func (a *App) GetTxnsBetweenDates(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAllTransactions handles a HTTP request to get all transactions, returning a list
-// of transactions.
-func (a *App) GetAllTransactions(rw http.ResponseWriter, r *http.Request) {
-	transactions, err := a.store.GetAllTransactions()
-
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	for i, e := range transactions {
-		if e.ImageKey != "" {
-			transactions[i], err = a.images.AddImageToTransaction(e)
-			if err != nil {
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-	}
-
-	rw.Header().Set("content-type", jsonContentType)
-	err = json.NewEncoder(rw).Encode(transactions)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
 func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 	err := r.ParseMultipartForm(1024 * 1024 * 5)
 	if err != nil {

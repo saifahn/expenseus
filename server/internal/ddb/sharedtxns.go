@@ -31,6 +31,7 @@ type SharedTxnItem struct {
 	Unsettled    string   `json:"Unsettled,omitempty"`
 	Details      string   `json:"Details"`
 }
+
 type SettleTxnInput struct {
 	ID           string
 	TrackerID    string

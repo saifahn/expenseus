@@ -29,7 +29,6 @@ type Store interface {
 	GetTransaction(userID, txnID string) (Transaction, error)
 	GetTransactionsByUser(userID string) ([]Transaction, error)
 	GetTxnsBetweenDates(userID string, from, to int64) ([]Transaction, error)
-	GetAllTransactions() ([]Transaction, error)
 	CreateTransaction(txn Transaction) error
 	UpdateTransaction(txn Transaction) error
 	DeleteTransaction(txnID, userID string) error

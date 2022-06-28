@@ -33,7 +33,6 @@ func Init(a *app.App) *chi.Mux {
 		r.Group(func(r chi.Router) {
 			r.Use(a.VerifyUser)
 
-			r.Get("/transactions", a.GetAllTransactions)
 			r.Post("/transactions", a.CreateTransaction)
 			r.With(userIDCtx).Get("/transactions/user/{userID}", a.GetTransactionsByUser)
 			r.With(transactionIDCtx).Get("/transactions/{transactionID}", a.GetTransaction)

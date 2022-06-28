@@ -149,20 +149,6 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 	return transactions, nil
 }
 
-func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
-	transactionItems, err := d.transactions.GetAll()
-	if err != nil {
-		return nil, err
-	}
-
-	var transactions []app.Transaction
-	for _, ti := range transactionItems {
-		transactions = append(transactions, txnItemToTxn(ti))
-	}
-
-	return transactions, nil
-}
-
 func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {
 	err := d.transactions.Update(txnToTxnItem(txn))
 	if err != nil {

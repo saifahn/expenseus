@@ -24,7 +24,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
 
 		// try and get it
-		request := app.NewGetAllTransactionsRequest()
+		request := app.NewGetTransactionsByUserRequest(wantTxnDetails.UserID)
 		request.AddCookie(CreateCookie(wantTxnDetails.UserID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -50,7 +50,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		wantTxnDetails := TestSeanTxnDetails
 		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
 
-		request := app.NewGetAllTransactionsRequest()
+		request := app.NewGetTransactionsByUserRequest(wantTxnDetails.UserID)
 		request.AddCookie(CreateCookie(TestSeanUser.ID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -189,8 +189,8 @@ func TestUpdateTransactions(t *testing.T) {
 			CreateUser(t, test.user, router)
 			CreateTestTxn(t, router, test.initialTxnDetails, test.user.ID)
 
-			// get all transactions to get the transaction that was just added
-			request := app.NewGetAllTransactionsRequest()
+			// get transactions to get the transaction that was just added
+			request := app.NewGetTransactionsByUserRequest(test.user.ID)
 			request.AddCookie(CreateCookie(test.user.ID))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)

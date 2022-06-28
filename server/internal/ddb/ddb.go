@@ -80,12 +80,12 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
-func txnToTxnItem(txn app.Transaction) TransactionItem {
+func txnToTxnItem(txn app.Transaction) TxnItem {
 	userIDKey := makeUserIDKey(txn.UserID)
 	transactionIDKey := makeTxnIDKey(txn.ID)
 	txnDateKey := makeTxnDateIDKey(txn)
 
-	return TransactionItem{
+	return TxnItem{
 		PK:         userIDKey,
 		SK:         transactionIDKey,
 		EntityType: txnEntityType,
@@ -113,7 +113,7 @@ func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
 	return nil
 }
 
-func txnItemToTxn(ti TransactionItem) app.Transaction {
+func txnItemToTxn(ti TxnItem) app.Transaction {
 	return app.Transaction{
 		ID:       ti.ID,
 		UserID:   ti.UserID,

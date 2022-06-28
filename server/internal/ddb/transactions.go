@@ -16,7 +16,7 @@ const (
 	allTxnKey     = "transactions"
 )
 
-type TransactionItem struct {
+type TxnItem struct {
 	PK         string `json:"PK"`
 	SK         string `json:"SK"`
 	EntityType string `json:"EntityType"`
@@ -37,11 +37,11 @@ type GetTxnInput struct {
 }
 
 type TxnRepository interface {
-	Get(input GetTxnInput) (*TransactionItem, error)
-	GetByUserID(id string) ([]TransactionItem, error)
-	GetBetweenDates(userID string, from, to int64) ([]TransactionItem, error)
-	Create(item TransactionItem) error
-	Update(item TransactionItem) error
+	Get(input GetTxnInput) (*TxnItem, error)
+	GetByUserID(id string) ([]TxnItem, error)
+	GetBetweenDates(userID string, from, to int64) ([]TxnItem, error)
+	Create(item TxnItem) error
+	Update(item TxnItem) error
 	Delete(userID, transactionID string) error
 }
 
@@ -55,11 +55,11 @@ func NewTxnRepository(t *table.Table) TxnRepository {
 	return &txnRepo{table: t}
 }
 
-func (t *txnRepo) Get(input GetTxnInput) (*TransactionItem, error) {
+func (t *txnRepo) Get(input GetTxnInput) (*TxnItem, error) {
 	userIDKey := makeUserIDKey(input.UserID)
 	txnIDKey := makeTxnIDKey(input.ID)
 
-	item := &TransactionItem{}
+	item := &TxnItem{}
 	err := t.table.GetItem(attributes.String(userIDKey), attributes.String(txnIDKey), item)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (t *txnRepo) Get(input GetTxnInput) (*TransactionItem, error) {
 	return item, nil
 }
 
-func (t *txnRepo) Create(item TransactionItem) error {
+func (t *txnRepo) Create(item TxnItem) error {
 	err := t.table.PutItem(
 		item,
 		option.PutCondition("attribute_not_exists(SK)"),
@@ -79,7 +79,7 @@ func (t *txnRepo) Create(item TransactionItem) error {
 	return nil
 }
 
-func (t *txnRepo) Update(item TransactionItem) error {
+func (t *txnRepo) Update(item TxnItem) error {
 	// this condition is a stand in for the item existing, as the primary key
 	// and index keys must be present for a item to exist
 	err := t.table.PutItem(item, option.PutCondition("attribute_exists(SK)"))
@@ -96,7 +96,7 @@ func (t *txnRepo) Delete(txnID, userID string) error {
 	return t.table.DeleteItem(attributes.String(userIDKey), attributes.String(txnIDKey))
 }
 
-func (t *txnRepo) GetByUserID(id string) ([]TransactionItem, error) {
+func (t *txnRepo) GetByUserID(id string) ([]TxnItem, error) {
 	userIDKey := makeUserIDKey(id)
 	allTxnPrefix := fmt.Sprintf("%s#", txnKeyPrefix)
 
@@ -108,7 +108,7 @@ func (t *txnRepo) GetByUserID(id string) ([]TransactionItem, error) {
 		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTxnPrefix)"),
 	}
 
-	var items []TransactionItem
+	var items []TxnItem
 	_, err := t.table.Query(&items, options...)
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (t *txnRepo) GetByUserID(id string) ([]TransactionItem, error) {
 	return items, nil
 }
 
-func (t *txnRepo) GetBetweenDates(userID string, from, to int64) ([]TransactionItem, error) {
+func (t *txnRepo) GetBetweenDates(userID string, from, to int64) ([]TxnItem, error) {
 	userIDKey := makeUserIDKey(userID)
 	txnDateFromKey := makeTxnDateKey(from)
 	txnDateToKey := makeTxnDateKey(to)
@@ -132,7 +132,7 @@ func (t *txnRepo) GetBetweenDates(userID string, from, to int64) ([]TransactionI
 		option.QueryKeyConditionExpression("#GSI1PK = :userKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey"),
 	}
 
-	var items []TransactionItem
+	var items []TxnItem
 	_, err := t.table.Query(&items, options...)
 	if err != nil {
 		return nil, err

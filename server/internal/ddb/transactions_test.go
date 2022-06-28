@@ -22,7 +22,7 @@ func TestTransactionTable(t *testing.T) {
 	})
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	item := &TransactionItem{
+	item := &TxnItem{
 		PK:         "user#test-user-id",
 		SK:         "txn#test-txn-id",
 		ID:         "test-txn-id",
@@ -64,7 +64,7 @@ func TestTransactionTable(t *testing.T) {
 }
 
 func TestUpdateItem(t *testing.T) {
-	initialItem := &TransactionItem{
+	initialItem := &TxnItem{
 		PK:       "user#test-user-id",
 		SK:       "txn#test-txn-id",
 		GSI1PK:   "transactions",
@@ -74,7 +74,7 @@ func TestUpdateItem(t *testing.T) {
 		Location: "initial-location",
 		Details:  "original-transaction",
 	}
-	updatedItem := &TransactionItem{
+	updatedItem := &TxnItem{
 		PK:       initialItem.PK,
 		SK:       initialItem.SK,
 		GSI1PK:   initialItem.GSI1PK,
@@ -86,14 +86,14 @@ func TestUpdateItem(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		initialItem  *TransactionItem
-		itemToUpdate *TransactionItem
-		finalItem    *TransactionItem
+		initialItem  *TxnItem
+		itemToUpdate *TxnItem
+		finalItem    *TxnItem
 		wantErr      error
 	}{
 		"updating a non-existent item will give an error": {
 			initialItem: initialItem,
-			itemToUpdate: &TransactionItem{
+			itemToUpdate: &TxnItem{
 				PK:       "user#a-different-user",
 				SK:       "txn#a-different-item",
 				GSI1PK:   "transactions",
@@ -142,7 +142,7 @@ func TestUpdateItem(t *testing.T) {
 }
 
 func TestGetBetweenDates(t *testing.T) {
-	initialItem := TransactionItem{
+	initialItem := TxnItem{
 		PK:       "user#test-user-id",
 		SK:       "txn#test-txn-id",
 		GSI1PK:   "user#test-user-id",
@@ -154,17 +154,17 @@ func TestGetBetweenDates(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		wantItems []TransactionItem
+		wantItems []TxnItem
 		from      int64
 		to        int64
 	}{
 		"with a date-range containing an item": {
-			wantItems: []TransactionItem{initialItem},
+			wantItems: []TxnItem{initialItem},
 			from:      10000,
 			to:        20000,
 		},
 		"with a date range not containing any items": {
-			wantItems: []TransactionItem{},
+			wantItems: []TxnItem{},
 			from:      15000,
 			to:        20000,
 		},

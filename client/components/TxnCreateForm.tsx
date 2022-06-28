@@ -41,25 +41,10 @@ export default function TxnCreateForm() {
     setValue('category', 'unspecified.unspecified');
   };
 
-  const locationInputProps = register('location', {
-    required: 'Please input a location',
-  });
-  const amountInputProps = register('amount', {
-    min: { value: 1, message: 'Please input a positive amount' },
-    required: 'Please input an amount',
-  });
-  const dateInputProps = register('date', { required: 'Please input a date' });
-  const categoryInputProps = register('category');
-  const detailsInputProps = register('details');
-
   return (
     <TxnFormBase
       title="Create Transaction"
-      locationInputProps={locationInputProps}
-      amountInputProps={amountInputProps}
-      dateInputProps={dateInputProps}
-      categoryInputProps={categoryInputProps}
-      detailsInputProps={detailsInputProps}
+      register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
       <div className="mt-4 flex justify-end">

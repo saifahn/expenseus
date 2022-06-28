@@ -1,6 +1,6 @@
 import { CategoryKey, enUSCategories } from 'data/categories';
 import React from 'react';
-import { UseFormRegisterReturn } from 'react-hook-form';
+import { UseFormRegister } from 'react-hook-form';
 
 export type TxnFormInputs = {
   location: string;
@@ -24,24 +24,16 @@ export function createTxnFormData(data: TxnFormInputs) {
 
 type Props = {
   title?: string;
-  locationInputProps: UseFormRegisterReturn;
-  amountInputProps: UseFormRegisterReturn;
-  dateInputProps: UseFormRegisterReturn;
-  categoryInputProps: UseFormRegisterReturn;
-  detailsInputProps: UseFormRegisterReturn;
-  children?: React.ReactNode;
+  register: UseFormRegister<TxnFormInputs>;
   onSubmit: () => void;
+  children?: React.ReactNode;
 };
 
 export default function TxnFormBase({
   title,
-  locationInputProps,
-  detailsInputProps,
-  amountInputProps,
-  dateInputProps,
-  categoryInputProps,
-  children,
+  register,
   onSubmit,
+  children,
 }: Props) {
   return (
     <form
@@ -57,7 +49,9 @@ export default function TxnFormBase({
           Location
         </label>
         <input
-          {...locationInputProps}
+          {...register('location', {
+            required: 'Please input a location',
+          })}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           id="location"
           type="text"
@@ -68,7 +62,10 @@ export default function TxnFormBase({
           Amount
         </label>
         <input
-          {...amountInputProps}
+          {...register('amount', {
+            min: { value: 1, message: 'Please input a positive amount' },
+            required: 'Please input an amount',
+          })}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           id="amount"
           type="text"
@@ -81,7 +78,7 @@ export default function TxnFormBase({
           Date
         </label>
         <input
-          {...dateInputProps}
+          {...register('date', { required: 'Please input a date' })}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           type="date"
           id="date"
@@ -90,7 +87,7 @@ export default function TxnFormBase({
       <div className="mt-4">
         <label className="block font-semibold">Category</label>
         <select
-          {...categoryInputProps}
+          {...register('category')}
           className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
         >
           {enUSCategories.map((category) => (
@@ -105,7 +102,7 @@ export default function TxnFormBase({
           Details
         </label>
         <input
-          {...detailsInputProps}
+          {...register('details')}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
           id="details"
           type="text"

@@ -1,26 +1,10 @@
 import { useUserContext } from 'context/user';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
-import { CategoryKey } from 'data/categories';
-import TxnFormBase from './TxnFormBase';
+import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
 
-type Inputs = {
-  location: string;
-  amount: number;
-  date: string;
-  category: CategoryKey;
-  details: string;
-};
-
-async function createTransaction(data: Inputs) {
-  const formData = new FormData();
-  formData.append('location', data.location);
-  formData.append('details', data.details);
-  formData.append('amount', data.amount.toString());
-  formData.append('category', data.category);
-
-  const unixDate = new Date(data.date).getTime();
-  formData.append('date', unixDate.toString());
+async function createTransaction(data: TxnFormInputs) {
+  const formData = createTxnFormData(data);
 
   await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
     method: 'POST',
@@ -35,7 +19,7 @@ async function createTransaction(data: Inputs) {
 export default function TxnCreateForm() {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
-  const { register, handleSubmit, setValue } = useForm<Inputs>({
+  const { register, handleSubmit, setValue } = useForm<TxnFormInputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
       location: '',
@@ -46,7 +30,7 @@ export default function TxnCreateForm() {
     },
   });
 
-  const submitCallback: SubmitHandler<Inputs> = (data) => {
+  const submitCallback: SubmitHandler<TxnFormInputs> = (data) => {
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
       createTransaction(data),

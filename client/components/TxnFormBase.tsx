@@ -1,6 +1,26 @@
-import { enUSCategories } from 'data/categories';
+import { CategoryKey, enUSCategories } from 'data/categories';
 import React from 'react';
 import { UseFormRegisterReturn } from 'react-hook-form';
+
+export type TxnFormInputs = {
+  location: string;
+  amount: number;
+  date: string;
+  category: CategoryKey;
+  details: string;
+};
+
+export function createTxnFormData(data: TxnFormInputs) {
+  const formData = new FormData();
+  formData.append('location', data.location);
+  formData.append('details', data.details);
+  formData.append('amount', data.amount.toString());
+  formData.append('category', data.category);
+
+  const unixDate = new Date(data.date).getTime();
+  formData.append('date', unixDate.toString());
+  return formData;
+}
 
 type Props = {
   title?: string;

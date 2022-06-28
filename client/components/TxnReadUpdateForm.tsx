@@ -2,39 +2,19 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { Transaction } from 'pages/personal';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
-import { CategoryKey } from 'data/categories';
-import TxnFormBase from './TxnFormBase';
+import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
 
-type Inputs = {
-  txnID: string;
-  location: string;
-  amount: number;
-  date: string;
-  category: CategoryKey;
-  details: string;
-};
+async function updateTransaction(data: TxnFormInputs, txnID: string) {
+  const formData = createTxnFormData(data);
 
-async function updateTransaction(data: Inputs) {
-  const formData = new FormData();
-  formData.append('location', data.location);
-  formData.append('details', data.details);
-  formData.append('amount', data.amount.toString());
-  formData.append('category', data.category);
-
-  const unixDate = new Date(data.date).getTime();
-  formData.append('date', unixDate.toString());
-
-  await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${data.txnID}`,
-    {
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-      body: formData,
+  await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${txnID}`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
     },
-  );
+    credentials: 'include',
+    body: formData,
+  });
 }
 
 interface Props {
@@ -46,7 +26,7 @@ interface Props {
 export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
-  const { register, formState, handleSubmit } = useForm<Inputs>({
+  const { register, formState, handleSubmit } = useForm<TxnFormInputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
       location: txn.location,
@@ -57,11 +37,10 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
     },
   });
 
-  const submitCallback: SubmitHandler<Inputs> = (data) => {
-    data.txnID = txn.id;
+  const submitCallback: SubmitHandler<TxnFormInputs> = (data) => {
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
-      updateTransaction(data),
+      updateTransaction(data, txn.id),
     );
     onApply();
   };

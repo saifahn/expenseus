@@ -209,8 +209,8 @@ func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 	}
 
 	values := map[string]io.Reader{
-		"shop":   strings.NewReader(txn.Shop),
-		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		"location": strings.NewReader(txn.Location),
+		"amount":   strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
 		// NOTE: currently, date will never be empty, change this?
 		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
 		"participants": strings.NewReader(participants),

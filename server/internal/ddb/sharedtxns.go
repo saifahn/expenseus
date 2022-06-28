@@ -23,7 +23,7 @@ type SharedTxnItem struct {
 	ID           string   `json:"ID"`
 	Date         int64    `json:"Date"`
 	Amount       int64    `json:"Amount"`
-	Shop         string   `json:"Shop"`
+	Location     string   `json:"Location"`
 	Tracker      string   `json:"Tracker"`
 	Category     string   `json:"Category"`
 	Participants []string `json:"Participants"`
@@ -76,7 +76,7 @@ func (r *sharedTxnsRepo) Create(txn app.SharedTransaction) error {
 			Unsettled:    unsettledVal,
 			Date:         txn.Date,
 			Amount:       txn.Amount,
-			Shop:         txn.Shop,
+			Location:     txn.Location,
 			Payer:        txn.Payer,
 		})
 		if err != nil {
@@ -95,7 +95,7 @@ func (r *sharedTxnsRepo) Create(txn app.SharedTransaction) error {
 		Unsettled:    unsettledVal,
 		Date:         txn.Date,
 		Amount:       txn.Amount,
-		Shop:         txn.Shop,
+		Location:     txn.Location,
 		Payer:        txn.Payer,
 	})
 	return err
@@ -166,7 +166,7 @@ func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
 			Unsettled:    unsettledVal,
 			Date:         txn.Date,
 			Amount:       txn.Amount,
-			Shop:         txn.Shop,
+			Location:     txn.Location,
 			Payer:        txn.Payer,
 		}, option.PutCondition("attribute_exists(SK)"))
 		if err != nil {
@@ -185,7 +185,7 @@ func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
 		Unsettled:    unsettledVal,
 		Date:         txn.Date,
 		Amount:       txn.Amount,
-		Shop:         txn.Shop,
+		Location:     txn.Location,
 		Payer:        txn.Payer,
 	})
 	return attrNotExistsOrErr(err)

@@ -178,7 +178,7 @@ func TestGetTrackersByUser(t *testing.T) {
 func TestCreateSharedTxn(t *testing.T) {
 	validTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
-		Shop:         "test-shop",
+		Location:     "test-shop",
 		Amount:       123,
 		Date:         123456,
 		Tracker:      "test-tracker",
@@ -262,7 +262,7 @@ func addTransaction(h http.Handler, txn app.SharedTransaction) {
 func TestGetTxnsByTracker(t *testing.T) {
 	testTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
-		Shop:         "test-shop",
+		Location:     "test-shop",
 		Amount:       123,
 		Date:         123456,
 		Tracker:      "test-tracker-01",
@@ -323,7 +323,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 
 var testUnsettledTxn = app.SharedTransaction{
 	Participants: []string{"user-01", "user-02"},
-	Shop:         "test-shop",
+	Location:     "test-shop",
 	Amount:       123,
 	Date:         123456,
 	Tracker:      "test-tracker-01",
@@ -386,7 +386,7 @@ func TestUpdateSharedTxns(t *testing.T) {
 	assert := assert.New(t)
 	initialTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
-		Shop:         "test-shop",
+		Location:     "test-shop",
 		Amount:       123,
 		Date:         123456,
 		Tracker:      "test-tracker-01",
@@ -395,7 +395,7 @@ func TestUpdateSharedTxns(t *testing.T) {
 	}
 	updatedTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
-		Shop:         "different-shop",
+		Location:     "different-shop",
 		Amount:       456,
 		Date:         928371,
 		Tracker:      "test-tracker-01",
@@ -462,7 +462,7 @@ func TestDeleteSharedTxns(t *testing.T) {
 	assert := assert.New(t)
 	testTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
-		Shop:         "test-shop",
+		Location:     "test-shop",
 		Amount:       123,
 		Date:         123456,
 		Tracker:      "test-tracker-01",

@@ -11,7 +11,7 @@ import (
 type SharedTransaction struct {
 	ID           string   `json:"id"`
 	Date         int64    `json:"date" validate:"required"`
-	Shop         string   `json:"shop" validate:"required"`
+	Location     string   `json:"location" validate:"required"`
 	Amount       int64    `json:"amount" validate:"required"`
 	Category     string   `json:"category" validate:"required"`
 	Payer        string   `json:"payer" validate:"required"`
@@ -66,12 +66,12 @@ func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransacti
 	}
 
 	unsettled := r.FormValue("unsettled") == "true"
-	shop := r.FormValue("shop")
+	location := r.FormValue("location")
 	category := r.FormValue("category")
 	payer := r.FormValue("payer")
 
 	return &SharedTransaction{
-		Shop:      shop,
+		Location:  location,
 		Amount:    amountParsed,
 		Date:      dateParsed,
 		Unsettled: unsettled,

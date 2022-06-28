@@ -115,12 +115,12 @@ func TestUpdateItem(t *testing.T) {
 
 	for name, tc := range tests {
 		assert := assert.New(t)
-		DeleteTable(NewDynamoDBLocalAPI(), "test-txn-update-items")
-		tbl, teardown := SetUpTestTable(t, "test-txn-update-items")
-		defer teardown()
-		transactions := NewTxnRepository(tbl)
 
 		t.Run(name, func(t *testing.T) {
+			tbl, teardown := SetUpTestTable(t, "test-txn-update-items")
+			defer teardown()
+			transactions := NewTxnRepository(tbl)
+
 			err := transactions.Create(*tc.initialItem)
 			assert.NoError(err)
 
@@ -154,26 +154,30 @@ func TestGetBetweenDates(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		initialItems []TransactionItem
-		wantItems    []TransactionItem
-		from         int64
-		to           int64
+		wantItems []TransactionItem
+		from      int64
+		to        int64
 	}{
 		"with a date-range containing an item": {
-			initialItems: []TransactionItem{initialItem},
-			wantItems:    []TransactionItem{initialItem},
-			from:         10000,
-			to:           20000,
+			wantItems: []TransactionItem{initialItem},
+			from:      10000,
+			to:        20000,
+		},
+		"with a date range not containing any items": {
+			wantItems: []TransactionItem{},
+			from:      15000,
+			to:        20000,
 		},
 	}
 
 	for name, tc := range tests {
 		assert := assert.New(t)
-		tbl, teardown := SetUpTestTable(t, "test-get-txns-between-dates")
-		defer teardown()
-		txns := NewTxnRepository(tbl)
 
 		t.Run(name, func(t *testing.T) {
+			tbl, teardown := SetUpTestTable(t, "test-get-txns-between-dates")
+			defer teardown()
+			txns := NewTxnRepository(tbl)
+
 			err := txns.Create(initialItem)
 			assert.NoError(err)
 

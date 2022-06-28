@@ -10,11 +10,12 @@ import (
 
 type Transaction struct {
 	ID       string `json:"id"`
-	Name     string `json:"name"`
+	Location string `json:"location" validate:"required"`
 	UserID   string `json:"userId" validate:"required"`
 	Amount   int64  `json:"amount" validate:"required"`
 	Date     int64  `json:"date" validate:"required"`
 	Category string `json:"category" validate:"required"`
+	Details  string `json:"details"`
 	ImageKey string `json:"imageKey,omitempty"`
 	ImageURL string `json:"imageUrl,omitempty"`
 }
@@ -121,7 +122,8 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 		return nil
 	}
 
-	transactionName := r.FormValue("transactionName")
+	location := r.FormValue("location")
+	details := r.FormValue("details")
 
 	amount := r.FormValue("amount")
 	amountParsed, err := strconv.ParseInt(amount, 10, 64)
@@ -139,10 +141,11 @@ func parseTxnForm(r *http.Request, w http.ResponseWriter) *Transaction {
 	category := r.FormValue("category")
 
 	return &Transaction{
-		Name:     transactionName,
+		Location: location,
 		Amount:   amountParsed,
 		Date:     dateParsed,
 		Category: category,
+		Details:  details,
 	}
 }
 

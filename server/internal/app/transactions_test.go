@@ -158,14 +158,14 @@ func TestGetTxnsByUser(t *testing.T) {
 
 func TestCreateTransaction(t *testing.T) {
 	testTxnDetails := app.Transaction{
-		Name:     "test-txn",
+		Location: "test-txn",
 		Amount:   123,
 		Date:     123456,
 		Category: "test.category",
 	}
 
 	testImgTxnDetails := app.Transaction{
-		Name:     "test-txn",
+		Location: "test-txn",
 		Amount:   123,
 		Date:     123456,
 		ImageKey: "test-image-key",
@@ -184,7 +184,7 @@ func TestCreateTransaction(t *testing.T) {
 			user:       "user-01",
 			expectationsFn: func(ma *mock_app.App) {
 				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.Transaction{
-					Name:     testTxnDetails.Name,
+					Location: testTxnDetails.Location,
 					Amount:   testTxnDetails.Amount,
 					Date:     testTxnDetails.Date,
 					Category: testTxnDetails.Category,
@@ -210,7 +210,7 @@ func TestCreateTransaction(t *testing.T) {
 				ma.MockImages.EXPECT().Validate(gomock.Any()).Return(true, nil).Times(1)
 				ma.MockImages.EXPECT().Upload(gomock.Any(), gomock.Any()).Return(testImgTxnDetails.ImageKey, nil)
 				ma.MockStore.EXPECT().CreateTransaction(gomock.Eq(app.Transaction{
-					Name:     testImgTxnDetails.Name,
+					Location: testImgTxnDetails.Location,
 					Amount:   testImgTxnDetails.Amount,
 					Date:     testImgTxnDetails.Date,
 					ImageKey: testImgTxnDetails.ImageKey,
@@ -238,11 +238,11 @@ func TestCreateTransaction(t *testing.T) {
 				defer os.Remove(testFile.Name())
 
 				payload = map[string]io.Reader{
-					"transactionName": strings.NewReader(testImgTxnDetails.Name),
-					"amount":          strings.NewReader("123"),
-					"date":            strings.NewReader("123456"),
-					"category":        strings.NewReader(testImgTxnDetails.Category),
-					"image":           testFile,
+					"location": strings.NewReader(testImgTxnDetails.Location),
+					"amount":   strings.NewReader("123"),
+					"date":     strings.NewReader("123456"),
+					"category": strings.NewReader(testImgTxnDetails.Category),
+					"image":    testFile,
 				}
 			} else {
 				payload = app.MakeTxnRequestPayload(tc.txnDetails)
@@ -298,7 +298,7 @@ func TestDeleteTransaction(t *testing.T) {
 
 func TestUpdateTransaction(t *testing.T) {
 	updateTxnInput := app.Transaction{
-		Name:     "test-transaction-name",
+		Location: "test-transaction-name",
 		Amount:   123,
 		Date:     123456,
 		Category: "test.category",
@@ -319,7 +319,7 @@ func TestUpdateTransaction(t *testing.T) {
 				ma.MockStore.EXPECT().UpdateTransaction(app.Transaction{
 					ID:       "test-transaction-id",
 					UserID:   "test-user",
-					Name:     updateTxnInput.Name,
+					Location: updateTxnInput.Location,
 					Amount:   updateTxnInput.Amount,
 					Date:     updateTxnInput.Date,
 					Category: updateTxnInput.Category,

@@ -21,7 +21,8 @@ type TransactionItem struct {
 	EntityType string `json:"EntityType"`
 	ID         string `json:"ID"`
 	UserID     string `json:"UserID"`
-	Name       string `json:"Name"`
+	Location   string `json:"Location"`
+	Details    string `json:"Details"`
 	Amount     int64  `json:"Amount"`
 	Date       int64  `json:"Date"`
 	GSI1PK     string `json:"GSI1PK"`

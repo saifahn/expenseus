@@ -27,10 +27,11 @@ func NewGetTransactionRequest(id string) *http.Request {
 // NewCreateTransactionRequest
 func MakeTxnRequestPayload(txn Transaction) map[string]io.Reader {
 	return map[string]io.Reader{
-		"transactionName": strings.NewReader(txn.Name),
-		"amount":          strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
-		"date":            strings.NewReader(strconv.FormatInt(txn.Date, 10)),
-		"category":        strings.NewReader(txn.Category),
+		"location": strings.NewReader(txn.Location),
+		"details":  strings.NewReader(txn.Details),
+		"amount":   strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		"date":     strings.NewReader(strconv.FormatInt(txn.Date, 10)),
+		"category": strings.NewReader(txn.Category),
 	}
 }
 
@@ -208,14 +209,15 @@ func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 	}
 
 	values := map[string]io.Reader{
-		"shop":   strings.NewReader(txn.Shop),
-		"amount": strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
+		"location": strings.NewReader(txn.Location),
+		"amount":   strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
 		// NOTE: currently, date will never be empty, change this?
 		"date":         strings.NewReader(strconv.FormatInt(txn.Date, 10)),
 		"participants": strings.NewReader(participants),
 		"unsettled":    strings.NewReader(unsettled),
 		"category":     strings.NewReader(txn.Category),
 		"payer":        strings.NewReader(txn.Payer),
+		"details":      strings.NewReader(txn.Details),
 	}
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

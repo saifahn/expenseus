@@ -83,10 +83,11 @@ func TestCreateSharedTxn(t *testing.T) {
 		Participants: []string{"user1", "user2"},
 		Amount:       123,
 		Date:         123456,
-		Shop:         "test-shop",
+		Location:     "test-shop",
 		Tracker:      "test-tracker-1",
 		Category:     "test-category",
 		Payer:        "user1",
+		Details:      "some details",
 	}
 
 	tests := map[string]struct {
@@ -101,7 +102,7 @@ func TestCreateSharedTxn(t *testing.T) {
 				Participants: []string{"user1", "user2"},
 				Amount:       123,
 				Date:         123456,
-				Shop:         "test-shop",
+				Location:     "test-shop",
 			},
 			userInContext: "user-not-participating",
 			wantCode:      http.StatusForbidden,
@@ -120,7 +121,7 @@ func TestCreateSharedTxn(t *testing.T) {
 			transaction: app.SharedTransaction{
 				Participants: []string{"user1", "user2"},
 				Amount:       123,
-				Shop:         "test-shop",
+				Location:     "test-shop",
 			},
 			userInContext: "user1",
 			wantCode:      http.StatusBadRequest,
@@ -129,7 +130,7 @@ func TestCreateSharedTxn(t *testing.T) {
 			transaction: app.SharedTransaction{
 				Participants: []string{"user1", "user2"},
 				Date:         123456,
-				Shop:         "test-shop",
+				Location:     "test-shop",
 			},
 			userInContext: "user1",
 			wantCode:      http.StatusBadRequest,
@@ -169,7 +170,7 @@ func TestUpdateSharedTxn(t *testing.T) {
 		Participants: []string{"user1", "user2"},
 		Amount:       123,
 		Date:         123456,
-		Shop:         "test-shop",
+		Location:     "test-shop",
 		Tracker:      "test-tracker-1",
 		Category:     "test-category",
 		Payer:        "user1",

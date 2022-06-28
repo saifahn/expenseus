@@ -71,22 +71,24 @@ func TestTransactionTable(t *testing.T) {
 
 func TestUpdateItem(t *testing.T) {
 	initialItem := &TransactionItem{
-		PK:     "user#test-user-id",
-		SK:     "txn#test-txn-id",
-		GSI1PK: "transactions",
-		GSI1SK: "txn#test-txn-id",
-		ID:     "test-txn-id",
-		UserID: "test-user-id",
-		Name:   "original-transaction",
+		PK:       "user#test-user-id",
+		SK:       "txn#test-txn-id",
+		GSI1PK:   "transactions",
+		GSI1SK:   "txn#test-txn-id",
+		ID:       "test-txn-id",
+		UserID:   "test-user-id",
+		Location: "initial-location",
+		Details:  "original-transaction",
 	}
 	updatedItem := &TransactionItem{
-		PK:     initialItem.PK,
-		SK:     initialItem.SK,
-		GSI1PK: initialItem.GSI1PK,
-		GSI1SK: initialItem.GSI1SK,
-		ID:     initialItem.ID,
-		UserID: initialItem.UserID,
-		Name:   "transaction-name-changed",
+		PK:       initialItem.PK,
+		SK:       initialItem.SK,
+		GSI1PK:   initialItem.GSI1PK,
+		GSI1SK:   initialItem.GSI1SK,
+		ID:       initialItem.ID,
+		UserID:   initialItem.UserID,
+		Location: "changed-location",
+		Details:  "transaction-name-changed",
 	}
 
 	tests := map[string]struct {
@@ -98,13 +100,13 @@ func TestUpdateItem(t *testing.T) {
 		"updating a non-existent item will give an error": {
 			initialItem: initialItem,
 			itemToUpdate: &TransactionItem{
-				PK:     "user#a-different-user",
-				SK:     "txn#a-different-item",
-				GSI1PK: "transactions",
-				GSI1SK: "txn#a-different-item",
-				ID:     "a-different-item",
-				UserID: "different-user-id",
-				Name:   "not-the-original",
+				PK:       "user#a-different-user",
+				SK:       "txn#a-different-item",
+				GSI1PK:   "transactions",
+				GSI1SK:   "txn#a-different-item",
+				ID:       "a-different-item",
+				UserID:   "different-user-id",
+				Location: "not-the-original",
 			},
 			finalItem: initialItem,
 			wantErr:   ErrAttrNotExists,

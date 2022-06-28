@@ -90,7 +90,8 @@ func txnToTxnItem(txn app.Transaction) TransactionItem {
 		EntityType: txnEntityType,
 		ID:         txn.ID,
 		UserID:     txn.UserID,
-		Name:       txn.Name,
+		Location:   txn.Location,
+		Details:    txn.Details,
 		Amount:     txn.Amount,
 		Date:       txn.Date,
 		GSI1PK:     allTxnKey,
@@ -115,7 +116,8 @@ func txnItemToTxn(ti TransactionItem) app.Transaction {
 	return app.Transaction{
 		ID:       ti.ID,
 		UserID:   ti.UserID,
-		Name:     ti.Name,
+		Location: ti.Location,
+		Details:  ti.Details,
 		Amount:   ti.Amount,
 		Date:     ti.Date,
 		Category: ti.Category,
@@ -243,9 +245,10 @@ func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
 		Amount:       item.Amount,
 		Tracker:      item.Tracker,
 		Unsettled:    item.Unsettled == unsettledFlagTrue,
-		Shop:         item.Shop,
+		Location:     item.Location,
 		Category:     item.Category,
 		Payer:        item.Payer,
+		Details:      item.Details,
 	}
 }
 

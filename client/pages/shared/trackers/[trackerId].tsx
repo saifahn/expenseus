@@ -9,13 +9,14 @@ import { Tracker } from '.';
 
 export interface SharedTxn {
   id: string;
-  shop: string;
+  location: string;
   amount: number;
   date: string;
   unsettled?: boolean;
   participants: string[];
   tracker: string;
   category: CategoryKey;
+  details: string;
 }
 
 async function deleteSharedTxn(txn: SharedTxn) {
@@ -60,7 +61,7 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
       key={txn.id}
     >
       <div className="flex justify-between">
-        <h3 className="text-lg">{txn.shop}</h3>
+        <h3 className="text-lg">{txn.location}</h3>
         <button
           className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-blue-300"
           onClick={handleDelete}
@@ -72,6 +73,7 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
       <p>{txn.category}</p>
       <p>{new Date(txn.date).toDateString()}</p>
       <p>{txn.tracker}</p>
+      {txn.details && <p>{txn.details}</p>}
     </article>
   );
 }

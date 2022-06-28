@@ -11,13 +11,14 @@ import (
 type SharedTransaction struct {
 	ID           string   `json:"id"`
 	Date         int64    `json:"date" validate:"required"`
-	Shop         string   `json:"shop" validate:"required"`
+	Location     string   `json:"location" validate:"required"`
 	Amount       int64    `json:"amount" validate:"required"`
 	Category     string   `json:"category" validate:"required"`
 	Payer        string   `json:"payer" validate:"required"`
 	Participants []string `json:"participants" validate:"required,min=1"`
 	Unsettled    bool     `json:"unsettled"`
 	Tracker      string   `json:"tracker" validate:"required"`
+	Details      string   `json:"details"`
 }
 
 // GetTxnsByTracker handles a HTTP request to get a list of transactions belonging
@@ -66,17 +67,19 @@ func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransacti
 	}
 
 	unsettled := r.FormValue("unsettled") == "true"
-	shop := r.FormValue("shop")
+	location := r.FormValue("location")
 	category := r.FormValue("category")
 	payer := r.FormValue("payer")
+	details := r.FormValue("details")
 
 	return &SharedTransaction{
-		Shop:      shop,
+		Location:  location,
 		Amount:    amountParsed,
 		Date:      dateParsed,
 		Unsettled: unsettled,
 		Category:  category,
 		Payer:     payer,
+		Details:   details,
 	}
 }
 

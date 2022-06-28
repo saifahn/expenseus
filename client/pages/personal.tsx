@@ -6,13 +6,14 @@ import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 
 export interface Transaction {
-  name: string;
   id: string;
   userId: string;
+  location: string;
   amount: number;
   imageUrl?: string;
   date: string;
   category: CategoryKey;
+  details: string;
 }
 
 async function deleteTransaction(txnId: string) {
@@ -48,7 +49,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
       onClick={() => onTxnClick(txn)}
     >
       <div className="flex justify-between">
-        <h3 className="text-lg">{txn.name}</h3>
+        <h3 className="text-lg">{txn.location}</h3>
         <button
           className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-blue-300"
           onClick={handleDelete}
@@ -58,6 +59,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
       </div>
       <p>{txn.amount}</p>
       <p>{txn.category}</p>
+      {txn.details && <p>{txn.details}</p>}
       <p>{new Date(txn.date).toDateString()}</p>
     </article>
   );

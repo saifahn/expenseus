@@ -5,15 +5,17 @@ import { CategoryKey } from 'data/categories';
 import TxnFormBase from './TxnFormBase';
 
 type Inputs = {
-  transactionName: string;
+  location: string;
   amount: number;
   date: string;
   category: CategoryKey;
+  details: string;
 };
 
 async function createTransaction(data: Inputs) {
   const formData = new FormData();
-  formData.append('transactionName', data.transactionName);
+  formData.append('location', data.location);
+  formData.append('details', data.details);
   formData.append('amount', data.amount.toString());
   formData.append('category', data.category);
 
@@ -36,7 +38,8 @@ export default function TxnCreateForm() {
   const { register, handleSubmit, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
-      transactionName: '',
+      location: '',
+      details: '',
       amount: 0,
       date: new Date().toISOString().split('T')[0],
       category: 'unspecified.unspecified',
@@ -48,13 +51,14 @@ export default function TxnCreateForm() {
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
       createTransaction(data),
     );
-    setValue('transactionName', '');
+    setValue('location', '');
+    setValue('details', '');
     setValue('amount', 0);
     setValue('category', 'unspecified.unspecified');
   };
 
-  const txnNameInputProps = register('transactionName', {
-    required: 'Please input a transaction name',
+  const locationInputProps = register('location', {
+    required: 'Please input a location',
   });
   const amountInputProps = register('amount', {
     min: { value: 1, message: 'Please input a positive amount' },
@@ -62,14 +66,16 @@ export default function TxnCreateForm() {
   });
   const dateInputProps = register('date', { required: 'Please input a date' });
   const categoryInputProps = register('category');
+  const detailsInputProps = register('details');
 
   return (
     <TxnFormBase
       title="Create Transaction"
-      txnNameInputProps={txnNameInputProps}
+      locationInputProps={locationInputProps}
       amountInputProps={amountInputProps}
       dateInputProps={dateInputProps}
       categoryInputProps={categoryInputProps}
+      detailsInputProps={detailsInputProps}
       onSubmit={handleSubmit(submitCallback)}
     >
       <div className="mt-4 flex justify-end">

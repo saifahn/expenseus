@@ -7,15 +7,17 @@ import TxnFormBase from './TxnFormBase';
 
 type Inputs = {
   txnID: string;
-  transactionName: string;
+  location: string;
   amount: number;
   date: string;
   category: CategoryKey;
+  details: string;
 };
 
 async function updateTransaction(data: Inputs) {
   const formData = new FormData();
-  formData.append('transactionName', data.transactionName);
+  formData.append('location', data.location);
+  formData.append('details', data.details);
   formData.append('amount', data.amount.toString());
   formData.append('category', data.category);
 
@@ -47,7 +49,8 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   const { register, formState, handleSubmit } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
-      transactionName: txn.name,
+      location: txn.location,
+      details: txn.details,
       amount: txn.amount,
       date: new Date(txn.date).toISOString().split('T')[0],
       category: txn.category,
@@ -63,8 +66,8 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
     onApply();
   };
 
-  const txnNameInputProps = register('transactionName', {
-    required: 'Please input a transaction name',
+  const locationInputProps = register('location', {
+    required: 'Please input a location',
   });
   const amountInputProps = register('amount', {
     min: { value: 1, message: 'Please input a positive amount' },
@@ -72,14 +75,16 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   });
   const dateInputProps = register('date', { required: 'Please input a date' });
   const categoryInputProps = register('category');
+  const detailsInputProps = register('details');
 
   return (
     <TxnFormBase
       title="Update Transaction"
-      txnNameInputProps={txnNameInputProps}
+      locationInputProps={locationInputProps}
       amountInputProps={amountInputProps}
       dateInputProps={dateInputProps}
       categoryInputProps={categoryInputProps}
+      detailsInputProps={detailsInputProps}
       onSubmit={handleSubmit(submitCallback)}
     >
       <div className="mt-4 flex justify-end">

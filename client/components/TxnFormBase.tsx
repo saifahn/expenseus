@@ -4,17 +4,19 @@ import { UseFormRegisterReturn } from 'react-hook-form';
 
 type Props = {
   title?: string;
-  txnNameInputProps: UseFormRegisterReturn;
+  locationInputProps: UseFormRegisterReturn;
   amountInputProps: UseFormRegisterReturn;
   dateInputProps: UseFormRegisterReturn;
   categoryInputProps: UseFormRegisterReturn;
+  detailsInputProps: UseFormRegisterReturn;
   children?: React.ReactNode;
   onSubmit: () => void;
 };
 
 export default function TxnFormBase({
   title,
-  txnNameInputProps,
+  locationInputProps,
+  detailsInputProps,
   amountInputProps,
   dateInputProps,
   categoryInputProps,
@@ -31,13 +33,13 @@ export default function TxnFormBase({
     >
       {title && <h3 className="text-lg font-semibold">{title}</h3>}
       <div className="mt-4">
-        <label className="block font-semibold" htmlFor="name">
-          Name
+        <label className="block font-semibold" htmlFor="location">
+          Location
         </label>
         <input
-          {...txnNameInputProps}
+          {...locationInputProps}
           className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          id="name"
+          id="location"
           type="text"
         />
       </div>
@@ -77,6 +79,17 @@ export default function TxnFormBase({
             </option>
           ))}
         </select>
+      </div>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="details">
+          Details
+        </label>
+        <input
+          {...detailsInputProps}
+          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          id="details"
+          type="text"
+        />
       </div>
       {children}
     </form>

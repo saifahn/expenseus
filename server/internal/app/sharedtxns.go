@@ -18,6 +18,7 @@ type SharedTransaction struct {
 	Participants []string `json:"participants" validate:"required,min=1"`
 	Unsettled    bool     `json:"unsettled"`
 	Tracker      string   `json:"tracker" validate:"required"`
+	Details      string   `json:"details"`
 }
 
 // GetTxnsByTracker handles a HTTP request to get a list of transactions belonging
@@ -69,6 +70,7 @@ func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransacti
 	location := r.FormValue("location")
 	category := r.FormValue("category")
 	payer := r.FormValue("payer")
+	details := r.FormValue("details")
 
 	return &SharedTransaction{
 		Location:  location,
@@ -77,6 +79,7 @@ func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransacti
 		Unsettled: unsettled,
 		Category:  category,
 		Payer:     payer,
+		Details:   details,
 	}
 }
 

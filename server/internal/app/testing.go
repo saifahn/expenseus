@@ -217,6 +217,7 @@ func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 		"unsettled":    strings.NewReader(unsettled),
 		"category":     strings.NewReader(txn.Category),
 		"payer":        strings.NewReader(txn.Payer),
+		"details":      strings.NewReader(txn.Details),
 	}
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

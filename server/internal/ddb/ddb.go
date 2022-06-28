@@ -248,6 +248,7 @@ func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
 		Location:     item.Location,
 		Category:     item.Category,
 		Payer:        item.Payer,
+		Details:      item.Details,
 	}
 }
 

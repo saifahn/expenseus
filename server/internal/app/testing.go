@@ -120,6 +120,11 @@ func NewGetTransactionsByUserRequest(userID string) *http.Request {
 	return req.WithContext(ctx)
 }
 
+func NewGetTxnsBetweenDatesRequest(userID string, from, to int64) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s?from=%s&to=%s", userID, strconv.FormatInt(from, 10), strconv.FormatInt(to, 10)), nil)
+	return req
+}
+
 // NewGetAllTransactionsRequest creates a request to be used in tests to get all
 // transactions.
 func NewGetAllTransactionsRequest() *http.Request {

@@ -83,6 +83,27 @@ func (a *App) GetTransactionsByUser(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (a *App) GetTxnsBetweenDates(w http.ResponseWriter, r *http.Request) {
+	// get dateFrom, dateTo from the URL query string
+	// userID should also be from the URL param
+	userID := r.Context().Value(CtxKeyUserID).(string)
+	from := r.Context().Value(CtxKeyDateFrom).(int64)
+	to := r.Context().Value(CtxKeyDateTo).(int64)
+
+	transactions, err := a.store.GetTxnsBetweenDates(userID, from, to)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(w).Encode(transactions)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 // GetAllTransactions handles a HTTP request to get all transactions, returning a list
 // of transactions.
 func (a *App) GetAllTransactions(rw http.ResponseWriter, r *http.Request) {

@@ -156,6 +156,50 @@ func TestGetTxnsByUser(t *testing.T) {
 	}
 }
 
+func TestGetTxnsBetweenDates(t *testing.T) {
+	var testFrom int64 = 1000
+	var testTo int64 = 2000
+	// calls the function with the two dates
+	// TODO: with varying numbers of transactions
+	// TODO: has to be the same user in the cookie as the request
+	tests := map[string]struct {
+		user           string
+		from           int64
+		to             int64
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+	}{
+		"calls the store function to retrieve the txns": {
+			user: "test-user",
+			from: testFrom,
+			to:   testTo,
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetTxnsBetweenDates("test-user", testFrom, testTo).Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewGetTxnsBetweenDatesRequest(tc.user, tc.from, tc.to)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
+			ctx = context.WithValue(ctx, app.CtxKeyDateFrom, tc.from)
+			ctx = context.WithValue(ctx, app.CtxKeyDateTo, tc.to)
+			req = req.WithContext(ctx)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.GetTxnsBetweenDates)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
 func TestCreateTransaction(t *testing.T) {
 	testTxnDetails := app.Transaction{
 		Location: "test-txn",

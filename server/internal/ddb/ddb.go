@@ -83,6 +83,7 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 func txnToTxnItem(txn app.Transaction) TransactionItem {
 	userIDKey := makeUserIDKey(txn.UserID)
 	transactionIDKey := makeTxnIDKey(txn.ID)
+	txnDateKey := makeTxnDateIDKey(txn)
 
 	return TransactionItem{
 		PK:         userIDKey,
@@ -95,7 +96,7 @@ func txnToTxnItem(txn app.Transaction) TransactionItem {
 		Amount:     txn.Amount,
 		Date:       txn.Date,
 		GSI1PK:     allTxnKey,
-		GSI1SK:     transactionIDKey,
+		GSI1SK:     txnDateKey,
 		Category:   txn.Category,
 	}
 }
@@ -150,7 +151,17 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 }
 
 func (d *dynamoDB) GetTxnsBetweenDates(userID string, from, to int64) ([]app.Transaction, error) {
-	return []app.Transaction{}, nil
+	items, err := d.transactions.GetBetweenDates(userID, from, to)
+	if err != nil {
+		return nil, err
+	}
+
+	txns := []app.Transaction{}
+	for _, ti := range items {
+		txns = append(txns, txnItemToTxn(ti))
+	}
+
+	return txns, nil
 }
 
 func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {

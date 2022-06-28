@@ -48,14 +48,8 @@ func TestTransactionTable(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(item, got)
 
-	// get all transactions
-	itemsGot, err := transactions.GetAll()
-	assert.NoError(err)
-	assert.Len(itemsGot, 1)
-	assert.Contains(itemsGot, *item)
-
 	// get the transactions by username
-	itemsGot, err = transactions.GetByUserID(item.UserID)
+	itemsGot, err := transactions.GetByUserID(item.UserID)
 	assert.NoError(err)
 	assert.Contains(itemsGot, *item)
 
@@ -143,6 +137,49 @@ func TestUpdateItem(t *testing.T) {
 			)
 			assert.NoError(err)
 			assert.Equal(tc.finalItem, got)
+		})
+	}
+}
+
+func TestGetBetweenDates(t *testing.T) {
+	initialItem := TransactionItem{
+		PK:       "user#test-user-id",
+		SK:       "txn#test-txn-id",
+		GSI1PK:   "user#test-user-id",
+		GSI1SK:   "txn#10000#test-txn-id",
+		ID:       "test-txn-id",
+		UserID:   "test-user-id",
+		Location: "initial-location",
+		Date:     10000,
+	}
+
+	tests := map[string]struct {
+		initialItems []TransactionItem
+		wantItems    []TransactionItem
+		from         int64
+		to           int64
+	}{
+		"with a date-range containing an item": {
+			initialItems: []TransactionItem{initialItem},
+			wantItems:    []TransactionItem{initialItem},
+			from:         10000,
+			to:           20000,
+		},
+	}
+
+	for name, tc := range tests {
+		assert := assert.New(t)
+		tbl, teardown := SetUpTestTable(t, "test-get-txns-between-dates")
+		defer teardown()
+		txns := NewTxnRepository(tbl)
+
+		t.Run(name, func(t *testing.T) {
+			err := txns.Create(initialItem)
+			assert.NoError(err)
+
+			got, err := txns.GetBetweenDates(initialItem.UserID, tc.from, tc.to)
+			assert.NoError(err)
+			assert.ElementsMatch(got, tc.wantItems)
 		})
 	}
 }

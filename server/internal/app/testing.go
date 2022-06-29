@@ -121,7 +121,7 @@ func NewGetTransactionsByUserRequest(userID string) *http.Request {
 }
 
 func NewGetTxnsBetweenDatesRequest(userID string, from, to int64) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s?from=%d&to=%d", userID, from, to), nil)
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/user/%s/range?from=%d&to=%d", userID, from, to), nil)
 	return req
 }
 

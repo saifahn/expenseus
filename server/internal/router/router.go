@@ -2,7 +2,9 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -34,10 +36,17 @@ func Init(a *app.App) *chi.Mux {
 			r.Use(a.VerifyUser)
 
 			r.Post("/transactions", a.CreateTransaction)
-			r.With(userIDCtx).Get("/transactions/user/{userID}", a.GetTransactionsByUser)
-			r.With(transactionIDCtx).Get("/transactions/{transactionID}", a.GetTransaction)
-			r.With(transactionIDCtx).Put("/transactions/{transactionID}", a.UpdateTransaction)
-			r.With(transactionIDCtx).Delete("/transactions/{transactionID}", a.DeleteTransaction)
+			r.With(userIDCtx).
+				Get("/transactions/user/{userID}", a.GetTransactionsByUser)
+			r.With(userIDCtx).
+				With(dateRangeCtx).
+				Get("/transactions/user/{userID}/range", a.GetTxnsBetweenDates)
+			r.With(transactionIDCtx).
+				Get("/transactions/{transactionID}", a.GetTransaction)
+			r.With(transactionIDCtx).
+				Put("/transactions/{transactionID}", a.UpdateTransaction)
+			r.With(transactionIDCtx).
+				Delete("/transactions/{transactionID}", a.DeleteTransaction)
 			r.Post("/transactions/shared/settle", a.SettleTxns)
 
 			r.Get("/users", a.ListUsers)
@@ -55,9 +64,12 @@ func Init(a *app.App) *chi.Mux {
 			r.With(transactionIDCtx).
 				With(trackerIDCtx).
 				Put("/trackers/{trackerID}/transactions/{transactionID}", a.UpdateSharedTxn)
-			r.With(trackerIDCtx).Delete("/trackers/{trackerID}/transactions/{transactionID}", a.DeleteSharedTxn)
-			r.With(trackerIDCtx).Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
-			r.With(userIDCtx).Get("/trackers/user/{userID}", a.GetTrackersByUser)
+			r.With(trackerIDCtx).
+				Delete("/trackers/{trackerID}/transactions/{transactionID}", a.DeleteSharedTxn)
+			r.With(trackerIDCtx).
+				Get("/trackers/{trackerID}/transactions/unsettled", a.GetUnsettledTxnsByTracker)
+			r.With(userIDCtx).
+				Get("/trackers/user/{userID}", a.GetTrackersByUser)
 		})
 
 		r.Get("/login_google", a.OauthLogin)
@@ -94,5 +106,27 @@ func trackerIDCtx(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, app.CtxKeyUserID, r.Context().Value(app.CtxKeyUserID))
 		ctx = context.WithValue(ctx, app.CtxKeyTransactionID, r.Context().Value(app.CtxKeyTransactionID))
 		next.ServeHTTP(rw, r.WithContext(ctx))
+	})
+}
+
+func dateRangeCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		from := r.URL.Query().Get("from")
+		to := r.URL.Query().Get("to")
+		if from == "" || to == "" {
+			http.Error(w, "from and to must both be supplied", http.StatusBadRequest)
+		}
+		fromInt64, err := strconv.ParseInt(from, 10, 64)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("from was not a valid number: %v", err.Error()), http.StatusBadRequest)
+		}
+		toInt64, err := strconv.ParseInt(to, 10, 64)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("to was not a valid number: %v", err.Error()), http.StatusBadRequest)
+		}
+		ctx := context.WithValue(r.Context(), app.CtxKeyDateFrom, fromInt64)
+		ctx = context.WithValue(ctx, app.CtxKeyDateTo, toInt64)
+		ctx = context.WithValue(ctx, app.CtxKeyUserID, r.Context().Value(app.CtxKeyUserID))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

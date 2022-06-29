@@ -95,7 +95,7 @@ func txnToTxnItem(txn app.Transaction) TxnItem {
 		Details:    txn.Details,
 		Amount:     txn.Amount,
 		Date:       txn.Date,
-		GSI1PK:     allTxnKey,
+		GSI1PK:     userIDKey,
 		GSI1SK:     txnDateKey,
 		Category:   txn.Category,
 	}

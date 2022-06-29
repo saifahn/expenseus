@@ -142,6 +142,65 @@ func TestCreatingTxns(t *testing.T) {
 	}
 }
 
+func TestGetTxnBetweenDates(t *testing.T) {
+	initialTxn := app.Transaction{
+		Location: "test-location",
+		UserID:   "a-user",
+		Amount:   300,
+		Date:     10000,
+		Category: "something",
+	}
+
+	tests := map[string]struct {
+		wantTxns []app.Transaction
+		from     int64
+		to       int64
+		wantCode int
+	}{
+		"with a date range containing a transaction": {
+			wantTxns: []app.Transaction{initialTxn},
+			from:     10000,
+			to:       11000,
+			wantCode: http.StatusOK,
+		},
+		"with a date range not containing a transaction": {
+			wantTxns: []app.Transaction{},
+			from:     20000,
+			to:       21000,
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			CreateUser(t, TestSeanUser, router)
+			CreateTestTxn(t, router, initialTxn, initialTxn.UserID)
+
+			request := app.NewGetTxnsBetweenDatesRequest(initialTxn.UserID, tc.from, tc.to)
+			request.AddCookie(CreateCookie(initialTxn.UserID))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Len(got, len(tc.wantTxns))
+
+			if len(tc.wantTxns) > 0 {
+				for i := range tc.wantTxns {
+					AssertEqualTxnDetails(t, got[i], tc.wantTxns[i])
+				}
+			}
+		})
+	}
+}
+
 func TestUpdateTransactions(t *testing.T) {
 	initialDetails := app.Transaction{
 		Location: "test-location",

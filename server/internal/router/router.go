@@ -52,7 +52,8 @@ func Init(a *app.App) *chi.Mux {
 			r.Get("/users", a.ListUsers)
 			r.Get("/users/self", a.GetSelf)
 			r.Post("/users", a.CreateUser)
-			r.With(userIDCtx).Get("/users/{userID}", a.GetUser)
+			r.With(userIDCtx).
+				Get("/users/{userID}", a.GetUser)
 
 			r.Post("/trackers", a.CreateTracker)
 			r.With(trackerIDCtx).

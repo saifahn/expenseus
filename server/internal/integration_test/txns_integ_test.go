@@ -253,6 +253,7 @@ func TestUpdateTransactions(t *testing.T) {
 			request.AddCookie(CreateCookie(test.user.ID))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
+
 			var transactionsGot []app.Transaction
 			err := json.NewDecoder(response.Body).Decode(&transactionsGot)
 			assert.NoError(err)
@@ -271,6 +272,56 @@ func TestUpdateTransactions(t *testing.T) {
 			// TODO: potentially get the initial transaction and see if it matches tc.wantTxnDetails
 		})
 	}
+}
+
+func TestUpdateThenGetByDateRange(t *testing.T) {
+	initialDetails := app.Transaction{
+		Location: "test-location",
+		UserID:   TestSeanUser.ID,
+		Amount:   100,
+		Date:     333333,
+		Category: "test.category",
+		Details:  "test-details",
+	}
+	// create a txn
+	router, tearDownDB := SetUpTestServer(t)
+	defer tearDownDB(t)
+	assert := assert.New(t)
+
+	CreateUser(t, TestSeanUser, router)
+	CreateTestTxn(t, router, initialDetails, TestSeanUser.ID)
+
+	request := app.NewGetTxnsBetweenDatesRequest(TestSeanUser.ID, 30000, 40000)
+	request.AddCookie(CreateCookie(TestSeanUser.ID))
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	var transactionsGot []app.Transaction
+	err := json.NewDecoder(response.Body).Decode(&transactionsGot)
+	assert.NoError(err)
+	assert.Len(transactionsGot, 1)
+	AssertEqualTxnDetails(t, initialDetails, transactionsGot[0])
+
+	// update the transaction date
+	updatedDetails := initialDetails
+	updatedDetails.ID = transactionsGot[0].ID
+	updatedDetails.Date = 50000
+	request = app.NewUpdateTransactionRequest(updatedDetails)
+	request.AddCookie(CreateCookie(TestSeanUser.ID))
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	// get the new one with a new date range
+	request = app.NewGetTxnsBetweenDatesRequest(TestSeanUser.ID, 40000, 50000)
+	request.AddCookie(CreateCookie(TestSeanUser.ID))
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	transactionsGot = []app.Transaction{}
+	err = json.NewDecoder(response.Body).Decode(&transactionsGot)
+	assert.NoError(err)
+	assert.Len(transactionsGot, 1)
+	AssertEqualTxnDetails(t, updatedDetails, transactionsGot[0])
 }
 
 func TestDeletingTransactions(t *testing.T) {

@@ -151,7 +151,8 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 }
 
 func (d *dynamoDB) GetTxnsBetweenDates(userID string, from, to int64) ([]app.Transaction, error) {
-	items, err := d.transactions.GetBetweenDates(userID, from, to)
+	// add 1 to `to` to make it inclusive
+	items, err := d.transactions.GetBetweenDates(userID, from, to+1)
 	if err != nil {
 		return nil, err
 	}

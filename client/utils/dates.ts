@@ -76,35 +76,58 @@ export const presets = {
   },
 };
 
-export const dateRanges = {
-  thisWeek: function () {
-    return {
-      from: presets.startOfWeek().toString(),
-      to: presets.now().toString(),
-    };
+export type DateRangePresetFn = () => { from: string; to: string };
+export type DateRangePresets = {
+  [key: string]: {
+    name: string;
+    presetFn: DateRangePresetFn;
+  };
+};
+
+export const dateRanges: DateRangePresets = {
+  thisWeek: {
+    name: 'This week',
+    presetFn: function () {
+      return {
+        from: presets.startOfWeek().toString(),
+        to: presets.now().toString(),
+      };
+    },
   },
-  lastWeek: function () {
-    return {
-      from: presets.startOfLastWeek().toString(),
-      to: presets.endOfLastWeek().toString(),
-    };
+  lastWeek: {
+    name: 'Last week',
+    presetFn: function () {
+      return {
+        from: presets.startOfLastWeek().toString(),
+        to: presets.endOfLastWeek().toString(),
+      };
+    },
   },
-  thisMonth: function () {
-    return {
-      from: presets.startOfMonth().toString(),
-      to: presets.now().toString(),
-    };
+  thisMonth: {
+    name: 'This month',
+    presetFn: function () {
+      return {
+        from: presets.startOfMonth().toString(),
+        to: presets.now().toString(),
+      };
+    },
   },
-  lastMonth: function () {
-    return {
-      from: presets.startOfLastMonth().toString(),
-      to: presets.endOfLastMonth().toString(),
-    };
+  lastMonth: {
+    name: 'Last month',
+    presetFn: function () {
+      return {
+        from: presets.startOfLastMonth().toString(),
+        to: presets.endOfLastMonth().toString(),
+      };
+    },
   },
-  lastNinetyDays: function () {
-    return {
-      from: presets.ninetyDaysAgo().toString(),
-      to: presets.now().toString(),
-    };
+  lastNinetyDays: {
+    name: 'Last 90 days',
+    presetFn: function () {
+      return {
+        from: presets.ninetyDaysAgo().toString(),
+        to: presets.now().toString(),
+      };
+    },
   },
 };

@@ -111,16 +111,13 @@ export default function PersonalAnalysis() {
             />
           </div>
           <div className="mt-4">
-            {Object.entries(dateRanges).map(([preset, fn]) => (
+            {Object.entries(dateRanges).map(([preset, { name, presetFn }]) => (
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handlePresetClick(fn);
-                }}
+                onClick={() => handlePresetClick(presetFn)}
                 key={preset}
-                className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
+                className="mr-2 rounded border-2 border-indigo-300 py-2 px-4 text-sm hover:border-indigo-700 focus:outline-none focus:ring"
               >
-                {preset}
+                {name}
               </button>
             ))}
           </div>

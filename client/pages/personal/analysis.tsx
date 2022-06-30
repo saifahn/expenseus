@@ -1,6 +1,11 @@
 import PersonalLayout from 'components/LayoutPersonal';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
+import {
+  subcategories,
+  MainCategoryKey,
+  mainCategories,
+} from 'data/categories';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
 import { Temporal } from 'temporal-polyfill';
@@ -18,6 +23,19 @@ function calculateTotal(txns: Transaction[]) {
     total += txn.amount;
   }
   return total;
+}
+
+function totalsByMainCategory(txns: Transaction[]) {
+  const totals = {} as Record<MainCategoryKey, number>;
+  for (const txn of txns) {
+    const mainCategory = subcategories[txn.category].mainCategory;
+    if (!totals[mainCategory]) totals[mainCategory] = 0;
+    totals[mainCategory] += txn.amount;
+  }
+  return Object.entries(totals).map((cat) => ({
+    category: cat[0],
+    total: cat[1],
+  }));
 }
 
 export default function PersonalAnalysis() {
@@ -92,6 +110,15 @@ export default function PersonalAnalysis() {
               <ul>
                 <li>You have {txns.length} transaction(s)</li>
                 <li>You have spent {calculateTotal(txns)}</li>
+              </ul>
+              <p>Main categories:</p>
+              <ul>
+                {totalsByMainCategory(txns).map((total) => (
+                  <li key={total.category}>
+                    You spent {total.total} on{' '}
+                    {mainCategories[total.category].en_US}
+                  </li>
+                ))}
               </ul>
             </div>
           )}

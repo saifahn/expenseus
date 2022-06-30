@@ -52,7 +52,7 @@ export const mainCategories = {
   },
 };
 
-type MainCategoryKey = keyof typeof mainCategories;
+export type MainCategoryKey = keyof typeof mainCategories;
 
 export const mainCategoryKeys = Object.keys(
   mainCategories,

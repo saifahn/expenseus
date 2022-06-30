@@ -45,7 +45,7 @@ export default function TrackersSubmitForm() {
   };
 
   return (
-    <div className="mt-6">
+    <div>
       {error && <div>Failed to load</div>}
       {!error && !allUsers && <div>Loading all users information...</div>}
       {allUsers && (

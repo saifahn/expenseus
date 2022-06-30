@@ -6,14 +6,14 @@ export default function SharedLayout({ children }) {
       <h1 className="text-4xl">Shared</h1>
       <nav className="mt-4">
         <ul className="flex">
-          <li>
+          <li className="flex">
             <Link href="/shared">
-              <a className="p-2 border-2">Home</a>
+              <a className="border-2 p-2">Home</a>
             </Link>
           </li>
-          <li>
+          <li className="flex">
             <Link href="/shared/trackers">
-              <a className="p-2 border-2 ml-4">Trackers</a>
+              <a className="ml-4 border-2 p-2">Trackers</a>
             </Link>
           </li>
         </ul>

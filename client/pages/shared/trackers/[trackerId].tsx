@@ -1,4 +1,4 @@
-import SharedLayout from 'components/SharedLayout';
+import SharedLayout from 'components/LayoutShared';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
 import { CategoryKey } from 'data/categories';

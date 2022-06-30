@@ -1,6 +1,6 @@
 import { useUserContext } from 'context/user';
 import useSWR from 'swr';
-import { Transaction } from './personal';
+import { Transaction } from 'types/Transaction';
 import { Temporal } from 'temporal-polyfill';
 import {
   epochSecToLocaleString,

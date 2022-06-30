@@ -1,21 +1,11 @@
 import TxnCreateForm from 'components/TxnCreateForm';
 import TxnReadUpdateForm from 'components/TxnReadUpdateForm';
 import { useUserContext } from 'context/user';
-import { CategoryKey } from 'data/categories';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 import { epochSecToLocaleString } from 'utils/temporal';
-
-export interface Transaction {
-  id: string;
-  userId: string;
-  location: string;
-  amount: number;
-  imageUrl?: string;
-  date: number;
-  category: CategoryKey;
-  details: string;
-}
+import { Transaction } from 'types/Transaction';
+import PersonalLayout from 'components/LayoutPersonal';
 
 async function deleteTransaction(txnId: string) {
   await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${txnId}`, {
@@ -77,36 +67,33 @@ export default function Personal() {
 
   return (
     <>
-      <h1 className="text-4xl">Personal</h1>
-      {selectedTxn ? (
-        <div className="mt-4">
+      <PersonalLayout>
+        {selectedTxn ? (
           <TxnReadUpdateForm
             txn={selectedTxn}
             onApply={() => setSelectedTxn(null)}
             onCancel={() => setSelectedTxn(null)}
           />
-        </div>
-      ) : (
-        <>
-          <div className="mt-4">
+        ) : (
+          <>
             <TxnCreateForm />
-          </div>
-          <div className="mt-4 p-4">
-            <h2 className="text-2xl">Personal transactions</h2>
-            {error && <div>Failed to load transactions</div>}
-            {transactions === null && (
-              <div>Loading list of transactions...</div>
-            )}
-            {transactions && transactions.length === 0 && (
-              <div>No transactions to show</div>
-            )}
-            {transactions &&
-              transactions.map((txn) => (
-                <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
-              ))}
-          </div>
-        </>
-      )}
+            <div className="mt-4 p-4">
+              <h2 className="text-2xl">Personal transactions</h2>
+              {error && <div>Failed to load transactions</div>}
+              {transactions === null && (
+                <div>Loading list of transactions...</div>
+              )}
+              {transactions && transactions.length === 0 && (
+                <div>No transactions to show</div>
+              )}
+              {transactions &&
+                transactions.map((txn) => (
+                  <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
+                ))}
+            </div>
+          </>
+        )}
+      </PersonalLayout>
     </>
   );
 }

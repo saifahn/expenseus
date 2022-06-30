@@ -1,4 +1,4 @@
-import SharedLayout from 'components/SharedLayout';
+import SharedLayout from 'components/LayoutShared';
 import TrackersSubmitForm from 'components/TrackersSubmitForm';
 import { useUserContext } from 'context/user';
 import Link from 'next/link';

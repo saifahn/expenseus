@@ -1,5 +1,5 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { Transaction } from 'pages/personal';
+import { Transaction } from 'types/Transaction';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';

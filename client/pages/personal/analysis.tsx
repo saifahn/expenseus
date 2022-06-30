@@ -12,6 +12,14 @@ type Inputs = {
   to: string;
 };
 
+function calculateTotal(txns: Transaction[]) {
+  let total = 0;
+  for (const txn of txns) {
+    total += txn.amount;
+  }
+  return total;
+}
+
 export default function PersonalAnalysis() {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
@@ -80,7 +88,11 @@ export default function PersonalAnalysis() {
           )}
           {txns?.length > 0 && (
             <div>
-              You have {txns.length} transaction(s) from that time period
+              <h3>In that time period:</h3>
+              <ul>
+                <li>You have {txns.length} transaction(s)</li>
+                <li>You have spent {calculateTotal(txns)}</li>
+              </ul>
             </div>
           )}
         </div>

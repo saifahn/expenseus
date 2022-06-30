@@ -3,7 +3,6 @@ import { Transaction } from 'pages/personal';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
-import { Temporal } from 'temporal-polyfill';
 import { epochSecToISOString } from 'utils/temporal';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {

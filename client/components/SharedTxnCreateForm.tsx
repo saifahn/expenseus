@@ -2,6 +2,7 @@ import { useUserContext } from 'context/user';
 import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
+import { plainDateISONowString } from 'utils/temporal';
 import SharedTxnFormBase, {
   createSharedTxnFormData,
   SharedTxnFormInputs,
@@ -36,7 +37,7 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
     defaultValues: {
       location: '',
       amount: 0,
-      date: new Date().toISOString().split('T')[0],
+      date: plainDateISONowString(),
       settled: false,
       payer: user.id,
       participants: '',

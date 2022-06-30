@@ -5,13 +5,14 @@ import { CategoryKey } from 'data/categories';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
+import { epochSecToLocaleString } from 'utils/temporal';
 import { Tracker } from '.';
 
 export interface SharedTxn {
   id: string;
   location: string;
   amount: number;
-  date: string;
+  date: number;
   unsettled?: boolean;
   participants: string[];
   tracker: string;
@@ -71,7 +72,7 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
       </div>
       <p>{txn.amount}</p>
       <p>{txn.category}</p>
-      <p>{new Date(txn.date).toDateString()}</p>
+      <p>{epochSecToLocaleString(txn.date)}</p>
       <p>{txn.tracker}</p>
       {txn.details && <p>{txn.details}</p>}
     </article>

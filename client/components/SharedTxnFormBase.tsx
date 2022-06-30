@@ -2,6 +2,7 @@ import { CategoryKey, enUSCategories } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
+import { plainDateStringToEpochSec } from 'utils/temporal';
 
 export type SharedTxnFormInputs = {
   location: string;
@@ -24,7 +25,7 @@ export function createSharedTxnFormData(data: SharedTxnFormInputs) {
   formData.append('payer', data.payer);
   formData.append('details', data.details);
 
-  const unixDate = new Date(data.date).getTime();
+  const unixDate = plainDateStringToEpochSec(data.date);
   formData.append('date', unixDate.toString());
   return formData;
 }

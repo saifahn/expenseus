@@ -3,7 +3,7 @@ import TxnReadUpdateForm from 'components/TxnReadUpdateForm';
 import { useUserContext } from 'context/user';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { epochSecToLocaleString } from 'utils/temporal';
+import { epochSecToLocaleString } from 'utils/dates';
 import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
 

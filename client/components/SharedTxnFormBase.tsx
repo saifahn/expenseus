@@ -8,7 +8,7 @@ import {
 import { Tracker } from 'pages/shared/trackers';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
-import { plainDateStringToEpochSec } from 'utils/temporal';
+import { plainDateStringToEpochSec } from 'utils/dates';
 
 export type SharedTxnFormInputs = {
   location: string;

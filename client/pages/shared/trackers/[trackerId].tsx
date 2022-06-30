@@ -5,7 +5,7 @@ import { SubcategoryKey } from 'data/categories';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { epochSecToLocaleString } from 'utils/temporal';
+import { epochSecToLocaleString } from 'utils/dates';
 import { Tracker } from '.';
 
 export interface SharedTxn {

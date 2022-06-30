@@ -3,7 +3,7 @@ import { Transaction } from 'types/Transaction';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
-import { epochSecToISOString } from 'utils/temporal';
+import { epochSecToISOString } from 'utils/dates';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {
   const formData = createTxnFormData(data);

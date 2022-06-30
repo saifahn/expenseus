@@ -7,7 +7,7 @@ import {
 } from 'data/categories';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
-import { plainDateStringToEpochSec } from 'utils/temporal';
+import { plainDateStringToEpochSec } from 'utils/dates';
 
 export type TxnFormInputs = {
   location: string;

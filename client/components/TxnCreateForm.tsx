@@ -1,7 +1,7 @@
 import { useUserContext } from 'context/user';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
-import { plainDateISONowString } from 'utils/temporal';
+import { plainDateISONowString } from 'utils/dates';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
 
 async function createTransaction(data: TxnFormInputs) {

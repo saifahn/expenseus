@@ -2,7 +2,7 @@ import { Tracker } from 'pages/shared/trackers';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
-import { epochSecToISOString } from 'utils/temporal';
+import { epochSecToISOString } from 'utils/dates';
 import SharedTxnFormBase, {
   createSharedTxnFormData,
   SharedTxnFormInputs,

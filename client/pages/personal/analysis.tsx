@@ -11,7 +11,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
 import { Temporal } from 'temporal-polyfill';
 import { Transaction } from 'types/Transaction';
-import { plainDateStringToEpochSec } from 'utils/temporal';
+import { plainDateStringToEpochSec } from 'utils/dates';
 
 type Inputs = {
   from: string;

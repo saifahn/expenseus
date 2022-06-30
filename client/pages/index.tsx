@@ -2,10 +2,7 @@ import { useUserContext } from 'context/user';
 import useSWR from 'swr';
 import { Transaction } from 'types/Transaction';
 import { Temporal } from 'temporal-polyfill';
-import {
-  epochSecToLocaleString,
-  plainDateStringToEpochSec,
-} from 'utils/temporal';
+import { epochSecToLocaleString, plainDateStringToEpochSec } from 'utils/dates';
 
 export default function Home() {
   const { user } = useUserContext();

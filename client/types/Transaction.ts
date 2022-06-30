@@ -1,4 +1,4 @@
-import { CategoryKey } from 'data/categories';
+import { SubcategoryKey } from 'data/categories';
 
 export interface Transaction {
   id: string;
@@ -7,6 +7,6 @@ export interface Transaction {
   amount: number;
   imageUrl?: string;
   date: number;
-  category: CategoryKey;
+  category: SubcategoryKey;
   details: string;
 }

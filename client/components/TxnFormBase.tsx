@@ -1,6 +1,6 @@
 import {
   categories,
-  CategoryKey,
+  SubcategoryKey,
   mainCategories,
   mainCategoryKeys,
   subcategories,
@@ -13,7 +13,7 @@ export type TxnFormInputs = {
   location: string;
   amount: number;
   date: string;
-  category: CategoryKey;
+  category: SubcategoryKey;
   details: string;
 };
 

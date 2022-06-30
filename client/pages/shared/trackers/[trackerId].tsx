@@ -1,7 +1,7 @@
 import SharedLayout from 'components/LayoutShared';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
-import { CategoryKey } from 'data/categories';
+import { SubcategoryKey } from 'data/categories';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
@@ -16,7 +16,7 @@ export interface SharedTxn {
   unsettled?: boolean;
   participants: string[];
   tracker: string;
-  category: CategoryKey;
+  category: SubcategoryKey;
   details: string;
 }
 

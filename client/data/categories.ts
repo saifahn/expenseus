@@ -256,12 +256,12 @@ export const subcategories: SubCategories = {
   },
 };
 
-export type CategoryKey = Extract<keyof typeof subcategories, string>;
+export type SubcategoryKey = Extract<keyof typeof subcategories, string>;
 
-const categoryKeys = Object.keys(subcategories) as CategoryKey[];
+const categoryKeys = Object.keys(subcategories) as SubcategoryKey[];
 
 type AllCategories = {
-  [mainCat in MainCategoryKey]: Array<CategoryKey>;
+  [mainCat in MainCategoryKey]: Array<SubcategoryKey>;
 };
 
 // FIXME: this is kind of awful and hard to understand

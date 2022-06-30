@@ -1,6 +1,6 @@
 import {
   categories,
-  CategoryKey,
+  SubcategoryKey,
   mainCategories,
   mainCategoryKeys,
   subcategories,
@@ -18,7 +18,7 @@ export type SharedTxnFormInputs = {
   participants: string;
   payer: string;
   details: string;
-  category: CategoryKey;
+  category: SubcategoryKey;
 };
 
 export function createSharedTxnFormData(data: SharedTxnFormInputs) {

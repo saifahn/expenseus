@@ -2,21 +2,22 @@ import { useUserContext } from 'context/user';
 import useSWR from 'swr';
 import { Transaction } from './personal';
 import { Temporal } from 'temporal-polyfill';
+import {
+  epochSecToLocaleString,
+  plainDateStringToEpochSec,
+} from 'utils/temporal';
 
 export default function Home() {
   const { user } = useUserContext();
-  const today = Temporal.Now.plainDateISO().toZonedDateTime('UTC').toString();
-  const unixToday = Temporal.Instant.from(today).epochMilliseconds;
-  const threeMonthsAgo = Temporal.Now.plainDateISO()
-    .subtract({ months: 3 })
-    .toZonedDateTime('UTC')
-    .toString();
-  const unixThreeMonthsAgo =
-    Temporal.Instant.from(threeMonthsAgo).epochMilliseconds;
-
+  const todayEpochSeconds = plainDateStringToEpochSec(
+    Temporal.Now.plainDateISO().toString(),
+  );
+  const threeMonthsAgoEpochSeconds = plainDateStringToEpochSec(
+    Temporal.Now.plainDateISO().subtract({ months: 3 }).toString(),
+  );
   const { data: txns, error } = useSWR<Transaction[]>(() =>
     user
-      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}/range?from=${unixThreeMonthsAgo}&to=${unixToday}`
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}/range?from=${threeMonthsAgoEpochSeconds}&to=${todayEpochSeconds}`
       : null,
   );
 
@@ -37,12 +38,7 @@ export default function Home() {
           <p>{txn.amount}</p>
           <p>{txn.category}</p>
           {txn.details && <p>{txn.details}</p>}
-          <p>
-            {Temporal.Instant.fromEpochSeconds(txn.date)
-              .toZonedDateTimeISO('UTC')
-              .toPlainDate()
-              .toLocaleString()}
-          </p>
+          <p>{epochSecToLocaleString(txn.date)}</p>
         </article>
       ))}
     </>

@@ -1,7 +1,7 @@
 import { useUserContext } from 'context/user';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
-import { Temporal } from 'temporal-polyfill';
+import { plainDateISONowString } from 'utils/temporal';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
 
 async function createTransaction(data: TxnFormInputs) {
@@ -26,7 +26,7 @@ export default function TxnCreateForm() {
       location: '',
       details: '',
       amount: 0,
-      date: Temporal.Now.plainDateISO().toString(),
+      date: plainDateISONowString(),
       category: 'unspecified.unspecified',
     },
   });

@@ -4,7 +4,7 @@ import { useUserContext } from 'context/user';
 import { CategoryKey } from 'data/categories';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { Temporal } from 'temporal-polyfill';
+import { epochSecToLocaleString } from 'utils/temporal';
 
 export interface Transaction {
   id: string;
@@ -61,12 +61,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
       <p>{txn.amount}</p>
       <p>{txn.category}</p>
       {txn.details && <p>{txn.details}</p>}
-      <p>
-        {Temporal.Instant.fromEpochSeconds(txn.date)
-          .toZonedDateTimeISO('UTC')
-          .toPlainDate()
-          .toLocaleString()}
-      </p>
+      <p>{epochSecToLocaleString(txn.date)}</p>
     </article>
   );
 }

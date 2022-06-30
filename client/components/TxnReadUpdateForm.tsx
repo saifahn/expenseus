@@ -4,6 +4,7 @@ import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
 import { Temporal } from 'temporal-polyfill';
+import { epochSecToISOString } from 'utils/temporal';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {
   const formData = createTxnFormData(data);
@@ -33,10 +34,7 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
       location: txn.location,
       details: txn.details,
       amount: txn.amount,
-      date: Temporal.Instant.fromEpochSeconds(txn.date)
-        .toZonedDateTimeISO('UTC')
-        .toPlainDate()
-        .toString(),
+      date: epochSecToISOString(txn.date),
       category: txn.category,
     },
   });

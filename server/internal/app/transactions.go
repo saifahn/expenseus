@@ -83,9 +83,9 @@ func (a *App) GetTransactionsByUser(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetTxnsBetweenDates handles a HTTP request to get all transactions from a
+// user between two dates given in epoch seconds, returning a list of txns.
 func (a *App) GetTxnsBetweenDates(w http.ResponseWriter, r *http.Request) {
-	// get dateFrom, dateTo from the URL query string
-	// userID should also be from the URL param
 	userID := r.Context().Value(CtxKeyUserID).(string)
 	from := r.Context().Value(CtxKeyDateFrom).(int64)
 	to := r.Context().Value(CtxKeyDateTo).(int64)

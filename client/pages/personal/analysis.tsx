@@ -119,13 +119,13 @@ export default function PersonalAnalysis() {
           )}
           {txns?.length > 0 && (
             <div>
-              <h3>In that time period:</h3>
-              <ul>
-                <li>You have {txns.length} transaction(s)</li>
-                <li>You have spent {calculateTotal(txns)}</li>
-              </ul>
-              <p>Main categories:</p>
-              <ul>
+              <h3 className="text-xl font-medium">In this time period:</h3>
+              <p>
+                You have {txns.length} transactions, with a total cost of{' '}
+                {calculateTotal(txns)}
+              </p>
+              <p className="mt-4 text-lg font-medium">Main categories:</p>
+              <ul className="list-inside list-disc">
                 {totalsByMainCategory(txns).map((total) => (
                   <li key={total.category}>
                     You spent {total.total} on{' '}
@@ -133,8 +133,8 @@ export default function PersonalAnalysis() {
                   </li>
                 ))}
               </ul>
-              <p>Subcategories:</p>
-              <ul>
+              <p className="mt-4 text-lg font-medium">Subcategories:</p>
+              <ul className="list-inside list-disc">
                 {totalsBySubCategory(txns).map((total) => (
                   <li key={total.category}>
                     You spent {total.total} on{' '}

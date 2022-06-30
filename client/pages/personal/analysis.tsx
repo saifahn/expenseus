@@ -11,7 +11,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
 import { Temporal } from 'temporal-polyfill';
 import { Transaction } from 'types/Transaction';
-import { plainDateStringToEpochSec } from 'utils/dates';
+import { plainDateStringToEpochSec, presets } from 'utils/dates';
 
 type Inputs = {
   from: string;
@@ -54,7 +54,7 @@ function totalsBySubCategory(txns: Transaction[]) {
 export default function PersonalAnalysis() {
   const { user } = useUserContext();
   const { mutate } = useSWRConfig();
-  const { register, handleSubmit, getValues } = useForm<Inputs>({
+  const { register, handleSubmit, getValues, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
       from: Temporal.Now.plainDateISO().subtract({ months: 3 }).toString(),
@@ -78,6 +78,11 @@ export default function PersonalAnalysis() {
   const submitCallback: SubmitHandler<Inputs> = (data) => {
     mutate('personal.analysis');
   };
+
+  function handleThisWeekClick() {
+    setValue('from', presets.startOfWeek().toString());
+    setValue('to', presets.now().toString());
+  }
 
   return (
     <>
@@ -105,8 +110,14 @@ export default function PersonalAnalysis() {
               id="dateTo"
             />
           </div>
+          <div className="mt-4">
+            <button onClick={handleThisWeekClick}>This week</button>
+          </div>
           <div className="mt-4 flex justify-end">
-            <button className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring">
+            <button
+              className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
+              type="submit"
+            >
               Get details
             </button>
           </div>

@@ -256,8 +256,9 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}
 	unsettledTxns := []app.SharedTransaction{{
-		ID:        "test-unsettled-transaction",
-		Unsettled: true,
+		ID:           "test-unsettled-transaction",
+		Unsettled:    true,
+		Participants: []string{"user-01", "user-02"},
 	}}
 
 	tests := map[string]struct {
@@ -297,6 +298,8 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.trackerID)
+			ctx := context.WithValue(request.Context(), app.CtxKeyUserID, "user-01")
+			request = request.WithContext(ctx)
 			response := httptest.NewRecorder()
 
 			handler := http.HandlerFunc(a.GetUnsettledTxnsByTracker)
@@ -304,12 +307,12 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 
 			assert.Equal(tc.wantCode, response.Code)
 			if tc.wantTxns != nil {
-				var got []app.SharedTransaction
+				var got app.UnsettledResponse
 				err := json.NewDecoder(response.Body).Decode(&got)
 				if err != nil {
-					t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
+					t.Fatalf("error parsing response from server %q into UnsettledResponse, '%v'", response.Body, err)
 				}
-				assert.ElementsMatch(got, tc.wantTxns)
+				assert.ElementsMatch(got.Txns, tc.wantTxns)
 			}
 		})
 	}

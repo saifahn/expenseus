@@ -180,9 +180,50 @@ func (a *App) DeleteSharedTxn(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// TODO: add tests, make it better
+type UnsettledResponse struct {
+	Txns       []SharedTransaction `json:"transactions"`
+	Debtor     string              `json:"debtor"`
+	Debtee     string              `json:"debtee"`
+	AmountOwed float64             `json:"amountOwed"`
+}
+
+func totalOwed(currentUser string, txns []SharedTransaction) UnsettledResponse {
+	defaultSplit := 0.5
+	var otherUser string
+	var total float64
+
+	for _, t := range txns {
+		// set the other user
+		if otherUser == "" {
+			for _, u := range t.Participants {
+				if u != currentUser {
+					otherUser = u
+					continue
+				}
+			}
+		}
+		// from the perspective that the logged in user is the one who has paid
+		isPayer := t.Payer == currentUser
+		if isPayer {
+			total += float64(t.Amount) * defaultSplit
+		} else {
+			total -= float64(t.Amount) * defaultSplit
+		}
+	}
+	return UnsettledResponse{
+		Txns:       txns,
+		Debtor:     otherUser,
+		Debtee:     currentUser,
+		AmountOwed: total,
+	}
+
+}
+
 // GetUnsettledTxnsByTracker handles a HTTP request to get transactions that
 // are unsettled and returns the list of transactions
 func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
 	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
 
 	transactions, err := a.store.GetUnsettledTxnsByTracker(trackerID)
@@ -194,9 +235,10 @@ func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("something went wrong getting unsettled shared transactions from tracker: %v", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	totals := totalOwed(userID, transactions)
 
 	w.Header().Set("content-type", jsonContentType)
-	err = json.NewEncoder(w).Encode(transactions)
+	err = json.NewEncoder(w).Encode(totals)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

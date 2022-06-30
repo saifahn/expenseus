@@ -365,16 +365,16 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 
 			assert.Equal(tc.wantCode, response.Code)
 
-			var got []app.SharedTransaction
+			var got app.UnsettledResponse
 			err := json.NewDecoder(response.Body).Decode(&got)
 			if err != nil {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
-			assert.Len(got, len(tc.wantTransactions))
+			assert.Len(got.Txns, len(tc.wantTransactions))
 
 			// remove the ID from the got transactions to account for randomly generated
 			var gotWithoutID []app.SharedTransaction
-			for _, txn := range got {
+			for _, txn := range got.Txns {
 				gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
 			}
 
@@ -560,13 +560,13 @@ func TestSettleTxns(t *testing.T) {
 			request.AddCookie(&tc.cookie)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
-			var unsettled []app.SharedTransaction
+			var unsettled app.UnsettledResponse
 			err := json.NewDecoder(response.Body).Decode(&unsettled)
 			if err != nil {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
 
-			request = app.NewSettleTxnsRequest(t, unsettled)
+			request = app.NewSettleTxnsRequest(t, unsettled.Txns)
 			request.AddCookie(&tc.cookie)
 			response = httptest.NewRecorder()
 			router.ServeHTTP(response, request)
@@ -579,12 +579,12 @@ func TestSettleTxns(t *testing.T) {
 			response = httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
-			var got []app.SharedTransaction
+			var got app.UnsettledResponse
 			err = json.NewDecoder(response.Body).Decode(&got)
 			if err != nil {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
-			assert.Len(got, len(tc.wantTxns))
+			assert.Len(got.Txns, len(tc.wantTxns))
 		})
 	}
 }

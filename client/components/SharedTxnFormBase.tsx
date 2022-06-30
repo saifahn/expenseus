@@ -1,4 +1,10 @@
-import { CategoryKey, enUSCategories } from 'data/categories';
+import {
+  categories,
+  CategoryKey,
+  mainCategories,
+  mainCategoryKeys,
+  subcategories,
+} from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
@@ -128,10 +134,14 @@ export default function SharedTxnFormBase({
           {...register('category')}
           className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
         >
-          {enUSCategories.map((category) => (
-            <option key={category.key} value={category.key}>
-              {category.value}
-            </option>
+          {mainCategoryKeys.map((mainKey) => (
+            <optgroup key={mainKey} label={mainCategories[mainKey].en_US}>
+              {categories[mainKey].map((subKey) => (
+                <option key={subKey} value={subKey}>
+                  {subcategories[subKey].en_US}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>

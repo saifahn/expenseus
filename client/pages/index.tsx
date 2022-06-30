@@ -37,7 +37,12 @@ export default function Home() {
           <p>{txn.amount}</p>
           <p>{txn.category}</p>
           {txn.details && <p>{txn.details}</p>}
-          <p>{new Date(txn.date).toDateString()}</p>
+          <p>
+            {Temporal.Instant.fromEpochSeconds(txn.date)
+              .toZonedDateTimeISO('UTC')
+              .toPlainDate()
+              .toLocaleString()}
+          </p>
         </article>
       ))}
     </>

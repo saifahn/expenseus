@@ -3,6 +3,7 @@ import { Transaction } from 'pages/personal';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
+import { Temporal } from 'temporal-polyfill';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {
   const formData = createTxnFormData(data);
@@ -32,7 +33,10 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
       location: txn.location,
       details: txn.details,
       amount: txn.amount,
-      date: new Date(txn.date).toISOString().split('T')[0],
+      date: Temporal.Instant.fromEpochSeconds(txn.date)
+        .toZonedDateTimeISO('UTC')
+        .toPlainDate()
+        .toString(),
       category: txn.category,
     },
   });

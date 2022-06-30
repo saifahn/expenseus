@@ -1,6 +1,7 @@
 import { CategoryKey, enUSCategories } from 'data/categories';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
+import { Temporal } from 'temporal-polyfill';
 
 export type TxnFormInputs = {
   location: string;
@@ -17,8 +18,8 @@ export function createTxnFormData(data: TxnFormInputs) {
   formData.append('amount', data.amount.toString());
   formData.append('category', data.category);
 
-  const unixDate = new Date(data.date).getTime();
-  formData.append('date', unixDate.toString());
+  const unixSeconds = Temporal.Instant.from(`${data.date}z`).epochSeconds;
+  formData.append('date', unixSeconds.toString());
   return formData;
 }
 

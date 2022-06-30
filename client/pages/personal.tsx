@@ -4,6 +4,7 @@ import { useUserContext } from 'context/user';
 import { CategoryKey } from 'data/categories';
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
+import { Temporal } from 'temporal-polyfill';
 
 export interface Transaction {
   id: string;
@@ -11,7 +12,7 @@ export interface Transaction {
   location: string;
   amount: number;
   imageUrl?: string;
-  date: string;
+  date: number;
   category: CategoryKey;
   details: string;
 }
@@ -60,7 +61,12 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
       <p>{txn.amount}</p>
       <p>{txn.category}</p>
       {txn.details && <p>{txn.details}</p>}
-      <p>{new Date(txn.date).toDateString()}</p>
+      <p>
+        {Temporal.Instant.fromEpochSeconds(txn.date)
+          .toZonedDateTimeISO('UTC')
+          .toPlainDate()
+          .toLocaleString()}
+      </p>
     </article>
   );
 }

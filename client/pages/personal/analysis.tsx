@@ -5,6 +5,7 @@ import {
   subcategories,
   MainCategoryKey,
   mainCategories,
+  SubcategoryKey,
 } from 'data/categories';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
@@ -31,6 +32,18 @@ function totalsByMainCategory(txns: Transaction[]) {
     const mainCategory = subcategories[txn.category].mainCategory;
     if (!totals[mainCategory]) totals[mainCategory] = 0;
     totals[mainCategory] += txn.amount;
+  }
+  return Object.entries(totals).map((cat) => ({
+    category: cat[0],
+    total: cat[1],
+  }));
+}
+
+function totalsBySubCategory(txns: Transaction[]) {
+  const totals = {} as Record<SubcategoryKey, number>;
+  for (const txn of txns) {
+    if (!totals[txn.category]) totals[txn.category] = 0;
+    totals[txn.category] += txn.amount;
   }
   return Object.entries(totals).map((cat) => ({
     category: cat[0],
@@ -117,6 +130,15 @@ export default function PersonalAnalysis() {
                   <li key={total.category}>
                     You spent {total.total} on{' '}
                     {mainCategories[total.category].en_US}
+                  </li>
+                ))}
+              </ul>
+              <p>Subcategories:</p>
+              <ul>
+                {totalsBySubCategory(txns).map((total) => (
+                  <li key={total.category}>
+                    You spent {total.total} on{' '}
+                    {subcategories[total.category].en_US}
                   </li>
                 ))}
               </ul>

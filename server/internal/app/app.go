@@ -15,6 +15,8 @@ const (
 	CtxKeyTrackerID contextKey = iota
 	CtxKeyTransactionID
 	CtxKeyUserID
+	CtxKeyDateFrom
+	CtxKeyDateTo
 )
 
 const (
@@ -26,7 +28,7 @@ type Store interface {
 	// Transactions
 	GetTransaction(userID, txnID string) (Transaction, error)
 	GetTransactionsByUser(userID string) ([]Transaction, error)
-	GetAllTransactions() ([]Transaction, error)
+	GetTxnsBetweenDates(userID string, from, to int64) ([]Transaction, error)
 	CreateTransaction(txn Transaction) error
 	UpdateTransaction(txn Transaction) error
 	DeleteTransaction(txnID, userID string) error

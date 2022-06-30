@@ -83,30 +83,23 @@ func (a *App) GetTransactionsByUser(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetAllTransactions handles a HTTP request to get all transactions, returning a list
-// of transactions.
-func (a *App) GetAllTransactions(rw http.ResponseWriter, r *http.Request) {
-	transactions, err := a.store.GetAllTransactions()
+// GetTxnsBetweenDates handles a HTTP request to get all transactions from a
+// user between two dates given in epoch seconds, returning a list of txns.
+func (a *App) GetTxnsBetweenDates(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
+	from := r.Context().Value(CtxKeyDateFrom).(int64)
+	to := r.Context().Value(CtxKeyDateTo).(int64)
 
+	transactions, err := a.store.GetTxnsBetweenDates(userID, from, to)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	for i, e := range transactions {
-		if e.ImageKey != "" {
-			transactions[i], err = a.images.AddImageToTransaction(e)
-			if err != nil {
-				http.Error(rw, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-	}
-
-	rw.Header().Set("content-type", jsonContentType)
-	err = json.NewEncoder(rw).Encode(transactions)
+	w.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(w).Encode(transactions)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }

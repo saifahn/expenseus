@@ -122,21 +122,6 @@ func (mr *MockStoreMockRecorder) DeleteTransaction(txnID, userID interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTransaction", reflect.TypeOf((*MockStore)(nil).DeleteTransaction), txnID, userID)
 }
 
-// GetAllTransactions mocks base method.
-func (m *MockStore) GetAllTransactions() ([]app.Transaction, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllTransactions")
-	ret0, _ := ret[0].([]app.Transaction)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllTransactions indicates an expected call of GetAllTransactions.
-func (mr *MockStoreMockRecorder) GetAllTransactions() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllTransactions", reflect.TypeOf((*MockStore)(nil).GetAllTransactions))
-}
-
 // GetAllUsers mocks base method.
 func (m *MockStore) GetAllUsers() ([]app.User, error) {
 	m.ctrl.T.Helper()
@@ -210,6 +195,21 @@ func (m *MockStore) GetTransactionsByUser(userID string) ([]app.Transaction, err
 func (mr *MockStoreMockRecorder) GetTransactionsByUser(userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionsByUser", reflect.TypeOf((*MockStore)(nil).GetTransactionsByUser), userID)
+}
+
+// GetTxnsBetweenDates mocks base method.
+func (m *MockStore) GetTxnsBetweenDates(userID string, from, to int64) ([]app.Transaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTxnsBetweenDates", userID, from, to)
+	ret0, _ := ret[0].([]app.Transaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTxnsBetweenDates indicates an expected call of GetTxnsBetweenDates.
+func (mr *MockStoreMockRecorder) GetTxnsBetweenDates(userID, from, to interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxnsBetweenDates", reflect.TypeOf((*MockStore)(nil).GetTxnsBetweenDates), userID, from, to)
 }
 
 // GetTxnsByTracker mocks base method.

@@ -2,6 +2,7 @@ import { Tracker } from 'pages/shared/trackers';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
+import { epochSecToISOString } from 'utils/dates';
 import SharedTxnFormBase, {
   createSharedTxnFormData,
   SharedTxnFormInputs,
@@ -47,7 +48,7 @@ export default function SharedTxnReadUpdateForm({
     defaultValues: {
       location: txn.location,
       amount: txn.amount,
-      date: new Date(txn.date).toISOString().split('T')[0],
+      date: epochSecToISOString(txn.date),
       settled: !txn.unsettled,
       category: txn.category,
       details: txn.details,

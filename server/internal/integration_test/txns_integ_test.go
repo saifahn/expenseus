@@ -24,7 +24,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
 
 		// try and get it
-		request := app.NewGetAllTransactionsRequest()
+		request := app.NewGetTransactionsByUserRequest(wantTxnDetails.UserID)
 		request.AddCookie(CreateCookie(wantTxnDetails.UserID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -50,7 +50,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		wantTxnDetails := TestSeanTxnDetails
 		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
 
-		request := app.NewGetAllTransactionsRequest()
+		request := app.NewGetTransactionsByUserRequest(wantTxnDetails.UserID)
 		request.AddCookie(CreateCookie(TestSeanUser.ID))
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, request)
@@ -142,6 +142,65 @@ func TestCreatingTxns(t *testing.T) {
 	}
 }
 
+func TestGetTxnBetweenDates(t *testing.T) {
+	initialTxn := app.Transaction{
+		Location: "test-location",
+		UserID:   "a-user",
+		Amount:   300,
+		Date:     10000,
+		Category: "something",
+	}
+
+	tests := map[string]struct {
+		wantTxns []app.Transaction
+		from     int64
+		to       int64
+		wantCode int
+	}{
+		"with a date range containing a transaction": {
+			wantTxns: []app.Transaction{initialTxn},
+			from:     10000,
+			to:       11000,
+			wantCode: http.StatusOK,
+		},
+		"with a date range not containing a transaction": {
+			wantTxns: []app.Transaction{},
+			from:     20000,
+			to:       21000,
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			CreateUser(t, TestSeanUser, router)
+			CreateTestTxn(t, router, initialTxn, initialTxn.UserID)
+
+			request := app.NewGetTxnsBetweenDatesRequest(initialTxn.UserID, tc.from, tc.to)
+			request.AddCookie(CreateCookie(initialTxn.UserID))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Len(got, len(tc.wantTxns))
+
+			if len(tc.wantTxns) > 0 {
+				for i := range tc.wantTxns {
+					AssertEqualTxnDetails(t, got[i], tc.wantTxns[i])
+				}
+			}
+		})
+	}
+}
+
 func TestUpdateTransactions(t *testing.T) {
 	initialDetails := app.Transaction{
 		Location: "test-location",
@@ -189,11 +248,12 @@ func TestUpdateTransactions(t *testing.T) {
 			CreateUser(t, test.user, router)
 			CreateTestTxn(t, router, test.initialTxnDetails, test.user.ID)
 
-			// get all transactions to get the transaction that was just added
-			request := app.NewGetAllTransactionsRequest()
+			// get transactions to get the transaction that was just added
+			request := app.NewGetTransactionsByUserRequest(test.user.ID)
 			request.AddCookie(CreateCookie(test.user.ID))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
+
 			var transactionsGot []app.Transaction
 			err := json.NewDecoder(response.Body).Decode(&transactionsGot)
 			assert.NoError(err)
@@ -212,6 +272,56 @@ func TestUpdateTransactions(t *testing.T) {
 			// TODO: potentially get the initial transaction and see if it matches tc.wantTxnDetails
 		})
 	}
+}
+
+func TestUpdateThenGetByDateRange(t *testing.T) {
+	initialDetails := app.Transaction{
+		Location: "test-location",
+		UserID:   TestSeanUser.ID,
+		Amount:   100,
+		Date:     333333,
+		Category: "test.category",
+		Details:  "test-details",
+	}
+	// create a txn
+	router, tearDownDB := SetUpTestServer(t)
+	defer tearDownDB(t)
+	assert := assert.New(t)
+
+	CreateUser(t, TestSeanUser, router)
+	CreateTestTxn(t, router, initialDetails, TestSeanUser.ID)
+
+	request := app.NewGetTxnsBetweenDatesRequest(TestSeanUser.ID, 30000, 40000)
+	request.AddCookie(CreateCookie(TestSeanUser.ID))
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	var transactionsGot []app.Transaction
+	err := json.NewDecoder(response.Body).Decode(&transactionsGot)
+	assert.NoError(err)
+	assert.Len(transactionsGot, 1)
+	AssertEqualTxnDetails(t, initialDetails, transactionsGot[0])
+
+	// update the transaction date
+	updatedDetails := initialDetails
+	updatedDetails.ID = transactionsGot[0].ID
+	updatedDetails.Date = 50000
+	request = app.NewUpdateTransactionRequest(updatedDetails)
+	request.AddCookie(CreateCookie(TestSeanUser.ID))
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	// get the new one with a new date range
+	request = app.NewGetTxnsBetweenDatesRequest(TestSeanUser.ID, 40000, 50000)
+	request.AddCookie(CreateCookie(TestSeanUser.ID))
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	transactionsGot = []app.Transaction{}
+	err = json.NewDecoder(response.Body).Decode(&transactionsGot)
+	assert.NoError(err)
+	assert.Len(transactionsGot, 1)
+	AssertEqualTxnDetails(t, updatedDetails, transactionsGot[0])
 }
 
 func TestDeletingTransactions(t *testing.T) {

@@ -1,4 +1,4 @@
-import SharedLayout from 'components/SharedLayout';
+import SharedLayout from 'components/LayoutShared';
 
 export default function SharedIndex() {
   return (

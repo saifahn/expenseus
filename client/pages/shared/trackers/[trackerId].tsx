@@ -1,21 +1,22 @@
-import SharedLayout from 'components/SharedLayout';
+import SharedLayout from 'components/LayoutShared';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
-import { CategoryKey } from 'data/categories';
+import { SubcategoryKey } from 'data/categories';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
+import { epochSecToLocaleString } from 'utils/dates';
 import { Tracker } from '.';
 
 export interface SharedTxn {
   id: string;
   location: string;
   amount: number;
-  date: string;
+  date: number;
   unsettled?: boolean;
   participants: string[];
   tracker: string;
-  category: CategoryKey;
+  category: SubcategoryKey;
   details: string;
 }
 
@@ -71,7 +72,7 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
       </div>
       <p>{txn.amount}</p>
       <p>{txn.category}</p>
-      <p>{new Date(txn.date).toDateString()}</p>
+      <p>{epochSecToLocaleString(txn.date)}</p>
       <p>{txn.tracker}</p>
       {txn.details && <p>{txn.details}</p>}
     </article>

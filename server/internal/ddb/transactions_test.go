@@ -22,7 +22,7 @@ func TestTransactionTable(t *testing.T) {
 	})
 	assert.EqualError(err, table.ErrItemNotFound.Error())
 
-	item := &TransactionItem{
+	item := &TxnItem{
 		PK:         "user#test-user-id",
 		SK:         "txn#test-txn-id",
 		ID:         "test-txn-id",
@@ -48,14 +48,8 @@ func TestTransactionTable(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(item, got)
 
-	// get all transactions
-	itemsGot, err := transactions.GetAll()
-	assert.NoError(err)
-	assert.Len(itemsGot, 1)
-	assert.Contains(itemsGot, *item)
-
 	// get the transactions by username
-	itemsGot, err = transactions.GetByUserID(item.UserID)
+	itemsGot, err := transactions.GetByUserID(item.UserID)
 	assert.NoError(err)
 	assert.Contains(itemsGot, *item)
 
@@ -70,7 +64,7 @@ func TestTransactionTable(t *testing.T) {
 }
 
 func TestUpdateItem(t *testing.T) {
-	initialItem := &TransactionItem{
+	initialItem := &TxnItem{
 		PK:       "user#test-user-id",
 		SK:       "txn#test-txn-id",
 		GSI1PK:   "transactions",
@@ -80,7 +74,7 @@ func TestUpdateItem(t *testing.T) {
 		Location: "initial-location",
 		Details:  "original-transaction",
 	}
-	updatedItem := &TransactionItem{
+	updatedItem := &TxnItem{
 		PK:       initialItem.PK,
 		SK:       initialItem.SK,
 		GSI1PK:   initialItem.GSI1PK,
@@ -92,14 +86,14 @@ func TestUpdateItem(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		initialItem  *TransactionItem
-		itemToUpdate *TransactionItem
-		finalItem    *TransactionItem
+		initialItem  *TxnItem
+		itemToUpdate *TxnItem
+		finalItem    *TxnItem
 		wantErr      error
 	}{
 		"updating a non-existent item will give an error": {
 			initialItem: initialItem,
-			itemToUpdate: &TransactionItem{
+			itemToUpdate: &TxnItem{
 				PK:       "user#a-different-user",
 				SK:       "txn#a-different-item",
 				GSI1PK:   "transactions",
@@ -121,12 +115,12 @@ func TestUpdateItem(t *testing.T) {
 
 	for name, tc := range tests {
 		assert := assert.New(t)
-		DeleteTable(NewDynamoDBLocalAPI(), "test-txn-update-items")
-		tbl, teardown := SetUpTestTable(t, "test-txn-update-items")
-		defer teardown()
-		transactions := NewTxnRepository(tbl)
 
 		t.Run(name, func(t *testing.T) {
+			tbl, teardown := SetUpTestTable(t, "test-txn-update-items")
+			defer teardown()
+			transactions := NewTxnRepository(tbl)
+
 			err := transactions.Create(*tc.initialItem)
 			assert.NoError(err)
 
@@ -143,6 +137,53 @@ func TestUpdateItem(t *testing.T) {
 			)
 			assert.NoError(err)
 			assert.Equal(tc.finalItem, got)
+		})
+	}
+}
+
+func TestGetBetweenDates(t *testing.T) {
+	initialItem := TxnItem{
+		PK:       "user#test-user-id",
+		SK:       "txn#test-txn-id",
+		GSI1PK:   "user#test-user-id",
+		GSI1SK:   "txn#10000#test-txn-id",
+		ID:       "test-txn-id",
+		UserID:   "test-user-id",
+		Location: "initial-location",
+		Date:     10000,
+	}
+
+	tests := map[string]struct {
+		wantItems []TxnItem
+		from      int64
+		to        int64
+	}{
+		"with a date-range containing an item": {
+			wantItems: []TxnItem{initialItem},
+			from:      10000,
+			to:        20000,
+		},
+		"with a date range not containing any items": {
+			wantItems: []TxnItem{},
+			from:      15000,
+			to:        20000,
+		},
+	}
+
+	for name, tc := range tests {
+		assert := assert.New(t)
+
+		t.Run(name, func(t *testing.T) {
+			tbl, teardown := SetUpTestTable(t, "test-get-txns-between-dates")
+			defer teardown()
+			txns := NewTxnRepository(tbl)
+
+			err := txns.Create(initialItem)
+			assert.NoError(err)
+
+			got, err := txns.GetBetweenDates(initialItem.UserID, tc.from, tc.to)
+			assert.NoError(err)
+			assert.ElementsMatch(got, tc.wantItems)
 		})
 	}
 }

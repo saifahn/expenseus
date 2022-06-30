@@ -1,8 +1,9 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { Transaction } from 'pages/personal';
+import { Transaction } from 'types/Transaction';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
 import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
+import { epochSecToISOString } from 'utils/dates';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {
   const formData = createTxnFormData(data);
@@ -32,7 +33,7 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
       location: txn.location,
       details: txn.details,
       amount: txn.amount,
-      date: new Date(txn.date).toISOString().split('T')[0],
+      date: epochSecToISOString(txn.date),
       category: txn.category,
     },
   });

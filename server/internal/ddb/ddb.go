@@ -80,11 +80,12 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 	return users, nil
 }
 
-func txnToTxnItem(txn app.Transaction) TransactionItem {
+func txnToTxnItem(txn app.Transaction) TxnItem {
 	userIDKey := makeUserIDKey(txn.UserID)
 	transactionIDKey := makeTxnIDKey(txn.ID)
+	txnDateKey := makeTxnDateIDKey(txn)
 
-	return TransactionItem{
+	return TxnItem{
 		PK:         userIDKey,
 		SK:         transactionIDKey,
 		EntityType: txnEntityType,
@@ -94,8 +95,8 @@ func txnToTxnItem(txn app.Transaction) TransactionItem {
 		Details:    txn.Details,
 		Amount:     txn.Amount,
 		Date:       txn.Date,
-		GSI1PK:     allTxnKey,
-		GSI1SK:     transactionIDKey,
+		GSI1PK:     userIDKey,
+		GSI1SK:     txnDateKey,
 		Category:   txn.Category,
 	}
 }
@@ -112,7 +113,7 @@ func (d *dynamoDB) CreateTransaction(txn app.Transaction) error {
 	return nil
 }
 
-func txnItemToTxn(ti TransactionItem) app.Transaction {
+func txnItemToTxn(ti TxnItem) app.Transaction {
 	return app.Transaction{
 		ID:       ti.ID,
 		UserID:   ti.UserID,
@@ -149,18 +150,19 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 	return transactions, nil
 }
 
-func (d *dynamoDB) GetAllTransactions() ([]app.Transaction, error) {
-	transactionItems, err := d.transactions.GetAll()
+func (d *dynamoDB) GetTxnsBetweenDates(userID string, from, to int64) ([]app.Transaction, error) {
+	// add 1 to `to` to make it inclusive
+	items, err := d.transactions.GetBetweenDates(userID, from, to+1)
 	if err != nil {
 		return nil, err
 	}
 
-	var transactions []app.Transaction
-	for _, ti := range transactionItems {
-		transactions = append(transactions, txnItemToTxn(ti))
+	txns := []app.Transaction{}
+	for _, ti := range items {
+		txns = append(txns, txnItemToTxn(ti))
 	}
 
-	return transactions, nil
+	return txns, nil
 }
 
 func (d *dynamoDB) UpdateTransaction(txn app.Transaction) error {

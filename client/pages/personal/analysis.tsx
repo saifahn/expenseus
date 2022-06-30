@@ -9,9 +9,8 @@ import {
 } from 'data/categories';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
-import { Temporal } from 'temporal-polyfill';
 import { Transaction } from 'types/Transaction';
-import { plainDateStringToEpochSec, presets } from 'utils/dates';
+import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 
 type Inputs = {
   from: string;
@@ -33,9 +32,9 @@ function totalsByMainCategory(txns: Transaction[]) {
     if (!totals[mainCategory]) totals[mainCategory] = 0;
     totals[mainCategory] += txn.amount;
   }
-  return Object.entries(totals).map((cat) => ({
-    category: cat[0],
-    total: cat[1],
+  return Object.entries(totals).map(([category, total]) => ({
+    category,
+    total,
   }));
 }
 
@@ -45,9 +44,9 @@ function totalsBySubCategory(txns: Transaction[]) {
     if (!totals[txn.category]) totals[txn.category] = 0;
     totals[txn.category] += txn.amount;
   }
-  return Object.entries(totals).map((cat) => ({
-    category: cat[0],
-    total: cat[1],
+  return Object.entries(totals).map(([category, total]) => ({
+    category,
+    total,
   }));
 }
 
@@ -57,8 +56,8 @@ export default function PersonalAnalysis() {
   const { register, handleSubmit, getValues, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
-      from: Temporal.Now.plainDateISO().subtract({ months: 3 }).toString(),
-      to: Temporal.Now.plainDateISO().toString(),
+      from: presets.ninetyDaysAgo().toString(),
+      to: presets.now().toString(),
     },
   });
 
@@ -79,9 +78,10 @@ export default function PersonalAnalysis() {
     mutate('personal.analysis');
   };
 
-  function handleThisWeekClick() {
-    setValue('from', presets.startOfWeek().toString());
-    setValue('to', presets.now().toString());
+  function handlePresetClick(presetFn) {
+    const { from, to } = presetFn();
+    setValue('from', from);
+    setValue('to', to);
   }
 
   return (
@@ -111,7 +111,18 @@ export default function PersonalAnalysis() {
             />
           </div>
           <div className="mt-4">
-            <button onClick={handleThisWeekClick}>This week</button>
+            {Object.entries(dateRanges).map(([preset, fn]) => (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePresetClick(fn);
+                }}
+                key={preset}
+                className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
+              >
+                {preset}
+              </button>
+            ))}
           </div>
           <div className="mt-4 flex justify-end">
             <button

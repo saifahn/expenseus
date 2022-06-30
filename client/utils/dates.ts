@@ -38,19 +38,73 @@ export function plainDateStringToEpochSec(date: string) {
   return Temporal.Instant.from(`${date.toString()}z`).epochSeconds;
 }
 
-// this month
-// last month
-// this week - needs start of week
-// last week
-// last 7 days
-// last month
-// last 90 days
-// last 180 days
 export const presets = {
   now() {
     return Temporal.Now.plainDateISO();
   },
   startOfWeek() {
     return presets.now().subtract({ days: presets.now().dayOfWeek - 1 });
+  },
+  startOfLastWeek() {
+    return presets
+      .now()
+      .subtract({ weeks: 1, days: presets.now().dayOfWeek - 1 });
+  },
+  endOfLastWeek() {
+    return presets.now().subtract({ days: presets.now().dayOfWeek });
+  },
+  startOfMonth() {
+    return presets.now().subtract({ days: presets.now().day - 1 });
+  },
+  startOfLastMonth() {
+    return presets.now().subtract({ months: 1, days: presets.now().day - 1 });
+  },
+  endOfLastMonth() {
+    return presets.now().subtract({ days: presets.now().day });
+  },
+  sevenDaysAgo() {
+    return presets.now().subtract({ days: 7 });
+  },
+  thirtyDaysAgo() {
+    return presets.now().subtract({ days: 30 });
+  },
+  ninetyDaysAgo() {
+    return presets.now().subtract({ days: 90 });
+  },
+  oneHundredAndEightyDaysAgo() {
+    return presets.now().subtract({ days: 180 });
+  },
+};
+
+export const dateRanges = {
+  thisWeek: function () {
+    return {
+      from: presets.startOfWeek().toString(),
+      to: presets.now().toString(),
+    };
+  },
+  lastWeek: function () {
+    return {
+      from: presets.startOfLastWeek().toString(),
+      to: presets.endOfLastWeek().toString(),
+    };
+  },
+  thisMonth: function () {
+    return {
+      from: presets.startOfMonth().toString(),
+      to: presets.now().toString(),
+    };
+  },
+  lastMonth: function () {
+    return {
+      from: presets.startOfLastMonth().toString(),
+      to: presets.endOfLastMonth().toString(),
+    };
+  },
+  lastNinetyDays: function () {
+    return {
+      from: presets.ninetyDaysAgo().toString(),
+      to: presets.now().toString(),
+    };
   },
 };

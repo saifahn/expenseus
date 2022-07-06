@@ -252,7 +252,7 @@ func TestDeleteSharedTxn(t *testing.T) {
 	}
 }
 
-func TestTotalOwed(t *testing.T) {
+func TestCalculateDebts(t *testing.T) {
 	firstUser := "first-user"
 	secondUser := "second-user"
 	participants := []string{firstUser, secondUser}
@@ -293,7 +293,7 @@ func TestTotalOwed(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
-			totals := app.TotalOwed(tc.currentUser, tc.txns)
+			totals := app.CalculateDebts(tc.currentUser, tc.txns)
 			assert.Equal(tc.wantAmount, totals.AmountOwed)
 			assert.Equal(tc.currentUser, totals.Debtee)
 		})

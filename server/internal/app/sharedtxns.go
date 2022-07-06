@@ -188,7 +188,7 @@ type UnsettledResponse struct {
 	AmountOwed float64             `json:"amountOwed"`
 }
 
-func TotalOwed(currentUser string, txns []SharedTransaction) UnsettledResponse {
+func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledResponse {
 	defaultSplit := 0.5
 	var otherUser string
 	var total float64
@@ -234,7 +234,7 @@ func (a *App) GetUnsettledTxnsByTracker(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, fmt.Sprintf("something went wrong getting unsettled shared transactions from tracker: %v", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	totals := TotalOwed(userID, transactions)
+	totals := CalculateDebts(userID, transactions)
 
 	w.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(w).Encode(totals)

@@ -266,6 +266,8 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 		expectationsFn mock_app.MockAppFn
 		wantTxns       []app.SharedTransaction
 		wantCode       int
+		wantDebtor     string
+		wantDebtee     string
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
 			trackerID: testTrackerID,
@@ -282,6 +284,9 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 			},
 			wantTxns: unsettledTxns,
 			wantCode: http.StatusOK,
+			// we have hardcoded user-01 as the logged in user in the test
+			wantDebtor: "user-02",
+			wantDebtee: "user-01",
 		},
 		"with a trackerID of a non-existent tracker, returns a 404": {
 			trackerID: "non-existent-trackerID",
@@ -313,6 +318,13 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 					t.Fatalf("error parsing response from server %q into UnsettledResponse, '%v'", response.Body, err)
 				}
 				assert.ElementsMatch(got.Txns, tc.wantTxns)
+
+				if tc.wantDebtor != "" {
+					assert.Equal(tc.wantDebtor, got.Debtor)
+				}
+				if tc.wantDebtee != "" {
+					assert.Equal(tc.wantDebtee, got.Debtee)
+				}
 			}
 		})
 	}

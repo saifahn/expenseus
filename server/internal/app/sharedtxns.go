@@ -217,7 +217,6 @@ func totalOwed(currentUser string, txns []SharedTransaction) UnsettledResponse {
 		Debtee:     currentUser,
 		AmountOwed: total,
 	}
-
 }
 
 // GetUnsettledTxnsByTracker handles a HTTP request to get transactions that

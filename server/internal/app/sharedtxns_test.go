@@ -252,6 +252,55 @@ func TestDeleteSharedTxn(t *testing.T) {
 	}
 }
 
+func TestTotalOwed(t *testing.T) {
+	firstUser := "first-user"
+	secondUser := "second-user"
+	participants := []string{firstUser, secondUser}
+	txns := []app.SharedTransaction{
+		{
+			Payer:        firstUser,
+			Amount:       1000,
+			Participants: participants,
+		},
+		{
+			Payer:        secondUser,
+			Amount:       2000,
+			Participants: participants,
+		},
+	}
+
+	tests := map[string]struct {
+		txns        []app.SharedTransaction
+		currentUser string
+		wantAmount  float64
+	}{
+		"for one transaction where the payer is the current user": {
+			txns:        txns[0:1],
+			currentUser: firstUser,
+			wantAmount:  500,
+		},
+		"for one transaction, where the payer is not the current user": {
+			txns:        txns[0:1],
+			currentUser: secondUser,
+			wantAmount:  -500,
+		},
+		"for two transactions": {
+			txns:        txns,
+			currentUser: firstUser,
+			wantAmount:  -500,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			totals := app.TotalOwed(tc.currentUser, tc.txns)
+			assert.Equal(tc.wantAmount, totals.AmountOwed)
+			assert.Equal(tc.currentUser, totals.Debtee)
+		})
+	}
+
+}
+
 func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}

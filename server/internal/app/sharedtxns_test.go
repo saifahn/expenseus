@@ -281,53 +281,72 @@ func TestCalculateDebts(t *testing.T) {
 			Amount:       1000,
 			Participants: participants,
 			Split: map[string]float64{
-				firstUser:  1.0,
-				secondUser: 0.0,
+				firstUser:  1,
+				secondUser: 0,
+			},
+		},
+		{
+			Payer:        secondUser,
+			Amount:       2000,
+			Participants: participants,
+			Split: map[string]float64{
+				firstUser:  1,
+				secondUser: 0,
 			},
 		},
 	}
 
 	tests := map[string]struct {
-		txns        []app.SharedTransaction
-		currentUser string
-		wantAmount  float64
+		txns           []app.SharedTransaction
+		currentUser    string
+		wantAmountOwed float64
 	}{
 		"for one transaction where the payer is the current user": {
-			txns:        txns[0:1],
-			currentUser: firstUser,
-			wantAmount:  500,
+			txns:           txns[0:1],
+			currentUser:    firstUser,
+			wantAmountOwed: 500,
 		},
 		"for one transaction, where the payer is not the current user": {
-			txns:        txns[0:1],
-			currentUser: secondUser,
-			wantAmount:  -500,
+			txns:           txns[0:1],
+			currentUser:    secondUser,
+			wantAmountOwed: -500,
 		},
 		"for two transactions": {
-			txns:        txns[0:2],
-			currentUser: firstUser,
-			wantAmount:  -500,
+			txns:           txns[0:2],
+			currentUser:    firstUser,
+			wantAmountOwed: -500,
 		},
 		"for a transaction with a custom split": {
-			txns:        txns[2:3],
-			currentUser: firstUser,
-			wantAmount:  330,
+			txns:           txns[2:3],
+			currentUser:    firstUser,
+			wantAmountOwed: 330,
 		},
 		"for a transaction that is completely owed by and paid by the logged in user": {
-			txns:        txns[3:4],
-			currentUser: firstUser,
-			wantAmount:  0,
+			txns:           txns[3:4],
+			currentUser:    firstUser,
+			wantAmountOwed: 0,
 		},
 		"for a transaction that is completely owed by and paid by the other user": {
-			txns:        txns[3:4],
-			currentUser: secondUser,
-			wantAmount:  0,
+			txns:           txns[3:4],
+			currentUser:    secondUser,
+			wantAmountOwed: 0,
+		},
+		"for a transaction that is completely owed by the logged in user and paid by the other user": {
+			txns:           txns[4:5],
+			currentUser:    firstUser,
+			wantAmountOwed: -2000,
+		},
+		"for a transaction that is completely paid by the logged in user and owed by the other user": {
+			txns:           txns[4:5],
+			currentUser:    secondUser,
+			wantAmountOwed: 2000,
 		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 			totals := app.CalculateDebts(tc.currentUser, tc.txns)
-			assert.Equal(tc.wantAmount, totals.AmountOwed)
+			assert.Equal(tc.wantAmountOwed, totals.AmountOwed)
 			assert.Equal(tc.currentUser, totals.Debtee)
 		})
 	}

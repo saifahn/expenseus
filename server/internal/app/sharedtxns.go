@@ -9,16 +9,17 @@ import (
 )
 
 type SharedTransaction struct {
-	ID           string   `json:"id"`
-	Date         int64    `json:"date" validate:"required"`
-	Location     string   `json:"location" validate:"required"`
-	Amount       int64    `json:"amount" validate:"required"`
-	Category     string   `json:"category" validate:"required"`
-	Payer        string   `json:"payer" validate:"required"`
-	Participants []string `json:"participants" validate:"required,min=1"`
-	Unsettled    bool     `json:"unsettled"`
-	Tracker      string   `json:"tracker" validate:"required"`
-	Details      string   `json:"details"`
+	ID           string             `json:"id"`
+	Date         int64              `json:"date" validate:"required"`
+	Location     string             `json:"location" validate:"required"`
+	Amount       int64              `json:"amount" validate:"required"`
+	Category     string             `json:"category" validate:"required"`
+	Payer        string             `json:"payer" validate:"required"`
+	Participants []string           `json:"participants" validate:"required,min=1"`
+	Unsettled    bool               `json:"unsettled"`
+	Tracker      string             `json:"tracker" validate:"required"`
+	Details      string             `json:"details"`
+	Split        map[string]float64 `json:"split"`
 }
 
 // GetTxnsByTracker handles a HTTP request to get a list of transactions belonging
@@ -180,7 +181,6 @@ func (a *App) DeleteSharedTxn(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
-// TODO: add tests, make it better
 type UnsettledResponse struct {
 	Txns       []SharedTransaction `json:"transactions"`
 	Debtor     string              `json:"debtor"`
@@ -194,7 +194,8 @@ func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledRespo
 	var total float64
 
 	for _, t := range txns {
-		// set the other user
+		// set the other user only once as all transactions should come from the
+		// same tracker and have the same participants
 		if otherUser == "" {
 			for _, u := range t.Participants {
 				if u != currentUser {
@@ -203,12 +204,23 @@ func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledRespo
 				}
 			}
 		}
-		// from the perspective that the logged in user is the one who has paid
+
+		// calculate from the perspective that the logged in user is the one who has paid
 		isPayer := t.Payer == currentUser
 		if isPayer {
-			total += float64(t.Amount) * defaultSplit
+			// Split represents the proportion each participant will pay for a purchase
+			// so when calculating the debt, it is the inverse proportion (or other person's proportion) that is used
+			split := t.Split[otherUser]
+			if split == 0 {
+				split = defaultSplit
+			}
+			total += float64(t.Amount) * split
 		} else {
-			total -= float64(t.Amount) * defaultSplit
+			split := t.Split[currentUser]
+			if split == 0 {
+				split = defaultSplit
+			}
+			total -= float64(t.Amount) * split
 		}
 	}
 	return UnsettledResponse{

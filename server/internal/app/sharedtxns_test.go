@@ -267,6 +267,15 @@ func TestCalculateDebts(t *testing.T) {
 			Amount:       2000,
 			Participants: participants,
 		},
+		{
+			Payer:        firstUser,
+			Amount:       1000,
+			Participants: participants,
+			Split: map[string]float64{
+				firstUser:  0.67,
+				secondUser: 0.33,
+			},
+		},
 	}
 
 	tests := map[string]struct {
@@ -285,9 +294,14 @@ func TestCalculateDebts(t *testing.T) {
 			wantAmount:  -500,
 		},
 		"for two transactions": {
-			txns:        txns,
+			txns:        txns[0:2],
 			currentUser: firstUser,
 			wantAmount:  -500,
+		},
+		"for a transaction with a custom split": {
+			txns:        txns[2:3],
+			currentUser: firstUser,
+			wantAmount:  330,
 		},
 	}
 	for name, tc := range tests {

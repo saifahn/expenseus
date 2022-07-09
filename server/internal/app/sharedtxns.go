@@ -207,9 +207,6 @@ type UnsettledResponse struct {
 	AmountOwed float64             `json:"amountOwed"`
 }
 
-// starting value for split as 0 is the same as the zero value for a float
-const STARTING_SPLIT = 8.88
-
 func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledResponse {
 	defaultSplit := 0.5
 	var otherUser string
@@ -227,13 +224,8 @@ func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledRespo
 			}
 		}
 
-		// start with a non-real split as the default
-		split := STARTING_SPLIT
-		currentUserSplit := t.Split[currentUser]
-		otherUserSplit := t.Split[otherUser]
-		// only when both are the zero value do we use the default split, to allow
-		// for a user-defined 0.0 custom split
-		if currentUserSplit == 0 && otherUserSplit == 0 {
+		var split float64
+		if t.Split == nil {
 			split = defaultSplit
 		}
 
@@ -243,12 +235,12 @@ func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledRespo
 			// Split represents the proportion each participant will pay for a purchase
 			// so when calculating the debt, it is the inverse proportion (and is equal to
 			// the other person's proportion) that is used
-			if split == STARTING_SPLIT {
+			if split != defaultSplit {
 				split = t.Split[otherUser]
 			}
 			total += float64(t.Amount) * split
 		} else {
-			if split == STARTING_SPLIT {
+			if split != defaultSplit {
 				split = t.Split[currentUser]
 			}
 			total -= float64(t.Amount) * split

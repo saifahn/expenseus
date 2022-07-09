@@ -85,7 +85,7 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 func txnToTxnItem(txn app.Transaction) TxnItem {
 	userIDKey := makeUserIDKey(txn.UserID)
 	transactionIDKey := makeTxnIDKey(txn.ID)
-	txnDateKey := makeTxnDateIDKey(txn)
+	txnDateIDKey := makeTxnDateIDKey(txn)
 
 	return TxnItem{
 		PK:         userIDKey,
@@ -98,7 +98,7 @@ func txnToTxnItem(txn app.Transaction) TxnItem {
 		Amount:     txn.Amount,
 		Date:       txn.Date,
 		GSI1PK:     userIDKey,
-		GSI1SK:     txnDateKey,
+		GSI1SK:     txnDateIDKey,
 		Category:   txn.Category,
 	}
 }

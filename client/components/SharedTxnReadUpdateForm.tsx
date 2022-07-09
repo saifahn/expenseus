@@ -43,6 +43,12 @@ export default function SharedTxnReadUpdateForm({
   onCancel,
 }: Props) {
   const { mutate } = useSWRConfig();
+
+  let userSplits = [];
+  for (const userSplit of Object.entries(txn.split)) {
+    userSplits.push(`${userSplit[0]}:${userSplit[1]}`);
+  }
+
   const { register, handleSubmit, formState } = useForm<SharedTxnFormInputs>({
     shouldUseNativeValidation: true,
     defaultValues: {
@@ -52,6 +58,7 @@ export default function SharedTxnReadUpdateForm({
       settled: !txn.unsettled,
       category: txn.category,
       details: txn.details,
+      split: userSplits.join(','),
     },
   });
 

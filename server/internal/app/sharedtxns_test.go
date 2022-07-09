@@ -252,12 +252,114 @@ func TestDeleteSharedTxn(t *testing.T) {
 	}
 }
 
+func TestCalculateDebts(t *testing.T) {
+	firstUser := "first-user"
+	secondUser := "second-user"
+	participants := []string{firstUser, secondUser}
+	txns := []app.SharedTransaction{
+		{
+			Payer:        firstUser,
+			Amount:       1000,
+			Participants: participants,
+		},
+		{
+			Payer:        secondUser,
+			Amount:       2000,
+			Participants: participants,
+		},
+		{
+			Payer:        firstUser,
+			Amount:       1000,
+			Participants: participants,
+			Split: map[string]float64{
+				firstUser:  0.67,
+				secondUser: 0.33,
+			},
+		},
+		{
+			Payer:        firstUser,
+			Amount:       1000,
+			Participants: participants,
+			Split: map[string]float64{
+				firstUser:  1,
+				secondUser: 0,
+			},
+		},
+		{
+			Payer:        secondUser,
+			Amount:       2000,
+			Participants: participants,
+			Split: map[string]float64{
+				firstUser:  1,
+				secondUser: 0,
+			},
+		},
+	}
+
+	tests := map[string]struct {
+		txns           []app.SharedTransaction
+		currentUser    string
+		wantAmountOwed float64
+	}{
+		"for one transaction where the payer is the current user": {
+			txns:           txns[0:1],
+			currentUser:    firstUser,
+			wantAmountOwed: 500,
+		},
+		"for one transaction, where the payer is not the current user": {
+			txns:           txns[0:1],
+			currentUser:    secondUser,
+			wantAmountOwed: -500,
+		},
+		"for two transactions": {
+			txns:           txns[0:2],
+			currentUser:    firstUser,
+			wantAmountOwed: -500,
+		},
+		"for a transaction with a custom split": {
+			txns:           txns[2:3],
+			currentUser:    firstUser,
+			wantAmountOwed: 330,
+		},
+		"for a transaction that is completely owed by and paid by the logged in user": {
+			txns:           txns[3:4],
+			currentUser:    firstUser,
+			wantAmountOwed: 0,
+		},
+		"for a transaction that is completely owed by and paid by the other user": {
+			txns:           txns[3:4],
+			currentUser:    secondUser,
+			wantAmountOwed: 0,
+		},
+		"for a transaction that is completely owed by the logged in user and paid by the other user": {
+			txns:           txns[4:5],
+			currentUser:    firstUser,
+			wantAmountOwed: -2000,
+		},
+		"for a transaction that is completely paid by the logged in user and owed by the other user": {
+			txns:           txns[4:5],
+			currentUser:    secondUser,
+			wantAmountOwed: 2000,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			totals := app.CalculateDebts(tc.currentUser, tc.txns)
+			assert.Equal(tc.wantAmountOwed, totals.AmountOwed)
+			assert.Equal(tc.currentUser, totals.Debtee)
+		})
+	}
+
+}
+
 func TestGetUnsettledTxnsByTracker(t *testing.T) {
 	testTrackerID := "test-tracker-id"
 	emptyTransactions := []app.SharedTransaction{}
 	unsettledTxns := []app.SharedTransaction{{
-		ID:        "test-unsettled-transaction",
-		Unsettled: true,
+		ID:           "test-unsettled-transaction",
+		Unsettled:    true,
+		Participants: []string{"user-01", "user-02"},
 	}}
 
 	tests := map[string]struct {
@@ -265,6 +367,8 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 		expectationsFn mock_app.MockAppFn
 		wantTxns       []app.SharedTransaction
 		wantCode       int
+		wantDebtor     string
+		wantDebtee     string
 	}{
 		"with an empty list of txns from the store, returns an empty list": {
 			trackerID: testTrackerID,
@@ -281,6 +385,9 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 			},
 			wantTxns: unsettledTxns,
 			wantCode: http.StatusOK,
+			// we have hardcoded user-01 as the logged in user in the test
+			wantDebtor: "user-02",
+			wantDebtee: "user-01",
 		},
 		"with a trackerID of a non-existent tracker, returns a 404": {
 			trackerID: "non-existent-trackerID",
@@ -297,6 +404,8 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 			a := mock_app.SetUp(t, tc.expectationsFn)
 
 			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.trackerID)
+			ctx := context.WithValue(request.Context(), app.CtxKeyUserID, "user-01")
+			request = request.WithContext(ctx)
 			response := httptest.NewRecorder()
 
 			handler := http.HandlerFunc(a.GetUnsettledTxnsByTracker)
@@ -304,12 +413,19 @@ func TestGetUnsettledTxnsByTracker(t *testing.T) {
 
 			assert.Equal(tc.wantCode, response.Code)
 			if tc.wantTxns != nil {
-				var got []app.SharedTransaction
+				var got app.UnsettledResponse
 				err := json.NewDecoder(response.Body).Decode(&got)
 				if err != nil {
-					t.Fatalf("error parsing response from server %q into slice of SharedTransactions, '%v'", response.Body, err)
+					t.Fatalf("error parsing response from server %q into UnsettledResponse, '%v'", response.Body, err)
 				}
-				assert.ElementsMatch(got, tc.wantTxns)
+				assert.ElementsMatch(got.Txns, tc.wantTxns)
+
+				if tc.wantDebtor != "" {
+					assert.Equal(tc.wantDebtor, got.Debtor)
+				}
+				if tc.wantDebtee != "" {
+					assert.Equal(tc.wantDebtee, got.Debtee)
+				}
 			}
 		})
 	}

@@ -1,6 +1,8 @@
 package ddb
 
 import (
+	"encoding/json"
+
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/google/uuid"
 	"github.com/nabeken/aws-go-dynamodb/table"
@@ -239,8 +241,8 @@ func (d *dynamoDB) CreateSharedTxn(txn app.SharedTransaction) error {
 
 // A helper function for converting an item in the database representing a
 // shared transaction to a shared transaction structure for the application.
-func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
-	return app.SharedTransaction{
+func sharedTxnItemToSharedTxn(item SharedTxnItem) (app.SharedTransaction, error) {
+	txn := app.SharedTransaction{
 		ID:           item.ID,
 		Participants: item.Participants,
 		Date:         item.Date,
@@ -252,6 +254,17 @@ func sharedTxnItemToSharedTxn(item SharedTxnItem) app.SharedTransaction {
 		Payer:        item.Payer,
 		Details:      item.Details,
 	}
+
+	if item.SplitJSON != "" {
+		var split map[string]float64
+		err := json.Unmarshal([]byte(item.SplitJSON), &split)
+		if err != nil {
+			return app.SharedTransaction{}, err
+		}
+		txn.Split = split
+	}
+
+	return txn, nil
 }
 
 // GetTxnsByTracker calls the repository to get a list of transactions from a
@@ -264,7 +277,11 @@ func (d *dynamoDB) GetTxnsByTracker(trackerID string) ([]app.SharedTransaction, 
 
 	txns := []app.SharedTransaction{}
 	for _, i := range items {
-		txns = append(txns, sharedTxnItemToSharedTxn(i))
+		txn, err := sharedTxnItemToSharedTxn(i)
+		if err != nil {
+			return nil, err
+		}
+		txns = append(txns, txn)
 	}
 	return txns, nil
 }
@@ -279,7 +296,11 @@ func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTran
 
 	var txns []app.SharedTransaction
 	for _, i := range items {
-		txns = append(txns, sharedTxnItemToSharedTxn(i))
+		txn, err := sharedTxnItemToSharedTxn(i)
+		if err != nil {
+			return nil, err
+		}
+		txns = append(txns, txn)
 	}
 	return txns, nil
 }

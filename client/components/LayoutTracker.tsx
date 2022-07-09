@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Tracker } from 'pages/shared/trackers';
 import useSWR from 'swr';
@@ -21,6 +22,20 @@ export default function TrackerLayout({ children }) {
           {tracker.users.map((user) => (
             <p key={user}>{user}</p>
           ))}
+          <nav className="mt-4">
+            <ul className="flex">
+              <li className="flex">
+                <Link href={`/shared/trackers/${trackerId}`}>
+                  <a className="border-2 p-2">Transactions</a>
+                </Link>
+              </li>
+              <li className="flex">
+                <Link href={`/shared/trackers/${trackerId}/unsettled-txns`}>
+                  <a className="ml-4 border-2 p-2">Unsettled</a>
+                </Link>
+              </li>
+            </ul>
+          </nav>
           {children}
         </>
       )}

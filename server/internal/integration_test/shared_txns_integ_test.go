@@ -325,7 +325,7 @@ func TestGetTxnsByTracker(t *testing.T) {
 var testUnsettledTxn = app.SharedTransaction{
 	Participants: []string{"user-01", "user-02"},
 	Location:     "test-shop",
-	Amount:       123,
+	Amount:       1000,
 	Date:         123456,
 	Tracker:      "test-tracker-01",
 	Unsettled:    true,
@@ -343,16 +343,22 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 		tracker          string
 		wantTransactions []app.SharedTransaction
 		wantCode         int
+		loggedInUser     string
+		wantOwed         float64
 	}{
 		"for a non-existent tracker or one with no unsettled txns": {
 			tracker:          "no-unsettled-txn-tracker",
 			wantTransactions: []app.SharedTransaction{},
 			wantCode:         http.StatusOK,
+			loggedInUser:     "user-01",
+			wantOwed:         0,
 		},
 		"for a tracker with at least one unsettled txn": {
 			tracker:          "test-tracker-01",
 			wantTransactions: []app.SharedTransaction{testUnsettledTxn},
 			wantCode:         http.StatusOK,
+			loggedInUser:     "user-01",
+			wantOwed:         400,
 		},
 	}
 
@@ -363,7 +369,7 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			addTransaction(router, testUnsettledTxn)
 
 			request := app.NewGetUnsettledTxnsByTrackerRequest(tc.tracker)
-			request.AddCookie(CreateCookie(TestSeanUser.ID))
+			request.AddCookie(CreateCookie(tc.loggedInUser))
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, request)
 
@@ -376,13 +382,16 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			}
 			assert.Len(got.Txns, len(tc.wantTransactions))
 
-			// remove the ID from the got transactions to account for randomly generated
+			// remove the ID from the got transactions to account for randomly generated ID
 			var gotWithoutID []app.SharedTransaction
 			for _, txn := range got.Txns {
 				gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
 			}
-
 			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
+
+			if len(tc.wantTransactions) > 0 {
+				assert.Equal(got.AmountOwed, tc.wantOwed)
+			}
 		})
 	}
 }

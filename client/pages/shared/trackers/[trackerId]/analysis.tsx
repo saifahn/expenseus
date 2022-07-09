@@ -1,14 +1,14 @@
 import TrackerLayout from 'components/LayoutTracker';
 import { fetcher } from 'config/fetcher';
-import {
-  mainCategories,
-  MainCategoryKey,
-  subcategories,
-  SubcategoryKey,
-} from 'data/categories';
+import { mainCategories, subcategories } from 'data/categories';
 import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
+import {
+  calculateTotal,
+  totalsByMainCategory,
+  totalsBySubCategory,
+} from 'utils/analysis';
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { SharedTxn } from '.';
 
@@ -16,39 +16,6 @@ type Inputs = {
   from: string;
   to: string;
 };
-
-function calculateTotal(txns: SharedTxn[]) {
-  let total = 0;
-  for (const txn of txns) {
-    total += txn.amount;
-  }
-  return total;
-}
-
-function totalsByMainCategory(txns: SharedTxn[]) {
-  const totals = {} as Record<MainCategoryKey, number>;
-  for (const txn of txns) {
-    const mainCategory = subcategories[txn.category].mainCategory;
-    if (!totals[mainCategory]) totals[mainCategory] = 0;
-    totals[mainCategory] += txn.amount;
-  }
-  return Object.entries(totals).map(([category, total]) => ({
-    category,
-    total,
-  }));
-}
-
-function totalsBySubCategory(txns: SharedTxn[]) {
-  const totals = {} as Record<SubcategoryKey, number>;
-  for (const txn of txns) {
-    if (!totals[txn.category]) totals[txn.category] = 0;
-    totals[txn.category] += txn.amount;
-  }
-  return Object.entries(totals).map(([category, total]) => ({
-    category,
-    total,
-  }));
-}
 
 export default function TrackerAnalysis() {
   const router = useRouter();

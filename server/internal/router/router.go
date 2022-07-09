@@ -62,6 +62,9 @@ func Init(a *app.App) *chi.Mux {
 				Get("/trackers/{trackerID}/transactions", a.GetTxnsByTracker)
 			r.With(trackerIDCtx).
 				Post("/trackers/{trackerID}/transactions", a.CreateSharedTxn)
+			r.With(trackerIDCtx).
+				With(dateRangeCtx).
+				Get("/trackers/{trackerID}/transactions/range", a.GetTxnsByTrackerBetweenDates)
 			r.With(transactionIDCtx).
 				With(trackerIDCtx).
 				Put("/trackers/{trackerID}/transactions/{transactionID}", a.UpdateSharedTxn)

@@ -20,6 +20,8 @@ const (
 type SharedTxnItem struct {
 	PK           string   `json:"PK"`
 	SK           string   `json:"SK"`
+	GSI1PK       string   `json:"GSI1PK"`
+	GSI1SK       string   `json:"GSI1SK"`
 	EntityType   string   `json:"EntityType"`
 	ID           string   `json:"ID"`
 	Date         int64    `json:"Date"`
@@ -43,6 +45,7 @@ type SettleTxnInput struct {
 type SharedTxnsRepository interface {
 	Create(txn app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
+	GetFromTrackerBetweenDates(trackerID string, from, to int64) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
 	Update(txn app.SharedTransaction) error
 	Delete(input app.DelSharedTxnInput) error
@@ -62,9 +65,11 @@ func NewSharedTxnsRepository(t *table.Table) SharedTxnsRepository {
 func (r *sharedTxnsRepo) Create(txn app.SharedTransaction) error {
 	trackerIDKey := makeTrackerIDKey(txn.Tracker)
 	txnIDKey := makeSharedTxnIDKey(txn.ID)
+	txnDateKey := makeSharedTxnDateIDKey(txn)
 
 	txnItem := SharedTxnItem{
 		SK:           txnIDKey,
+		GSI1SK:       txnDateKey,
 		EntityType:   sharedTxnEntityType,
 		ID:           txn.ID,
 		Category:     txn.Category,
@@ -92,12 +97,14 @@ func (r *sharedTxnsRepo) Create(txn app.SharedTransaction) error {
 	for _, p := range txn.Participants {
 		userIDKey := makeUserIDKey(p)
 		txnItem.PK = userIDKey
+		txnItem.GSI1PK = userIDKey
 		err := r.table.PutItem(txnItem)
 		if err != nil {
 			return err
 		}
 	}
 
+	txnItem.GSI1PK = trackerIDKey
 	txnItem.PK = trackerIDKey
 	err := r.table.PutItem(txnItem)
 	return err
@@ -116,6 +123,30 @@ func (r *sharedTxnsRepo) GetFromTracker(trackerID string) ([]SharedTxnItem, erro
 
 	var items []SharedTxnItem
 
+	_, err := r.table.Query(&items, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (r *sharedTxnsRepo) GetFromTrackerBetweenDates(trackerID string, from, to int64) ([]SharedTxnItem, error) {
+	trackerIDKey := makeTrackerIDKey(trackerID)
+	txnDateFromKey := makeSharedTxnDateKey(from)
+	txnDateToKey := makeSharedTxnDateKey(to)
+
+	options := []option.QueryInput{
+		option.Index(gsi1Name),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
+		option.QueryExpressionAttributeName(gsi1SortKey, "#GSI1SK"),
+		option.QueryExpressionAttributeValue(":trackerKey", attributes.String(trackerIDKey)),
+		option.QueryExpressionAttributeValue(":txnDateFromKey", attributes.String(txnDateFromKey)),
+		option.QueryExpressionAttributeValue(":txnDateToKey", attributes.String(txnDateToKey)),
+		option.QueryKeyConditionExpression("#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey"),
+	}
+
+	var items []SharedTxnItem
 	_, err := r.table.Query(&items, options...)
 	if err != nil {
 		return nil, err
@@ -149,9 +180,11 @@ func (r *sharedTxnsRepo) GetUnsettledFromTracker(trackerID string) ([]SharedTxnI
 func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
 	trackerIDKey := makeTrackerIDKey(txn.Tracker)
 	txnIDKey := makeSharedTxnIDKey(txn.ID)
+	txnDateIDKey := makeSharedTxnDateIDKey(txn)
 
 	txnItem := SharedTxnItem{
 		SK:           txnIDKey,
+		GSI1SK:       txnDateIDKey,
 		EntityType:   sharedTxnEntityType,
 		ID:           txn.ID,
 		Category:     txn.Category,
@@ -179,6 +212,7 @@ func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
 	for _, p := range txn.Participants {
 		userIDKey := makeUserIDKey(p)
 		txnItem.PK = userIDKey
+		txnItem.GSI1PK = userIDKey
 		err := r.table.PutItem(txnItem, option.PutCondition("attribute_exists(SK)"))
 		if err != nil {
 			return attrNotExistsOrErr(err)
@@ -186,6 +220,7 @@ func (r *sharedTxnsRepo) Update(txn app.SharedTransaction) error {
 	}
 
 	txnItem.PK = trackerIDKey
+	txnItem.GSI1PK = trackerIDKey
 	err := r.table.PutItem(txnItem, option.PutCondition("attribute_exists(SK)"))
 	return attrNotExistsOrErr(err)
 }
@@ -241,4 +276,12 @@ func (r *sharedTxnsRepo) Settle(txns []SettleTxnInput) error {
 
 func makeSharedTxnIDKey(id string) string {
 	return fmt.Sprintf("%s#%s", sharedTxnKeyPrefix, id)
+}
+
+func makeSharedTxnDateIDKey(txn app.SharedTransaction) string {
+	return fmt.Sprintf("%s#%d#%s", sharedTxnKeyPrefix, txn.Date, txn.ID)
+}
+
+func makeSharedTxnDateKey(date int64) string {
+	return fmt.Sprintf("%s#%d", sharedTxnKeyPrefix, date)
 }

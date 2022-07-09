@@ -33,6 +33,8 @@ func TestSharedTxns(t *testing.T) {
 		want := SharedTxnItem{
 			PK:           makeTrackerIDKey(testInput.Tracker),
 			SK:           makeSharedTxnIDKey(id),
+			GSI1PK:       makeTrackerIDKey(testInput.Tracker),
+			GSI1SK:       makeSharedTxnDateIDKey(testInput),
 			EntityType:   sharedTxnEntityType,
 			ID:           id,
 			Tracker:      testInput.Tracker,
@@ -70,6 +72,8 @@ func TestSharedTxns(t *testing.T) {
 		want := SharedTxnItem{
 			PK:           makeTrackerIDKey(testUnsettledInput.Tracker),
 			SK:           makeSharedTxnIDKey(unsettledID),
+			GSI1PK:       makeTrackerIDKey(testUnsettledInput.Tracker),
+			GSI1SK:       makeSharedTxnDateIDKey(testUnsettledInput),
 			EntityType:   sharedTxnEntityType,
 			ID:           unsettledID,
 			Tracker:      testUnsettledInput.Tracker,
@@ -135,6 +139,8 @@ func TestSharedTxns(t *testing.T) {
 		want := SharedTxnItem{
 			PK:           makeTrackerIDKey(updatedTxn.Tracker),
 			SK:           makeSharedTxnIDKey(updatedTxn.ID),
+			GSI1PK:       makeTrackerIDKey(updatedTxn.Tracker),
+			GSI1SK:       makeSharedTxnDateIDKey(updatedTxn),
 			EntityType:   sharedTxnEntityType,
 			ID:           updatedTxn.ID,
 			Tracker:      updatedTxn.Tracker,
@@ -170,4 +176,61 @@ func TestSharedTxns(t *testing.T) {
 		assert.NoError(err)
 		assert.Empty(got)
 	})
+}
+
+func TestGetSharedBetweenDates(t *testing.T) {
+	testTrackerID := "test-tracker-id"
+	testTxnID := "test-txn-id"
+
+	initialTxn := app.SharedTransaction{
+		ID:           testTxnID,
+		Tracker:      testTrackerID,
+		Date:         10000,
+		Participants: []string{"user-01", "user-02"},
+	}
+
+	wantItem := SharedTxnItem{
+		PK:           makeTrackerIDKey(testTrackerID),
+		SK:           makeSharedTxnIDKey(testTxnID),
+		GSI1PK:       makeTrackerIDKey(testTrackerID),
+		GSI1SK:       "txn.shared#10000#test-txn-id",
+		Participants: []string{"user-01", "user-02"},
+		EntityType:   sharedTxnEntityType,
+		ID:           testTxnID,
+		Tracker:      testTrackerID,
+		Date:         10000,
+	}
+
+	tests := map[string]struct {
+		wantItems []SharedTxnItem
+		from      int64
+		to        int64
+	}{
+		"with a date-range containing an item": {
+			wantItems: []SharedTxnItem{wantItem},
+			from:      10000,
+			to:        20000,
+		},
+		"with a date range not containing any items": {
+			wantItems: []SharedTxnItem{},
+			from:      15000,
+			to:        20000,
+		},
+	}
+	for name, tc := range tests {
+		assert := assert.New(t)
+
+		t.Run(name, func(t *testing.T) {
+			tbl, teardown := SetUpTestTable(t, "test-get-shared-txns-between-dates")
+			defer teardown()
+			shared := NewSharedTxnsRepository(tbl)
+
+			err := shared.Create(initialTxn)
+			assert.NoError(err)
+
+			got, err := shared.GetFromTrackerBetweenDates(wantItem.Tracker, tc.from, tc.to)
+			assert.NoError(err)
+			assert.ElementsMatch(got, tc.wantItems)
+		})
+	}
 }

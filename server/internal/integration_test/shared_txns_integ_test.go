@@ -409,7 +409,7 @@ func TestGetTxnsFromTrackerBetweenDates(t *testing.T) {
 		Participants: []string{"user-01", "user-02"},
 		Location:     "test-shop",
 		Amount:       123456,
-		Date:         10000,
+		Date:         20000,
 		Tracker:      "test-tracker-01",
 		Unsettled:    true,
 		Category:     "test-category",
@@ -426,16 +426,22 @@ func TestGetTxnsFromTrackerBetweenDates(t *testing.T) {
 		to       int64
 		wantCode int
 	}{
-		"with a date range containing a transaction": {
+		"with a date range containing a transaction that has a date equal to 'from'": {
 			wantTxns: []app.SharedTransaction{initialTxn},
-			from:     10000,
-			to:       11000,
+			from:     20000,
+			to:       21000,
+			wantCode: http.StatusOK,
+		},
+		"with a date range containing a transaction that has a date equal to 'to'": {
+			wantTxns: []app.SharedTransaction{initialTxn},
+			from:     19000,
+			to:       20000,
 			wantCode: http.StatusOK,
 		},
 		"with a date range not containing a transaction": {
 			wantTxns: []app.SharedTransaction{},
-			from:     20000,
-			to:       21000,
+			from:     10000,
+			to:       11000,
 			wantCode: http.StatusOK,
 		},
 	}

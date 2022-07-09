@@ -397,6 +397,10 @@ func TestUpdateSharedTxns(t *testing.T) {
 		Tracker:      "test-tracker-01",
 		Category:     "test-category",
 		Payer:        "user-01",
+		Split: map[string]float64{
+			"user-01": 0.6,
+			"user-02": 0.4,
+		},
 	}
 	updatedTxn := app.SharedTransaction{
 		Participants: []string{"user-01", "user-02"},
@@ -406,6 +410,10 @@ func TestUpdateSharedTxns(t *testing.T) {
 		Tracker:      "test-tracker-01",
 		Category:     "different-category",
 		Payer:        "user-02",
+		Split: map[string]float64{
+			"user-01": 0.7,
+			"user-02": 0.3,
+		},
 	}
 
 	tests := map[string]struct {

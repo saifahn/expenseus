@@ -1,4 +1,4 @@
-import SharedLayout from 'components/LayoutShared';
+import TrackerLayout from 'components/LayoutTracker';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
 import { SubcategoryKey } from 'data/categories';
@@ -6,7 +6,7 @@ import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 import { epochSecToLocaleString } from 'utils/dates';
-import { Tracker } from '.';
+import { Tracker } from '..';
 
 export interface SharedTxn {
   id: string;
@@ -94,53 +94,44 @@ export default function TrackerPage() {
   );
 
   return (
-    <SharedLayout>
-      {error && <div>Failed to load</div>}
-      {!error && !tracker && <div>Loading tracker information...</div>}
-      {tracker && (
-        <>
-          <h2 className="mt-8 text-2xl">{tracker.name}</h2>
-          <h3 className="mt-2">{tracker.id}</h3>
-          {tracker.users.map((user) => (
-            <p key={user}>{user}</p>
-          ))}
-          {selectedTxn ? (
+    <TrackerLayout>
+      {selectedTxn ? (
+        <div className="mt-4">
+          <SharedTxnReadUpdateForm
+            txn={selectedTxn}
+            tracker={tracker}
+            onApply={() => setSelectedTxn(null)}
+            onCancel={() => setSelectedTxn(null)}
+          />
+        </div>
+      ) : (
+        tracker && (
+          <>
             <div className="mt-4">
-              <SharedTxnReadUpdateForm
-                txn={selectedTxn}
-                tracker={tracker}
-                onApply={() => setSelectedTxn(null)}
-                onCancel={() => setSelectedTxn(null)}
-              />
+              <SharedTxnCreateForm tracker={tracker} />
             </div>
-          ) : (
-            <>
-              <div className="mt-4">
-                <SharedTxnCreateForm tracker={tracker} />
-              </div>
-              <div className="mt-8">
-                <h3 className="mt-4 text-2xl">Transactions</h3>
-                {sharedTxnsError && <div>Failed to load</div>}
-                {sharedTxns === null && (
-                  <div>Loading list of transactions...</div>
-                )}
-                {sharedTxns && sharedTxns.length === 0 && (
-                  <div>There are no transactions here yet</div>
-                )}
-                {sharedTxns &&
-                  sharedTxns.map((txn) => (
-                    <SharedTxnOne
-                      txn={txn}
-                      onTxnClick={setSelectedTxn}
-                      key={txn.id}
-                      tracker={tracker}
-                    />
-                  ))}
-              </div>
-            </>
-          )}
-        </>
+            <div className="mt-8">
+              <h3 className="mt-4 text-2xl">Transactions</h3>
+              {sharedTxnsError && <div>Failed to load</div>}
+              {sharedTxns === null && (
+                <div>Loading list of transactions...</div>
+              )}
+              {sharedTxns && sharedTxns.length === 0 && (
+                <div>There are no transactions here yet</div>
+              )}
+              {sharedTxns &&
+                sharedTxns.map((txn) => (
+                  <SharedTxnOne
+                    txn={txn}
+                    onTxnClick={setSelectedTxn}
+                    key={txn.id}
+                    tracker={tracker}
+                  />
+                ))}
+            </div>
+          </>
+        )
       )}
-    </SharedLayout>
+    </TrackerLayout>
   );
 }

@@ -43,6 +43,8 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       participants: '',
       category: 'unspecified.unspecified',
       details: '',
+      // TODO: support more than two users
+      split: `${tracker.users[0]}:0.50,${tracker.users[1]}:0.50`,
     },
   });
 

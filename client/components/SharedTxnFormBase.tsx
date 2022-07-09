@@ -6,7 +6,7 @@ import {
   subcategories,
 } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
-import React from 'react';
+import React, { useState } from 'react';
 import { UseFormRegister } from 'react-hook-form';
 import { plainDateStringToEpochSec } from 'utils/dates';
 
@@ -14,11 +14,12 @@ export type SharedTxnFormInputs = {
   location: string;
   amount: number;
   date: string;
-  settled?: boolean;
   participants: string;
   payer: string;
   details: string;
   category: SubcategoryKey;
+  settled?: boolean;
+  split?: string;
 };
 
 export function createSharedTxnFormData(data: SharedTxnFormInputs) {
@@ -33,6 +34,7 @@ export function createSharedTxnFormData(data: SharedTxnFormInputs) {
 
   const unixDate = plainDateStringToEpochSec(data.date);
   formData.append('date', unixDate.toString());
+  formData.append('split', data.split);
   return formData;
 }
 
@@ -51,6 +53,8 @@ export default function SharedTxnFormBase({
   onSubmit,
   children,
 }: Props) {
+  const [hasCustomSplit, setHasCustomSplit] = useState(false);
+
   return (
     <form
       onSubmit={(e) => {
@@ -156,6 +160,27 @@ export default function SharedTxnFormBase({
           id="details"
         />
       </div>
+      <div className="mt-4">
+        <label className="block font-semibold" htmlFor="details">
+          Custom split?
+        </label>
+        <input
+          type="checkbox"
+          checked={hasCustomSplit}
+          onChange={(e) => {
+            setHasCustomSplit(e.target.checked);
+          }}
+        />
+      </div>
+      {hasCustomSplit && (
+        <div className="mt-4">
+          <input
+            {...register('split')}
+            className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+            type="text"
+          />
+        </div>
+      )}
       {children}
     </form>
   );

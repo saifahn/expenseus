@@ -13,11 +13,14 @@ export interface SharedTxn {
   location: string;
   amount: number;
   date: number;
-  unsettled?: boolean;
   participants: string[];
   tracker: string;
   category: SubcategoryKey;
   details: string;
+  unsettled?: boolean;
+  split?: {
+    [userId: string]: number;
+  };
 }
 
 async function deleteSharedTxn(txn: SharedTxn) {

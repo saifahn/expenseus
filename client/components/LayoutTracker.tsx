@@ -34,6 +34,11 @@ export default function TrackerLayout({ children }) {
                   <a className="ml-4 border-2 p-2">Unsettled</a>
                 </Link>
               </li>
+              <li className="flex">
+                <Link href={`/shared/trackers/${trackerId}/analysis`}>
+                  <a className="ml-4 border-2 p-2">Analysis</a>
+                </Link>
+              </li>
             </ul>
           </nav>
           {children}

@@ -360,6 +360,13 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			loggedInUser:     "user-01",
 			wantOwed:         400,
 		},
+		"for a tracker with at least one unsettled txn when the non-payer is logged in": {
+			tracker:          "test-tracker-01",
+			wantTransactions: []app.SharedTransaction{testUnsettledTxn},
+			wantCode:         http.StatusOK,
+			loggedInUser:     "user-02",
+			wantOwed:         -400,
+		},
 	}
 
 	for name, tc := range tests {
@@ -381,6 +388,7 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
 			assert.Len(got.Txns, len(tc.wantTransactions))
+			assert.Equal(got.Debtee, tc.loggedInUser)
 
 			// remove the ID from the got transactions to account for randomly generated ID
 			var gotWithoutID []app.SharedTransaction

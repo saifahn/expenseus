@@ -159,7 +159,7 @@ func TestGetTxnsByUser(t *testing.T) {
 func TestGetTxnsBetweenDates(t *testing.T) {
 	var testFrom int64 = 1000
 	var testTo int64 = 2000
-	// calls the function with the two dates
+
 	// TODO: with varying numbers of transactions
 	// TODO: has to be the same user in the cookie as the request
 	tests := map[string]struct {

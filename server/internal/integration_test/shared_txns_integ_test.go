@@ -331,6 +331,10 @@ var testUnsettledTxn = app.SharedTransaction{
 	Unsettled:    true,
 	Category:     "test-category",
 	Payer:        "user-01",
+	Split: map[string]float64{
+		"user-01": 0.6,
+		"user-02": 0.4,
+	},
 }
 
 func TestGetUnsettledTxnsFromTracker(t *testing.T) {

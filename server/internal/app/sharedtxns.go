@@ -73,7 +73,7 @@ func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransacti
 	payer := r.FormValue("payer")
 	details := r.FormValue("details")
 
-	return &SharedTransaction{
+	txn := &SharedTransaction{
 		Location:  location,
 		Amount:    amountParsed,
 		Date:      dateParsed,
@@ -82,6 +82,25 @@ func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransacti
 		Payer:     payer,
 		Details:   details,
 	}
+
+	split := r.FormValue("split")
+	if split != "" {
+		splitMap := map[string]float64{}
+		// the format will be "userid:split,userid:split", so split them into individual parts
+		userSplits := strings.Split(split, ",")
+		for _, u := range userSplits {
+			// split into [userid, split], then assign to the map
+			userSplitSeparated := strings.Split(u, ":")
+			splitFloat, err := strconv.ParseFloat(userSplitSeparated[1], 64)
+			if err != nil {
+				http.Error(w, "error parsing split into float: "+err.Error(), http.StatusInternalServerError)
+			}
+			splitMap[userSplitSeparated[0]] = splitFloat
+		}
+		txn.Split = splitMap
+	}
+
+	return txn
 }
 
 // CreateSharedTxn handles a HTTP request to create a shared transaction

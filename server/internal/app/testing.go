@@ -208,6 +208,15 @@ func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 		unsettled = "true"
 	}
 
+	var splits []string
+	if txn.Split != nil {
+		for user, split := range txn.Split {
+			s := strconv.FormatFloat(split, 'E', -1, 64)
+			splits = append(splits, fmt.Sprintf("%s:%s", user, s))
+		}
+	}
+	splitString := strings.Join(splits, ",")
+
 	values := map[string]io.Reader{
 		"location": strings.NewReader(txn.Location),
 		"amount":   strings.NewReader(strconv.FormatInt(txn.Amount, 10)),
@@ -218,6 +227,7 @@ func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 		"category":     strings.NewReader(txn.Category),
 		"payer":        strings.NewReader(txn.Payer),
 		"details":      strings.NewReader(txn.Details),
+		"split":        strings.NewReader(splitString),
 	}
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)

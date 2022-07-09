@@ -1,6 +1,7 @@
 package ddb
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -30,6 +31,7 @@ type SharedTxnItem struct {
 	Payer        string   `json:"Payer"`
 	Unsettled    string   `json:"Unsettled,omitempty"`
 	Details      string   `json:"Details"`
+	SplitJSON    string   `json:"Split"`
 }
 
 type SettleTxnInput struct {
@@ -60,48 +62,43 @@ func NewSharedTxnsRepository(t *table.Table) SharedTxnsRepository {
 func (r *sharedTxnsRepo) Create(txn app.SharedTransaction) error {
 	trackerIDKey := makeTrackerIDKey(txn.Tracker)
 	txnIDKey := makeSharedTxnIDKey(txn.ID)
-	var unsettledVal string
-	if txn.Unsettled {
-		unsettledVal = unsettledFlagTrue
-	}
 
-	for _, p := range txn.Participants {
-		userIDKey := makeUserIDKey(p)
-		err := r.table.PutItem(SharedTxnItem{
-			PK:           userIDKey,
-			SK:           txnIDKey,
-			EntityType:   sharedTxnEntityType,
-			ID:           txn.ID,
-			Category:     txn.Category,
-			Tracker:      txn.Tracker,
-			Participants: txn.Participants,
-			Unsettled:    unsettledVal,
-			Date:         txn.Date,
-			Amount:       txn.Amount,
-			Location:     txn.Location,
-			Payer:        txn.Payer,
-			Details:      txn.Details,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	err := r.table.PutItem(SharedTxnItem{
-		PK:           trackerIDKey,
+	txnItem := SharedTxnItem{
 		SK:           txnIDKey,
 		EntityType:   sharedTxnEntityType,
 		ID:           txn.ID,
 		Category:     txn.Category,
 		Tracker:      txn.Tracker,
 		Participants: txn.Participants,
-		Unsettled:    unsettledVal,
 		Date:         txn.Date,
 		Amount:       txn.Amount,
 		Location:     txn.Location,
 		Payer:        txn.Payer,
 		Details:      txn.Details,
-	})
+	}
+
+	if txn.Unsettled {
+		txnItem.Unsettled = unsettledFlagTrue
+	}
+	if txn.Split != nil {
+		splitJSON, err := json.Marshal(txn.Split)
+		if err != nil {
+			return err
+		}
+		txnItem.SplitJSON = string(splitJSON)
+	}
+
+	for _, p := range txn.Participants {
+		userIDKey := makeUserIDKey(p)
+		txnItem.PK = userIDKey
+		err := r.table.PutItem(txnItem)
+		if err != nil {
+			return err
+		}
+	}
+
+	txnItem.PK = trackerIDKey
+	err := r.table.PutItem(txnItem)
 	return err
 }
 

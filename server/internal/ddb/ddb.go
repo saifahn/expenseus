@@ -85,7 +85,7 @@ func (d *dynamoDB) GetAllUsers() ([]app.User, error) {
 func txnToTxnItem(txn app.Transaction) TxnItem {
 	userIDKey := makeUserIDKey(txn.UserID)
 	transactionIDKey := makeTxnIDKey(txn.ID)
-	txnDateKey := makeTxnDateIDKey(txn)
+	txnDateIDKey := makeTxnDateIDKey(txn)
 
 	return TxnItem{
 		PK:         userIDKey,
@@ -98,7 +98,7 @@ func txnToTxnItem(txn app.Transaction) TxnItem {
 		Amount:     txn.Amount,
 		Date:       txn.Date,
 		GSI1PK:     userIDKey,
-		GSI1SK:     txnDateKey,
+		GSI1SK:     txnDateIDKey,
 		Category:   txn.Category,
 	}
 }
@@ -153,7 +153,7 @@ func (d *dynamoDB) GetTransactionsByUser(userID string) ([]app.Transaction, erro
 }
 
 func (d *dynamoDB) GetTxnsBetweenDates(userID string, from, to int64) ([]app.Transaction, error) {
-	// add 1 to `to` to make it inclusive
+	// add 1 to make it inclusive of the upper bound
 	items, err := d.transactions.GetBetweenDates(userID, from, to+1)
 	if err != nil {
 		return nil, err
@@ -271,6 +271,26 @@ func sharedTxnItemToSharedTxn(item SharedTxnItem) (app.SharedTransaction, error)
 // tracker with the given ID.
 func (d *dynamoDB) GetTxnsByTracker(trackerID string) ([]app.SharedTransaction, error) {
 	items, err := d.sharedTxn.GetFromTracker(trackerID)
+	if err != nil {
+		return nil, err
+	}
+
+	txns := []app.SharedTransaction{}
+	for _, i := range items {
+		txn, err := sharedTxnItemToSharedTxn(i)
+		if err != nil {
+			return nil, err
+		}
+		txns = append(txns, txn)
+	}
+	return txns, nil
+}
+
+// GetTxnsByTrackerBetweenDates calls the repository to get a list of txns from
+// a tracker with the given ID between the given dates.
+func (d *dynamoDB) GetTxnsByTrackerBetweenDates(trackerID string, from, to int64) ([]app.SharedTransaction, error) {
+	// add one to make it inclusive of the upper bound
+	items, err := d.sharedTxn.GetFromTrackerBetweenDates(trackerID, from, to+1)
 	if err != nil {
 		return nil, err
 	}

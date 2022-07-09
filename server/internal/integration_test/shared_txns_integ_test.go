@@ -404,6 +404,86 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 	}
 }
 
+func TestGetTxnsFromTrackerBetweenDates(t *testing.T) {
+	initialTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Location:     "test-shop",
+		Amount:       123456,
+		Date:         20000,
+		Tracker:      "test-tracker-01",
+		Unsettled:    true,
+		Category:     "test-category",
+		Payer:        "user-01",
+		Split: map[string]float64{
+			"user-01": 0.6,
+			"user-02": 0.4,
+		},
+	}
+
+	tests := map[string]struct {
+		wantTxns []app.SharedTransaction
+		from     int64
+		to       int64
+		wantCode int
+	}{
+		"with a date range containing a transaction that has a date equal to 'from'": {
+			wantTxns: []app.SharedTransaction{initialTxn},
+			from:     20000,
+			to:       21000,
+			wantCode: http.StatusOK,
+		},
+		"with a date range containing a transaction that has a date equal to 'to'": {
+			wantTxns: []app.SharedTransaction{initialTxn},
+			from:     19000,
+			to:       20000,
+			wantCode: http.StatusOK,
+		},
+		"with a date range not containing a transaction": {
+			wantTxns: []app.SharedTransaction{},
+			from:     10000,
+			to:       11000,
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			CreateUser(t, TestSeanUser, router)
+
+			// create the transaction
+			request := app.NewCreateSharedTxnRequest(initialTxn)
+			request.AddCookie(CreateCookie("user-01"))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			request = app.NewGetTxnsByTrackerBetweenDatesRequest(initialTxn.Tracker, tc.from, tc.to)
+			request.AddCookie(CreateCookie("user-01"))
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.SharedTransaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Len(got, len(tc.wantTxns))
+
+			if len(tc.wantTxns) > 0 {
+				// remove the ID from the got transactions to account for randomly generated ID
+				var gotWithoutID []app.SharedTransaction
+				for _, txn := range got {
+					gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
+				}
+				assert.ElementsMatch(gotWithoutID, tc.wantTxns)
+			}
+		})
+	}
+}
+
 func TestUpdateSharedTxns(t *testing.T) {
 	assert := assert.New(t)
 	initialTxn := app.SharedTransaction{

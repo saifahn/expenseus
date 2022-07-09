@@ -1,24 +1,25 @@
-import PersonalLayout from 'components/LayoutPersonal';
+import TrackerLayout from 'components/LayoutTracker';
 import { fetcher } from 'config/fetcher';
-import { useUserContext } from 'context/user';
-import { subcategories, mainCategories } from 'data/categories';
+import { mainCategories, subcategories } from 'data/categories';
+import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
-import { Transaction } from 'types/Transaction';
 import {
   calculateTotal,
   totalsByMainCategory,
   totalsBySubCategory,
 } from 'utils/analysis';
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
+import { SharedTxn } from '.';
 
 type Inputs = {
   from: string;
   to: string;
 };
 
-export default function PersonalAnalysis() {
-  const { user } = useUserContext();
+export default function TrackerAnalysis() {
+  const router = useRouter();
+  const { trackerId } = router.query;
   const { mutate } = useSWRConfig();
   const { register, handleSubmit, getValues, setValue } = useForm<Inputs>({
     shouldUseNativeValidation: true,
@@ -28,21 +29,21 @@ export default function PersonalAnalysis() {
     },
   });
 
-  const { data: txns, error } = useSWR<Transaction[]>(
-    'personal.analysis',
+  const { data: txns, error } = useSWR<SharedTxn[]>(
+    `${trackerId}.analysis`,
     () => {
-      if (!user) return null;
+      if (!trackerId) return null;
       const { from, to } = getValues();
       const fromEpochSec = plainDateStringToEpochSec(from);
       const toEpochSec = plainDateStringToEpochSec(to);
       return fetcher(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}/range?from=${fromEpochSec}&to=${toEpochSec}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${trackerId}/transactions/range?from=${fromEpochSec}&to=${toEpochSec}`,
       );
     },
   );
 
   const submitCallback: SubmitHandler<Inputs> = (data) => {
-    mutate('personal.analysis');
+    mutate(`${trackerId}.analysis`);
   };
 
   function handlePresetClick(presetFn) {
@@ -52,8 +53,11 @@ export default function PersonalAnalysis() {
   }
 
   return (
-    <PersonalLayout>
-      <form className="border-4 p-6" onSubmit={handleSubmit(submitCallback)}>
+    <TrackerLayout>
+      <form
+        className="mt-4 border-4 p-6"
+        onSubmit={handleSubmit(submitCallback)}
+      >
         <div className="mt-4">
           <label className="block font-semibold" htmlFor="dateFrom">
             From
@@ -128,6 +132,6 @@ export default function PersonalAnalysis() {
           </div>
         )}
       </div>
-    </PersonalLayout>
+    </TrackerLayout>
   );
 }

@@ -46,6 +46,28 @@ func (a *App) GetTxnsByTracker(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetTxnsByTrackerBetweenDates handles a HTTP request to get a list of txns
+// from a tracker with the given ID and between two given dates, returning the
+// list of txns
+func (a *App) GetTxnsByTrackerBetweenDates(w http.ResponseWriter, r *http.Request) {
+	trackerID := r.Context().Value(CtxKeyTrackerID).(string)
+	from := r.Context().Value(CtxKeyDateFrom).(int64)
+	to := r.Context().Value(CtxKeyDateTo).(int64)
+
+	txns, err := a.store.GetTxnsByTrackerBetweenDates(trackerID, from, to)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(w).Encode(txns)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransaction {
 	err := r.ParseMultipartForm(1000)
 	if err != nil {

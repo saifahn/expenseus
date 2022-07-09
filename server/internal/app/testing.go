@@ -198,6 +198,13 @@ func NewGetTxnsByTrackerRequest(trackerID string) *http.Request {
 	return req.WithContext(ctx)
 }
 
+// NewGetTxnsByTrackerBetweenDatesRequest creates a request to be used in tests
+// to get a list of transactions by trackerID between two dates
+func NewGetTxnsByTrackerBetweenDatesRequest(trackerID string, from, to int64) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/trackers/%s/transactions/range?from=%d&to=%d", trackerID, from, to), nil)
+	return req
+}
+
 // MakeSharedTxnRequestPayload generates the payload to be given to NewCreateSharedTxnRequest
 func MakeSharedTxnRequestPayload(txn SharedTransaction) (bytes.Buffer, string) {
 	// make a comma separated list of participants

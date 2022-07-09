@@ -227,6 +227,21 @@ func (mr *MockStoreMockRecorder) GetTxnsByTracker(trackerID interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxnsByTracker", reflect.TypeOf((*MockStore)(nil).GetTxnsByTracker), trackerID)
 }
 
+// GetTxnsByTrackerBetweenDates mocks base method.
+func (m *MockStore) GetTxnsByTrackerBetweenDates(trackerID string, from, to int64) ([]app.SharedTransaction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTxnsByTrackerBetweenDates", trackerID, from, to)
+	ret0, _ := ret[0].([]app.SharedTransaction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTxnsByTrackerBetweenDates indicates an expected call of GetTxnsByTrackerBetweenDates.
+func (mr *MockStoreMockRecorder) GetTxnsByTrackerBetweenDates(trackerID, from, to interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTxnsByTrackerBetweenDates", reflect.TypeOf((*MockStore)(nil).GetTxnsByTrackerBetweenDates), trackerID, from, to)
+}
+
 // GetUnsettledTxnsByTracker mocks base method.
 func (m *MockStore) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTransaction, error) {
 	m.ctrl.T.Helper()

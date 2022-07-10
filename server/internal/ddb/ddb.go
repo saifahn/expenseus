@@ -307,12 +307,12 @@ func (d *dynamoDB) GetTxnsByTrackerBetweenDates(trackerID string, from, to int64
 }
 
 func (d *dynamoDB) GetAllTxnsByUserBetweenDates(userID string, from, to int64) ([]app.Transaction, []app.SharedTransaction, error) {
-	txnItems, err := d.transactions.GetBetweenDates(userID, from, to)
+	txnItems, err := d.transactions.GetBetweenDates(userID, from, to+1)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	sharedTxnItems, err := d.sharedTxn.GetByUserBetweenDates(userID, from, to)
+	sharedTxnItems, err := d.sharedTxn.GetByUserBetweenDates(userID, from, to+1)
 	if err != nil {
 		return nil, nil, err
 	}

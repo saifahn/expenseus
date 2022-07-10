@@ -525,6 +525,14 @@ func TestGetAllTxnsFromUsersBetweenDates(t *testing.T) {
 			wantSharedTxns: []app.SharedTransaction{initialTxn},
 			wantCode:       http.StatusOK,
 		},
+		"with a date range and user containing a transactions that has a date equal to 'to'": {
+			user:           "user-01",
+			from:           20000,
+			to:             33333,
+			wantTxns:       []app.Transaction{initialDetails},
+			wantSharedTxns: []app.SharedTransaction{initialTxn},
+			wantCode:       http.StatusOK,
+		},
 	}
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {

@@ -352,6 +352,39 @@ func TestCalculateDebts(t *testing.T) {
 	}
 }
 
+func TestGetAllTxnsByUser(t *testing.T) {
+	tests := map[string]struct {
+		user           string
+		expectationsFn mock_app.MockAppFn
+		wantCode       int
+	}{
+		"it calls the store function with the user to retrieve the txns": {
+			user: "test-user",
+			expectationsFn: func(ma *mock_app.App) {
+				ma.MockStore.EXPECT().GetAllTxnsByUser("test-user").Times(1)
+			},
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert := assert.New(t)
+			a := mock_app.SetUp(t, tc.expectationsFn)
+
+			req := app.NewGetAllTxnsByUserRequest(tc.user)
+			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
+			req = req.WithContext(ctx)
+			response := httptest.NewRecorder()
+
+			handler := http.HandlerFunc(a.GetAllTxnsByUser)
+			handler.ServeHTTP(response, req)
+
+			assert.Equal(tc.wantCode, response.Code)
+		})
+	}
+}
+
 func TestGetTxnsByTrackerBetweenDates(t *testing.T) {
 	var testFrom int64 = 1000
 	var testTo int64 = 2000

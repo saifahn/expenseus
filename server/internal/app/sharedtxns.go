@@ -68,6 +68,36 @@ func (a *App) GetTxnsByTrackerBetweenDates(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+type AllTxnResponse struct {
+	Txns       []Transaction       `json:"transactions"`
+	SharedTxns []SharedTransaction `json:"sharedTransactions"`
+}
+
+// GetAllTxnsByUserBetweenDates handles a HTTP request to get all txns AND shared txns from
+// a user
+func (a *App) GetAllTxnsByUserBetweenDates(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value(CtxKeyUserID).(string)
+	from := r.Context().Value(CtxKeyDateFrom).(int64)
+	to := r.Context().Value(CtxKeyDateTo).(int64)
+
+	txns, sharedTxns, err := a.store.GetAllTxnsByUserBetweenDates(userID, from, to)
+	// TODO: if the user is not found, 404
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	response := AllTxnResponse{
+		Txns:       txns,
+		SharedTxns: sharedTxns,
+	}
+	w.Header().Set("content-type", jsonContentType)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func parseSharedTxnForm(r *http.Request, w http.ResponseWriter) *SharedTransaction {
 	err := r.ParseMultipartForm(1000)
 	if err != nil {

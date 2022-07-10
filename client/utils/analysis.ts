@@ -38,3 +38,23 @@ export function totalsBySubCategory(txns: Transaction[] | SharedTxn[]) {
     total,
   }));
 }
+
+export function calculatePersonalTotal(
+  user: string,
+  txns: (Transaction | SharedTxn)[],
+) {
+  let total = 0;
+  for (const txn of txns) {
+    if ('split' in txn) {
+      if (txn.split[user]) {
+        total += txn.amount * txn.split[user];
+        continue;
+      }
+      // if there's no split, use the default split
+      total += txn.amount * (1 / txn.participants.length);
+      continue;
+    }
+    total += txn.amount;
+  }
+  return total;
+}

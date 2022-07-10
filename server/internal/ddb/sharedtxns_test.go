@@ -234,3 +234,65 @@ func TestGetSharedBetweenDates(t *testing.T) {
 		})
 	}
 }
+
+func TestGetByUserBetweenDates(t *testing.T) {
+	testTrackerID := "test-tracker-id"
+	testTxnID := "test-txn-id"
+
+	initialTxn := app.SharedTransaction{
+		ID:           testTxnID,
+		Tracker:      testTrackerID,
+		Date:         10000,
+		Participants: []string{"user-01", "user-02"},
+	}
+
+	wantItem := SharedTxnItem{
+		PK:           makeUserIDKey("user-01"),
+		SK:           makeSharedTxnIDKey(testTxnID),
+		GSI1PK:       makeUserIDKey("user-01"),
+		GSI1SK:       "txn.shared#10000#test-txn-id",
+		Participants: []string{"user-01", "user-02"},
+		EntityType:   sharedTxnEntityType,
+		ID:           testTxnID,
+		Tracker:      testTrackerID,
+		Date:         10000,
+	}
+
+	tests := map[string]struct {
+		user string
+		// initialSharedTxns []app.SharedTransaction
+		from      int64
+		to        int64
+		wantItems []SharedTxnItem
+	}{
+		"with a user that has a transaction": {
+			user: "user-01",
+			// initialSharedTxns: []app.SharedTransaction{initialSharedTxn},
+			from:      10000,
+			to:        20000,
+			wantItems: []SharedTxnItem{wantItem},
+		},
+		"with a user that has no transaction": {
+			user:      "no-user-transaction",
+			from:      10000,
+			to:        99999,
+			wantItems: []SharedTxnItem{},
+		},
+	}
+	for name, tc := range tests {
+		assert := assert.New(t)
+
+		t.Run(name, func(t *testing.T) {
+			tbl, teardown := SetUpTestTable(t, "test-get-shared-txns-by-user-between-dates")
+			defer teardown()
+			shared := NewSharedTxnsRepository(tbl)
+
+			err := shared.Create(initialTxn)
+			assert.NoError(err)
+
+			got, err := shared.GetByUserBetweenDates(tc.user, tc.from, tc.to)
+			assert.NoError(err)
+			assert.ElementsMatch(got, tc.wantItems)
+		})
+	}
+}

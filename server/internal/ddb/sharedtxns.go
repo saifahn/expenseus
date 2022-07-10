@@ -46,6 +46,7 @@ type SharedTxnsRepository interface {
 	Create(txn app.SharedTransaction) error
 	GetFromTracker(trackerID string) ([]SharedTxnItem, error)
 	GetFromTrackerBetweenDates(trackerID string, from, to int64) ([]SharedTxnItem, error)
+	GetByUserBetweenDates(userID string, from, to int64) ([]SharedTxnItem, error)
 	GetUnsettledFromTracker(trackerID string) ([]SharedTxnItem, error)
 	Update(txn app.SharedTransaction) error
 	Delete(input app.DelSharedTxnInput) error
@@ -144,6 +145,30 @@ func (r *sharedTxnsRepo) GetFromTrackerBetweenDates(trackerID string, from, to i
 		option.QueryExpressionAttributeValue(":txnDateFromKey", attributes.String(txnDateFromKey)),
 		option.QueryExpressionAttributeValue(":txnDateToKey", attributes.String(txnDateToKey)),
 		option.QueryKeyConditionExpression("#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey"),
+	}
+
+	var items []SharedTxnItem
+	_, err := r.table.Query(&items, options...)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (r *sharedTxnsRepo) GetByUserBetweenDates(userID string, from, to int64) ([]SharedTxnItem, error) {
+	userIDKey := makeUserIDKey(userID)
+	txnDateFromKey := makeSharedTxnDateKey(from)
+	txnDateToKey := makeSharedTxnDateKey(to)
+
+	options := []option.QueryInput{
+		option.Index(gsi1Name),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
+		option.QueryExpressionAttributeName(gsi1SortKey, "#GSI1SK"),
+		option.QueryExpressionAttributeValue(":userKey", attributes.String(userIDKey)),
+		option.QueryExpressionAttributeValue(":txnDateFromKey", attributes.String(txnDateFromKey)),
+		option.QueryExpressionAttributeValue(":txnDateToKey", attributes.String(txnDateToKey)),
+		option.QueryKeyConditionExpression("#GSI1PK = :userKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey"),
 	}
 
 	var items []SharedTxnItem

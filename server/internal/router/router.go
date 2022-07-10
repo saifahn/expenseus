@@ -40,6 +40,9 @@ func Init(a *app.App) *chi.Mux {
 				Get("/transactions/user/{userID}", a.GetTransactionsByUser)
 			r.With(userIDCtx).
 				With(dateRangeCtx).
+				Get("/transactions/user/{userID}/all", a.GetAllTxnsByUserBetweenDates)
+			r.With(userIDCtx).
+				With(dateRangeCtx).
 				Get("/transactions/user/{userID}/range", a.GetTxnsBetweenDates)
 			r.With(transactionIDCtx).
 				Get("/transactions/{transactionID}", a.GetTransaction)

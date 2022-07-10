@@ -484,6 +484,100 @@ func TestGetTxnsFromTrackerBetweenDates(t *testing.T) {
 	}
 }
 
+func TestGetAllTxnsFromUsersBetweenDates(t *testing.T) {
+	initialDetails := app.Transaction{
+		Location: "test-location",
+		UserID:   "user-01",
+		Amount:   100,
+		Date:     33333,
+		Category: "test.category",
+		Details:  "test-details",
+	}
+
+	initialTxn := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Location:     "test-shop",
+		Amount:       123456,
+		Date:         20000,
+		Tracker:      "test-tracker-01",
+		Unsettled:    true,
+		Category:     "test-category",
+		Payer:        "user-01",
+		Split: map[string]float64{
+			"user-01": 0.6,
+			"user-02": 0.4,
+		},
+	}
+
+	tests := map[string]struct {
+		user           string
+		from           int64
+		to             int64
+		wantTxns       []app.Transaction
+		wantSharedTxns []app.SharedTransaction
+		wantCode       int
+	}{
+		"with a date range and user containing a transactions that has a date equal to 'from'": {
+			user:           "user-01",
+			from:           20000,
+			to:             40000,
+			wantTxns:       []app.Transaction{initialDetails},
+			wantSharedTxns: []app.SharedTransaction{initialTxn},
+			wantCode:       http.StatusOK,
+		},
+		"with a date range and user containing a transactions that has a date equal to 'to'": {
+			user:           "user-01",
+			from:           20000,
+			to:             33333,
+			wantTxns:       []app.Transaction{initialDetails},
+			wantSharedTxns: []app.SharedTransaction{initialTxn},
+			wantCode:       http.StatusOK,
+		},
+	}
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			CreateUser(t, TestSeanUser, router)
+			CreateTestTxn(t, router, initialDetails, tc.user)
+
+			// create the transaction
+			request := app.NewCreateSharedTxnRequest(initialTxn)
+			request.AddCookie(CreateCookie(tc.user))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			// get the transactions
+			request = app.NewGetAllTxnsByUserBetweenDatesRequest(tc.user, tc.from, tc.to)
+			request.AddCookie(CreateCookie(tc.user))
+			response = httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got app.AllTxnResponse
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Len(got.SharedTxns, len(tc.wantSharedTxns))
+			assert.Len(got.Txns, len(tc.wantTxns))
+
+			if len(tc.wantSharedTxns) > 0 {
+				var gotWithoutID []app.SharedTransaction
+				for _, txn := range got.SharedTxns {
+					gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
+				}
+				assert.ElementsMatch(gotWithoutID, tc.wantSharedTxns)
+			}
+
+			if len(tc.wantTxns) > 0 {
+				AssertEqualTxnDetails(t, got.Txns[0], tc.wantTxns[0])
+			}
+		})
+	}
+}
+
 func TestUpdateSharedTxns(t *testing.T) {
 	assert := assert.New(t)
 	initialTxn := app.SharedTransaction{

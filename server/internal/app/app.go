@@ -47,6 +47,7 @@ type Store interface {
 	DeleteSharedTxn(input DelSharedTxnInput) error
 	GetTxnsByTracker(trackerID string) ([]SharedTransaction, error)
 	GetTxnsByTrackerBetweenDates(trackerID string, from, to int64) ([]SharedTransaction, error)
+	GetAllTxnsByUserBetweenDates(userID string, from, to int64) ([]Transaction, []SharedTransaction, error)
 	GetUnsettledTxnsByTracker(trackerID string) ([]SharedTransaction, error)
 	SettleTxns(txns []SharedTransaction) error
 }

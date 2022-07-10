@@ -207,8 +207,8 @@ func NewGetTxnsByTrackerBetweenDatesRequest(trackerID string, from, to int64) *h
 
 // NewGetAllTxnsByUserRequest creates a request to be used in tests to get a list
 // of all txns and shared txns of a user
-func NewGetAllTxnsByUserRequest(userID string) *http.Request {
-	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/users/%s/all", userID), nil)
+func NewGetAllTxnsByUserBetweenDatesRequest(userID string, from, to int64) *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/transactions/users/%s/all?from=%d&to=%d", userID, from, to), nil)
 	return req
 }
 

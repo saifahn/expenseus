@@ -72,8 +72,10 @@ func (a *App) GetTxnsByTrackerBetweenDates(w http.ResponseWriter, r *http.Reques
 // a user
 func (a *App) GetAllTxnsByUser(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
+	from := r.Context().Value(CtxKeyDateFrom).(int64)
+	to := r.Context().Value(CtxKeyDateTo).(int64)
 
-	txns, sharedTxns, err := a.store.GetAllTxnsByUser(userID)
+	txns, sharedTxns, err := a.store.GetAllTxnsByUserBetweenDates(userID, from, to)
 	// TODO: if the user is not found, 404
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

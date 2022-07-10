@@ -353,15 +353,22 @@ func TestCalculateDebts(t *testing.T) {
 }
 
 func TestGetAllTxnsByUser(t *testing.T) {
+	var testFrom int64 = 1000
+	var testTo int64 = 2000
+
 	tests := map[string]struct {
 		user           string
+		from           int64
+		to             int64
 		expectationsFn mock_app.MockAppFn
 		wantCode       int
 	}{
 		"it calls the store function with the user to retrieve the txns": {
 			user: "test-user",
+			from: testFrom,
+			to:   testTo,
 			expectationsFn: func(ma *mock_app.App) {
-				ma.MockStore.EXPECT().GetAllTxnsByUser("test-user").Times(1)
+				ma.MockStore.EXPECT().GetAllTxnsByUserBetweenDates("test-user", testFrom, testTo).Times(1)
 			},
 			wantCode: http.StatusOK,
 		},
@@ -372,8 +379,10 @@ func TestGetAllTxnsByUser(t *testing.T) {
 			assert := assert.New(t)
 			a := mock_app.SetUp(t, tc.expectationsFn)
 
-			req := app.NewGetAllTxnsByUserRequest(tc.user)
+			req := app.NewGetAllTxnsByUserBetweenDatesRequest(tc.user, tc.from, tc.to)
 			ctx := context.WithValue(req.Context(), app.CtxKeyUserID, tc.user)
+			ctx = context.WithValue(ctx, app.CtxKeyDateFrom, tc.from)
+			ctx = context.WithValue(ctx, app.CtxKeyDateTo, tc.to)
 			req = req.WithContext(ctx)
 			response := httptest.NewRecorder()
 

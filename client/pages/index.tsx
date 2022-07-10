@@ -4,6 +4,7 @@ import { Transaction } from 'types/Transaction';
 import { Temporal } from 'temporal-polyfill';
 import { epochSecToLocaleString, plainDateStringToEpochSec } from 'utils/dates';
 import { SharedTxn } from './shared/trackers/[trackerId]';
+import { calculatePersonalTotal } from 'utils/analysis';
 
 type AllTxnsResponse = {
   transactions: Transaction[];
@@ -30,6 +31,7 @@ export default function Home() {
       (a, b) => b.date - a.date, // sorted descending, so the most recent dates are shown first
     );
   }
+  const total = calculatePersonalTotal(user.id, txns);
 
   return (
     <>
@@ -37,6 +39,11 @@ export default function Home() {
       {error && <div>Failed to load recent transactions</div>}
       {res === null && <div>Loading recent transactions....</div>}
       {res && txns.length === 0 && <div>No transactions to show</div>}
+      {txns && (
+        <p className="mt-4">
+          You have spent a total of {total} over {txns.length} transactions.
+        </p>
+      )}
       {txns?.map((txn) => (
         <article
           className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"

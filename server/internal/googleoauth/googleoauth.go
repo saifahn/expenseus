@@ -25,13 +25,6 @@ var (
 	oauthStateString = ""
 )
 
-type googleUserInfo struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Verified bool   `json:"verified_email"`
-}
-
 type GoogleOauthConfig struct {
 	config oauth2.Config
 }
@@ -75,6 +68,13 @@ func (g *GoogleOauthConfig) GetInfoAndGenerateUser(state string, code string) (a
 		return app.User{}, fmt.Errorf("failed reading response body: %s", err.Error())
 	}
 
+	type googleUserInfo struct {
+		ID       string `json:"id"`
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Verified bool   `json:"verified_email"`
+	}
+
 	// convert the contents into a google user struct
 	var googleUser googleUserInfo
 	err = json.Unmarshal(contents, &googleUser)
@@ -88,7 +88,7 @@ func (g *GoogleOauthConfig) GetInfoAndGenerateUser(state string, code string) (a
 	}
 	// use that information to create an app.User
 	return app.User{
-		ID:       googleUser.ID,
+		ID:       googleUser.Email,
 		Name:     googleUser.Name,
 		Username: googleUser.Email,
 	}, nil

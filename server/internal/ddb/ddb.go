@@ -317,7 +317,9 @@ func (d *dynamoDB) GetAllTxnsByUserBetweenDates(userID string, from, to int64) (
 		return nil, nil, err
 	}
 
-	var sharedTxns []app.SharedTransaction
+	// empty slices instead of nil slice so the JSON response will be an empty
+	// array instead of null
+	sharedTxns := []app.SharedTransaction{}
 	for _, i := range sharedTxnItems {
 		txn, err := sharedTxnItemToSharedTxn(i)
 		if err != nil {
@@ -326,7 +328,7 @@ func (d *dynamoDB) GetAllTxnsByUserBetweenDates(userID string, from, to int64) (
 		sharedTxns = append(sharedTxns, txn)
 	}
 
-	var txns []app.Transaction
+	txns := []app.Transaction{}
 	for _, i := range txnItems {
 		txns = append(txns, (txnItemToTxn(i)))
 	}

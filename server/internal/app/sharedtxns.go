@@ -68,9 +68,14 @@ func (a *App) GetTxnsByTrackerBetweenDates(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-// GetAllTxnsByUser handles a HTTP request to get all txns AND shared txns from
+type AllTxnResponse struct {
+	Txns       []Transaction       `json:"transactions"`
+	SharedTxns []SharedTransaction `json:"sharedTransactions"`
+}
+
+// GetAllTxnsByUserBetweenDates handles a HTTP request to get all txns AND shared txns from
 // a user
-func (a *App) GetAllTxnsByUser(w http.ResponseWriter, r *http.Request) {
+func (a *App) GetAllTxnsByUserBetweenDates(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(CtxKeyUserID).(string)
 	from := r.Context().Value(CtxKeyDateFrom).(int64)
 	to := r.Context().Value(CtxKeyDateTo).(int64)
@@ -81,9 +86,9 @@ func (a *App) GetAllTxnsByUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	response := map[string]interface{}{
-		"transactions":       txns,
-		"sharedTransactions": sharedTxns,
+	response := AllTxnResponse{
+		Txns:       txns,
+		SharedTxns: sharedTxns,
 	}
 	w.Header().Set("content-type", jsonContentType)
 	err = json.NewEncoder(w).Encode(response)

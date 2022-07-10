@@ -386,7 +386,7 @@ func TestGetAllTxnsByUser(t *testing.T) {
 			req = req.WithContext(ctx)
 			response := httptest.NewRecorder()
 
-			handler := http.HandlerFunc(a.GetAllTxnsByUser)
+			handler := http.HandlerFunc(a.GetAllTxnsByUserBetweenDates)
 			handler.ServeHTTP(response, req)
 
 			assert.Equal(tc.wantCode, response.Code)

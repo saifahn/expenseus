@@ -306,6 +306,34 @@ func (d *dynamoDB) GetTxnsByTrackerBetweenDates(trackerID string, from, to int64
 	return txns, nil
 }
 
+func (d *dynamoDB) GetAllTxnsByUserBetweenDates(userID string, from, to int64) ([]app.Transaction, []app.SharedTransaction, error) {
+	txnItems, err := d.transactions.GetBetweenDates(userID, from, to)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sharedTxnItems, err := d.sharedTxn.GetByUserBetweenDates(userID, from, to)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var sharedTxns []app.SharedTransaction
+	for _, i := range sharedTxnItems {
+		txn, err := sharedTxnItemToSharedTxn(i)
+		if err != nil {
+			return nil, nil, err
+		}
+		sharedTxns = append(sharedTxns, txn)
+	}
+
+	var txns []app.Transaction
+	for _, i := range txnItems {
+		txns = append(txns, (txnItemToTxn(i)))
+	}
+
+	return txns, sharedTxns, nil
+}
+
 // GetUnsettledTxnsByTracker calls the repository to get a list of unsettled
 // transactions from a tracker with the given ID.
 func (d *dynamoDB) GetUnsettledTxnsByTracker(trackerID string) ([]app.SharedTransaction, error) {

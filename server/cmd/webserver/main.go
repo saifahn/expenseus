@@ -41,7 +41,7 @@ func main() {
 		dynamo = dynamodb.New(sess)
 	} else {
 		sess := session.Must(session.NewSession(&aws.Config{
-			Region:                        aws.String("ap-northeast-1"),
+			Region:                        aws.String(os.Getenv("AWS_REGION")),
 			CredentialsChainVerboseErrors: aws.Bool(true),
 		}))
 

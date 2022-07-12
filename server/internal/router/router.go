@@ -20,7 +20,6 @@ func Init(a *app.App) *chi.Mux {
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
-		// TODO: use environment variables to determine allowed origins
 		AllowedOrigins:   []string{os.Getenv("CORS_ALLOWED_ORIGIN")},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -28,9 +27,6 @@ func Init(a *app.App) *chi.Mux {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-
-	fs := http.FileServer(http.Dir("./web/dist"))
-	r.Handle("/*", fs)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Group(func(r chi.Router) {

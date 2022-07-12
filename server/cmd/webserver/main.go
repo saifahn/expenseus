@@ -29,7 +29,7 @@ func main() {
 		frontendURL = os.Getenv("FRONTEND_DEV_SERVER")
 		useLocalAWSConfig = true
 	} else {
-		frontendURL = "/"
+		frontendURL = os.Getenv("FRONTEND_URL")
 		useLocalAWSConfig = false
 	}
 
@@ -38,6 +38,13 @@ func main() {
 	if useLocalAWSConfig {
 		sess := session.Must(session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(os.Getenv("DYNAMODB_DEV_ID"), os.Getenv("DYNAMODB_DEV_SECRET"), ""))))
 		sess.Config.Endpoint = aws.String(os.Getenv("DYNAMODB_ENDPOINT_LOCAL"))
+		dynamo = dynamodb.New(sess)
+	} else {
+		sess := session.Must(session.NewSession(&aws.Config{
+			Region:                        aws.String(os.Getenv("AWS_REGION")),
+			CredentialsChainVerboseErrors: aws.Bool(true),
+		}))
+
 		dynamo = dynamodb.New(sess)
 	}
 

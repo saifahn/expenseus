@@ -260,6 +260,10 @@ type UnsettledResponse struct {
 }
 
 func CalculateDebts(currentUser string, txns []SharedTransaction) UnsettledResponse {
+	if len(txns) == 0 {
+		return UnsettledResponse{}
+	}
+
 	defaultSplit := 0.5
 	var otherUser string
 	var total float64

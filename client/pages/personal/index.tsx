@@ -6,6 +6,7 @@ import useSWR, { mutate } from 'swr';
 import { epochSecToLocaleString } from 'utils/dates';
 import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
+import { categoryNameFromKeyEN } from 'data/categories';
 
 async function deleteTransaction(txnId: string) {
   await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${txnId}`, {
@@ -49,7 +50,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
         </button>
       </div>
       <p>{txn.amount}</p>
-      <p>{txn.category}</p>
+      <p>{categoryNameFromKeyEN(txn.category)}</p>
       {txn.details && <p>{txn.details}</p>}
       <p>{epochSecToLocaleString(txn.date)}</p>
     </article>

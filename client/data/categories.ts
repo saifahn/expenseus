@@ -3,7 +3,7 @@ export const mainCategories = {
     en_US: 'Unspecified',
   },
   food: {
-    en_US: 'Food',
+    en_US: 'Food & Drink',
   },
   daily: {
     en_US: 'Daily',
@@ -72,7 +72,7 @@ export const subcategories: SubCategories = {
   },
   'food.food': {
     mainCategory: 'food',
-    en_US: 'Food',
+    en_US: 'Food & Drink',
   },
   'food.groceries': {
     mainCategory: 'food',
@@ -222,6 +222,10 @@ export const subcategories: SubCategories = {
     mainCategory: 'social',
     en_US: 'Social',
   },
+  'social.gifts': {
+    mainCategory: 'social',
+    en_US: 'Gifts',
+  },
   'education.education': {
     mainCategory: 'education',
     en_US: 'Education',
@@ -265,8 +269,10 @@ type AllCategories = {
 };
 
 // FIXME: this is kind of awful and hard to understand
-// makes an AllCategories from the subcategories and main categories for making
-// tiered options with `optgroup`
+/**
+ * makes an AllCategories from the subcategories and main categories for making
+ * tiered options with `optgroup`
+ */
 export const categories = categoryKeys.reduce((prev, key) => {
   const mainCategory = subcategories[key].mainCategory;
   if (!prev[mainCategory]) {
@@ -275,3 +281,6 @@ export const categories = categoryKeys.reduce((prev, key) => {
   prev[mainCategory].push(key);
   return prev;
 }, {} as AllCategories);
+
+export const categoryNameFromKeyEN = (key: SubcategoryKey) =>
+  subcategories[key].en_US;

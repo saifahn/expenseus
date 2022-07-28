@@ -1,7 +1,7 @@
 import TrackerLayout from 'components/LayoutTracker';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
-import { SubcategoryKey } from 'data/categories';
+import { categoryNameFromKeyEN, SubcategoryKey } from 'data/categories';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
@@ -80,7 +80,7 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
       <p>
         {txn.amount} paid by {txn.payer}
       </p>
-      <p>{txn.category}</p>
+      <p>{categoryNameFromKeyEN(txn.category)}</p>
       <p>{epochSecToLocaleString(txn.date)}</p>
       <p>{txn.tracker}</p>
       {txn.details && <p>{txn.details}</p>}

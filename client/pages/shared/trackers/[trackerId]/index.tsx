@@ -16,6 +16,7 @@ export interface SharedTxn {
   participants: string[];
   tracker: string;
   category: SubcategoryKey;
+  payer: string;
   details: string;
   unsettled?: boolean;
   split?: {
@@ -43,6 +44,9 @@ async function deleteSharedTxn(txn: SharedTxn) {
   );
 }
 
+/**
+ * SharedTxnOne displays one shared transaction to be showed in a list.
+ */
 type SharedTxnOneProps = {
   txn: SharedTxn;
   tracker: Tracker;
@@ -73,7 +77,9 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
           Delete
         </button>
       </div>
-      <p>{txn.amount}</p>
+      <p>
+        {txn.amount} paid by {txn.payer}
+      </p>
       <p>{txn.category}</p>
       <p>{epochSecToLocaleString(txn.date)}</p>
       <p>{txn.tracker}</p>

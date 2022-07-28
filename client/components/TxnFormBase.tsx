@@ -3,7 +3,7 @@ import {
   SubcategoryKey,
   mainCategories,
   mainCategoryKeys,
-  subcategories,
+  categoryNameFromKeyEN,
 } from 'data/categories';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
@@ -101,7 +101,7 @@ export default function TxnFormBase({
             <optgroup key={mainKey} label={mainCategories[mainKey].en_US}>
               {categories[mainKey].map((subKey) => (
                 <option key={subKey} value={subKey}>
-                  {subcategories[subKey].en_US}
+                  {categoryNameFromKeyEN(subKey)}
                 </option>
               ))}
             </optgroup>

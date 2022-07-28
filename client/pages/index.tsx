@@ -5,6 +5,7 @@ import { Temporal } from 'temporal-polyfill';
 import { epochSecToLocaleString, plainDateStringToEpochSec } from 'utils/dates';
 import { SharedTxn } from './shared/trackers/[trackerId]';
 import { calculatePersonalTotal } from 'utils/analysis';
+import { categoryNameFromKeyEN } from 'data/categories';
 
 type AllTxnsResponse = {
   transactions: Transaction[];
@@ -53,7 +54,7 @@ export default function Home() {
             <h3 className="text-lg">{txn.location}</h3>
           </div>
           <p>{txn.amount}</p>
-          <p>{txn.category}</p>
+          <p>{categoryNameFromKeyEN(txn.category)}</p>
           {txn.details && <p>{txn.details}</p>}
           <p>{epochSecToLocaleString(txn.date)}</p>
         </article>

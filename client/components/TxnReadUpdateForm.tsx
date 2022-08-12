@@ -18,6 +18,16 @@ async function updateTransaction(data: TxnFormInputs, txnID: string) {
   });
 }
 
+async function deleteTransaction(txnId: string) {
+  await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${txnId}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+    },
+    credentials: 'include',
+  });
+}
+
 interface Props {
   txn: Transaction;
   onApply: () => void;
@@ -46,18 +56,34 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
     onApply();
   };
 
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
+      deleteTransaction(txn.id),
+    );
+  }
+
   return (
     <TxnFormBase
       title="Update Transaction"
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex">
+        <div className="flex-grow">
+          <button
+            className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-red-300"
+            onClick={handleDelete}
+          >
+            Delete transaction
+          </button>
+        </div>
         {formState.isDirty ? (
           <>
             <button
               className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
-              onClick={() => onCancel()}
+              onClick={onCancel}
             >
               Cancel
             </button>
@@ -71,7 +97,7 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
         ) : (
           <button
             className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
-            onClick={() => onCancel()}
+            onClick={onCancel}
           >
             Close
           </button>

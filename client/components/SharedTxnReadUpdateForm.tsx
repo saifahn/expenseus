@@ -29,6 +29,26 @@ async function updateSharedTxn(
   );
 }
 
+async function deleteSharedTxn(txn: SharedTxn) {
+  const payload = {
+    tracker: txn.tracker,
+    txnID: txn.id,
+    participants: txn.participants,
+  };
+
+  await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${txn.tracker}/transactions/${txn.id}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
 interface Props {
   txn: SharedTxn;
   tracker: Tracker;
@@ -70,6 +90,14 @@ export default function SharedTxnReadUpdateForm({
     onApply();
   };
 
+  function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    mutate(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
+      deleteSharedTxn(txn),
+    );
+  }
+
   return (
     <SharedTxnFormBase
       title="Update Shared Transaction"
@@ -77,12 +105,20 @@ export default function SharedTxnReadUpdateForm({
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex">
+        <div className="flex-grow">
+          <button
+            className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-red-300"
+            onClick={handleDelete}
+          >
+            Delete transaction
+          </button>
+        </div>
         {formState.isDirty ? (
           <>
             <button
               className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
-              onClick={() => onCancel()}
+              onClick={onCancel}
             >
               Cancel
             </button>
@@ -96,7 +132,7 @@ export default function SharedTxnReadUpdateForm({
         ) : (
           <button
             className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
-            onClick={() => onCancel()}
+            onClick={onCancel}
           >
             Close
           </button>

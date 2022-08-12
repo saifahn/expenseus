@@ -8,16 +8,6 @@ import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
 import { categoryNameFromKeyEN } from 'data/categories';
 
-async function deleteTransaction(txnId: string) {
-  await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${txnId}`, {
-    method: 'DELETE',
-    headers: {
-      Accept: 'application/json',
-    },
-    credentials: 'include',
-  });
-}
-
 type TxnOneProps = {
   txn: Transaction;
   onTxnClick: (txn: Transaction) => void;
@@ -25,14 +15,6 @@ type TxnOneProps = {
 
 function TxnOne({ txn, onTxnClick }: TxnOneProps) {
   const { user } = useUserContext();
-
-  function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation();
-    mutate(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
-      deleteTransaction(txn.id),
-    );
-  }
 
   return (
     <article
@@ -42,12 +24,6 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
     >
       <div className="flex justify-between">
         <h3 className="text-lg">{txn.location}</h3>
-        <button
-          className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-blue-300"
-          onClick={handleDelete}
-        >
-          Delete
-        </button>
       </div>
       <p>{txn.amount}</p>
       <p>{categoryNameFromKeyEN(txn.category)}</p>

@@ -572,7 +572,7 @@ func TestGetAllTxnsFromUsersBetweenDates(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, TestSeanUser, router)
-			CreateTestTxn(t, router, initialDetails, tc.user)
+			CreateTestTxn(t, router, initialDetails)
 
 			// create the transaction
 			request := app.NewCreateSharedTxnRequest(initialTxn)

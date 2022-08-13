@@ -21,7 +21,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 
 		// create a transaction and store it
 		wantTxnDetails := TestSeanTxnDetails
-		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
+		CreateTestTxn(t, router, wantTxnDetails)
 
 		// try and get it
 		request := app.NewGetTransactionsByUserRequest(wantTxnDetails.UserID)
@@ -48,7 +48,7 @@ func TestCreatingTransactionsAndRetrievingThem(t *testing.T) {
 		CreateUser(t, TestSeanUser, router)
 
 		wantTxnDetails := TestSeanTxnDetails
-		CreateTestTxn(t, router, wantTxnDetails, wantTxnDetails.UserID)
+		CreateTestTxn(t, router, wantTxnDetails)
 
 		request := app.NewGetTransactionsByUserRequest(wantTxnDetails.UserID)
 		request.AddCookie(CreateCookie(TestSeanUser.ID))
@@ -124,7 +124,7 @@ func TestCreatingTxns(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, TestSeanUser, router)
-			CreateTestTxn(t, router, tc.txnDetails, TestSeanUser.ID)
+			CreateTestTxn(t, router, tc.txnDetails)
 			request := app.NewGetTransactionsByUserRequest(TestSeanUser.ID)
 			request.AddCookie(CreateCookie(TestSeanUser.ID))
 			response := httptest.NewRecorder()
@@ -202,7 +202,7 @@ func TestGetTxnsByUser(t *testing.T) {
 
 			CreateUser(t, app.User{ID: tc.user}, router)
 			for _, txn := range tc.initTxns {
-				CreateTestTxn(t, router, txn, txn.UserID)
+				CreateTestTxn(t, router, txn)
 			}
 
 			request := app.NewGetTransactionsByUserRequest(tc.user)
@@ -262,7 +262,7 @@ func TestGetTxnBetweenDates(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, TestSeanUser, router)
-			CreateTestTxn(t, router, initialTxn, initialTxn.UserID)
+			CreateTestTxn(t, router, initialTxn)
 
 			request := app.NewGetTxnsBetweenDatesRequest(initialTxn.UserID, tc.from, tc.to)
 			request.AddCookie(CreateCookie(initialTxn.UserID))
@@ -330,7 +330,7 @@ func TestUpdateTransactions(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, test.user, router)
-			CreateTestTxn(t, router, test.initialTxnDetails, test.user.ID)
+			CreateTestTxn(t, router, test.initialTxnDetails)
 
 			// get transactions to get the transaction that was just added
 			request := app.NewGetTransactionsByUserRequest(test.user.ID)
@@ -373,7 +373,7 @@ func TestUpdateThenGetByDateRange(t *testing.T) {
 	assert := assert.New(t)
 
 	CreateUser(t, TestSeanUser, router)
-	CreateTestTxn(t, router, initialDetails, TestSeanUser.ID)
+	CreateTestTxn(t, router, initialDetails)
 
 	request := app.NewGetTxnsBetweenDatesRequest(TestSeanUser.ID, 30000, 40000)
 	request.AddCookie(CreateCookie(TestSeanUser.ID))
@@ -428,7 +428,7 @@ func TestDeletingTransactions(t *testing.T) {
 			assert := assert.New(t)
 
 			CreateUser(t, TestSeanUser, router)
-			CreateTestTxn(t, router, tc.td, tc.user)
+			CreateTestTxn(t, router, tc.td)
 
 			request := app.NewGetTransactionsByUserRequest(tc.user)
 			request.AddCookie(CreateCookie(tc.user))

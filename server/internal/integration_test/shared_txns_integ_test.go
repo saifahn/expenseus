@@ -388,7 +388,6 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
 			assert.Len(got.Txns, len(tc.wantTransactions))
-			assert.Equal(got.Debtee, tc.loggedInUser)
 
 			// remove the ID from the got transactions to account for randomly generated ID
 			var gotWithoutID []app.SharedTransaction
@@ -398,6 +397,7 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
 
 			if len(tc.wantTransactions) > 0 {
+				assert.Equal(got.Debtee, tc.loggedInUser)
 				assert.Equal(got.AmountOwed, tc.wantOwed)
 			}
 		})

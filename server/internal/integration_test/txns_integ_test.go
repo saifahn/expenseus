@@ -151,6 +151,22 @@ func TestGetTxnsByUser(t *testing.T) {
 		Category: "something",
 	}
 
+	initTxn2 := app.Transaction{
+		Location: "test-location",
+		UserID:   "a-user",
+		Amount:   300,
+		Date:     20000,
+		Category: "something",
+	}
+
+	initTxn3 := app.Transaction{
+		Location: "test-location",
+		UserID:   "a-user",
+		Amount:   300,
+		Date:     30000,
+		Category: "something",
+	}
+
 	tests := map[string]struct {
 		initTxns []app.Transaction
 		wantTxns []app.Transaction
@@ -166,6 +182,13 @@ func TestGetTxnsByUser(t *testing.T) {
 		"with a user that has one transaction": {
 			initTxns: []app.Transaction{initTxn1},
 			wantTxns: []app.Transaction{initTxn1},
+			user:     "a-user",
+			wantCode: http.StatusOK,
+		},
+		"with a user that has more than one transaction": {
+			initTxns: []app.Transaction{initTxn1, initTxn2, initTxn3},
+			// should be sorted in descending date
+			wantTxns: []app.Transaction{initTxn3, initTxn2, initTxn1},
 			user:     "a-user",
 			wantCode: http.StatusOK,
 		},

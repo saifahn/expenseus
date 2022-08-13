@@ -115,11 +115,14 @@ func (r *sharedTxnsRepo) GetFromTracker(trackerID string) ([]SharedTxnItem, erro
 	trackerIDKey := makeTrackerIDKey(trackerID)
 
 	options := []option.QueryInput{
-		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
-		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
-		option.QueryExpressionAttributeValue(":trackerID", attributes.String(trackerIDKey)),
+		option.Index(gsi1Name),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
+		option.QueryExpressionAttributeName(gsi1SortKey, "#GSI1SK"),
+		option.QueryExpressionAttributeValue(":trackerIDKey", attributes.String(trackerIDKey)),
 		option.QueryExpressionAttributeValue(":sharedTxnKeyPrefix", attributes.String(sharedTxnKeyPrefix)),
-		option.QueryKeyConditionExpression("#PK = :trackerID and begins_with(#SK, :sharedTxnKeyPrefix)"),
+		// sort descending
+		option.Reverse(),
+		option.QueryKeyConditionExpression("#GSI1PK = :trackerIDKey and begins_with(#GSI1SK, :sharedTxnKeyPrefix)"),
 	}
 
 	var items []SharedTxnItem

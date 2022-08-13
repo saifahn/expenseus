@@ -28,8 +28,8 @@ func TestTransactionTable(t *testing.T) {
 		ID:         "test-txn-id",
 		UserID:     "test-user-id",
 		EntityType: "transaction",
-		GSI1PK:     "transactions",
-		GSI1SK:     "txn#test-txn-id",
+		GSI1PK:     "user#test-user-id",
+		GSI1SK:     "txn#1337#test-txn-id",
 	}
 
 	// no error raised the first time

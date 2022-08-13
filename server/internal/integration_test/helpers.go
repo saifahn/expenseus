@@ -146,10 +146,10 @@ func RemoveSharedTxnID(txn app.SharedTransaction) app.SharedTransaction {
 	return txn
 }
 
-func CreateTestTxn(t *testing.T, r http.Handler, td app.Transaction, userid string) {
+func CreateTestTxn(t *testing.T, r http.Handler, td app.Transaction) {
 	payload := app.MakeTxnRequestPayload(td)
 	request := app.NewCreateTransactionRequest(payload)
-	request.AddCookie(CreateCookie(userid))
+	request.AddCookie(CreateCookie(td.UserID))
 	response := httptest.NewRecorder()
 	r.ServeHTTP(response, request)
 }

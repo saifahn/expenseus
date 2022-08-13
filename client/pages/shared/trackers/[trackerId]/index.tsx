@@ -24,44 +24,15 @@ export interface SharedTxn {
   };
 }
 
-async function deleteSharedTxn(txn: SharedTxn) {
-  const payload = {
-    tracker: txn.tracker,
-    txnID: txn.id,
-    participants: txn.participants,
-  };
-
-  await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${txn.tracker}/transactions/${txn.id}`,
-    {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    },
-  );
-}
-
 /**
  * SharedTxnOne displays one shared transaction to be showed in a list.
  */
 type SharedTxnOneProps = {
   txn: SharedTxn;
-  tracker: Tracker;
   onTxnClick: (txn: SharedTxn) => void;
 };
 
-function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
-  function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation();
-    mutate(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
-      deleteSharedTxn(txn),
-    );
-  }
-
+function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
   return (
     <article
       className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"
@@ -76,7 +47,6 @@ function SharedTxnOne({ txn, tracker, onTxnClick }: SharedTxnOneProps) {
       </p>
       <p>{categoryNameFromKeyEN(txn.category)}</p>
       <p>{epochSecToLocaleString(txn.date)}</p>
-      <p>{txn.tracker}</p>
       {txn.details && <p>{txn.details}</p>}
     </article>
   );
@@ -125,7 +95,6 @@ export default function TrackerPage() {
                     txn={txn}
                     onTxnClick={setSelectedTxn}
                     key={txn.id}
-                    tracker={tracker}
                   />
                 ))}
             </div>

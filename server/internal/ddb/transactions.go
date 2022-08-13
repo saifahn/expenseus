@@ -101,11 +101,14 @@ func (t *txnRepo) GetByUserID(id string) ([]TxnItem, error) {
 	allTxnPrefix := fmt.Sprintf("%s#", txnKeyPrefix)
 
 	options := []option.QueryInput{
-		option.QueryExpressionAttributeName(tablePrimaryKey, "#PK"),
-		option.QueryExpressionAttributeName(tableSortKey, "#SK"),
+		option.Index(gsi1Name),
+		option.QueryExpressionAttributeName(gsi1PrimaryKey, "#GSI1PK"),
+		option.QueryExpressionAttributeName(gsi1SortKey, "#GSI1SK"),
 		option.QueryExpressionAttributeValue(":userKey", attributes.String(userIDKey)),
 		option.QueryExpressionAttributeValue(":allTxnPrefix", attributes.String(allTxnPrefix)),
-		option.QueryKeyConditionExpression("#PK = :userKey and begins_with(#SK, :allTxnPrefix)"),
+		option.QueryKeyConditionExpression("#GSI1PK = :userKey and begins_with(#GSI1SK, :allTxnPrefix)"),
+		// for descending date order
+		option.Reverse(),
 	}
 
 	var items []TxnItem

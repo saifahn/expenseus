@@ -163,6 +163,12 @@ func TestGetTxnsByUser(t *testing.T) {
 			user:     "no-txns-user",
 			wantCode: http.StatusOK,
 		},
+		"with a user that has one transaction": {
+			initTxns: []app.Transaction{initTxn1},
+			wantTxns: []app.Transaction{initTxn1},
+			user:     "a-user",
+			wantCode: http.StatusOK,
+		},
 	}
 
 	for name, tc := range tests {
@@ -171,9 +177,9 @@ func TestGetTxnsByUser(t *testing.T) {
 			defer tearDownDB(t)
 			assert := assert.New(t)
 
-			CreateUser(t, TestSeanUser, router)
+			CreateUser(t, app.User{ID: tc.user}, router)
 			for _, txn := range tc.initTxns {
-				CreateTestTxn(t, router, txn, txn.ID)
+				CreateTestTxn(t, router, txn, txn.UserID)
 			}
 
 			request := app.NewGetTransactionsByUserRequest(tc.user)
@@ -187,6 +193,12 @@ func TestGetTxnsByUser(t *testing.T) {
 			err := json.NewDecoder(response.Body).Decode(&got)
 			assert.NoError(err)
 			assert.Len(got, len(tc.wantTxns))
+
+			if len(tc.wantTxns) > 0 {
+				for i := range tc.wantTxns {
+					AssertEqualTxnDetails(t, got[i], tc.wantTxns[i])
+				}
+			}
 		})
 	}
 }

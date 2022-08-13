@@ -2,7 +2,7 @@ import TxnCreateForm from 'components/TxnCreateForm';
 import TxnReadUpdateForm from 'components/TxnReadUpdateForm';
 import { useUserContext } from 'context/user';
 import { useState } from 'react';
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 import { epochSecToLocaleString } from 'utils/dates';
 import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
@@ -14,8 +14,6 @@ type TxnOneProps = {
 };
 
 function TxnOne({ txn, onTxnClick }: TxnOneProps) {
-  const { user } = useUserContext();
-
   return (
     <article
       className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"

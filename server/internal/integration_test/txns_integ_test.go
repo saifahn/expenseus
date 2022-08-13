@@ -142,6 +142,55 @@ func TestCreatingTxns(t *testing.T) {
 	}
 }
 
+func TestGetTxnsByUser(t *testing.T) {
+	initTxn1 := app.Transaction{
+		Location: "test-location",
+		UserID:   "a-user",
+		Amount:   300,
+		Date:     10000,
+		Category: "something",
+	}
+
+	tests := map[string]struct {
+		initTxns []app.Transaction
+		wantTxns []app.Transaction
+		user     string
+		wantCode int
+	}{
+		"with a user that has no transactions": {
+			initTxns: []app.Transaction{initTxn1},
+			wantTxns: []app.Transaction{},
+			user:     "no-txns-user",
+			wantCode: http.StatusOK,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			router, tearDownDB := SetUpTestServer(t)
+			defer tearDownDB(t)
+			assert := assert.New(t)
+
+			CreateUser(t, TestSeanUser, router)
+			for _, txn := range tc.initTxns {
+				CreateTestTxn(t, router, txn, txn.ID)
+			}
+
+			request := app.NewGetTransactionsByUserRequest(tc.user)
+			request.AddCookie(CreateCookie(tc.user))
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			assert.Equal(tc.wantCode, response.Code)
+
+			var got []app.Transaction
+			err := json.NewDecoder(response.Body).Decode(&got)
+			assert.NoError(err)
+			assert.Len(got, len(tc.wantTxns))
+		})
+	}
+}
+
 func TestGetTxnBetweenDates(t *testing.T) {
 	initialTxn := app.Transaction{
 		Location: "test-location",

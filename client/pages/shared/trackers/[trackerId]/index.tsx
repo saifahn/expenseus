@@ -29,7 +29,6 @@ export interface SharedTxn {
  */
 type SharedTxnOneProps = {
   txn: SharedTxn;
-  tracker: Tracker;
   onTxnClick: (txn: SharedTxn) => void;
 };
 
@@ -48,7 +47,6 @@ function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
       </p>
       <p>{categoryNameFromKeyEN(txn.category)}</p>
       <p>{epochSecToLocaleString(txn.date)}</p>
-      <p>{txn.tracker}</p>
       {txn.details && <p>{txn.details}</p>}
     </article>
   );
@@ -97,7 +95,6 @@ export default function TrackerPage() {
                     txn={txn}
                     onTxnClick={setSelectedTxn}
                     key={txn.id}
-                    tracker={tracker}
                   />
                 ))}
             </div>

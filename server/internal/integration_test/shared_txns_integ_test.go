@@ -265,7 +265,27 @@ func TestGetTxnsByTracker(t *testing.T) {
 		Participants: []string{"user-01", "user-02"},
 		Location:     "test-shop",
 		Amount:       123,
-		Date:         123456,
+		Date:         987654,
+		Tracker:      "test-tracker-01",
+		Category:     "test-category",
+		Payer:        "user-01",
+	}
+
+	testTxn2 := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Location:     "test-shop-2",
+		Amount:       234,
+		Date:         876543,
+		Tracker:      "test-tracker-01",
+		Category:     "test-category",
+		Payer:        "user-01",
+	}
+
+	testTxn3 := app.SharedTransaction{
+		Participants: []string{"user-01", "user-02"},
+		Location:     "test-shop-3",
+		Amount:       345,
+		Date:         765432,
 		Tracker:      "test-tracker-01",
 		Category:     "test-category",
 		Payer:        "user-01",
@@ -273,19 +293,28 @@ func TestGetTxnsByTracker(t *testing.T) {
 
 	assert := assert.New(t)
 	tests := map[string]struct {
-		tracker          string
-		wantTransactions []app.SharedTransaction
-		wantCode         int
+		tracker  string
+		wantTxns []app.SharedTransaction
+		initTxns []app.SharedTransaction
+		wantCode int
 	}{
 		"for a non-existent tracker or one with no transactions": {
-			tracker:          "no-txn-tracker",
-			wantTransactions: []app.SharedTransaction{},
-			wantCode:         http.StatusOK,
+			tracker:  "no-txn-tracker",
+			wantTxns: []app.SharedTransaction{},
+			initTxns: []app.SharedTransaction{testTxn},
+			wantCode: http.StatusOK,
 		},
 		"for a tracker with at least one transaction": {
-			tracker:          "test-tracker-01",
-			wantTransactions: []app.SharedTransaction{testTxn},
-			wantCode:         http.StatusOK,
+			tracker:  "test-tracker-01",
+			wantTxns: []app.SharedTransaction{testTxn},
+			initTxns: []app.SharedTransaction{testTxn},
+			wantCode: http.StatusOK,
+		},
+		"for a tracker with more than one transaction": {
+			tracker:  "test-tracker-01",
+			wantTxns: []app.SharedTransaction{testTxn, testTxn2, testTxn3},
+			initTxns: []app.SharedTransaction{testTxn, testTxn2, testTxn3},
+			wantCode: http.StatusOK,
 		},
 	}
 
@@ -294,8 +323,9 @@ func TestGetTxnsByTracker(t *testing.T) {
 			router, tearDownDB := SetUpTestServer(t)
 			defer tearDownDB(t)
 
-			// add a transaction to be gotten
-			addTransaction(router, testTxn)
+			for _, txn := range tc.initTxns {
+				addTransaction(router, txn)
+			}
 
 			request := app.NewGetTxnsByTrackerRequest(tc.tracker)
 			request.AddCookie(CreateCookie(TestSeanUser.ID))
@@ -309,15 +339,17 @@ func TestGetTxnsByTracker(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error parsing response from server %q into slice of shared txns: %v", response.Body, err)
 			}
-			assert.Len(got, len(tc.wantTransactions))
+			assert.Len(got, len(tc.wantTxns))
 
-			// remove the ID from the got transactions to account for randomly generated
-			var gotWithoutID []app.SharedTransaction
-			for _, txn := range got {
-				gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
+			if len(tc.wantTxns) > 0 {
+				// remove the ID from the got transactions to account for randomly generated
+				var gotWithoutID []app.SharedTransaction
+				for _, txn := range got {
+					gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
+				}
+
+				assert.Equal(gotWithoutID, tc.wantTxns)
 			}
-
-			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
 		})
 	}
 }
@@ -389,16 +421,15 @@ func TestGetUnsettledTxnsFromTracker(t *testing.T) {
 			}
 			assert.Len(got.Txns, len(tc.wantTransactions))
 
-			// remove the ID from the got transactions to account for randomly generated ID
-			var gotWithoutID []app.SharedTransaction
-			for _, txn := range got.Txns {
-				gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
-			}
-			assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
-
 			if len(tc.wantTransactions) > 0 {
 				assert.Equal(got.Debtee, tc.loggedInUser)
 				assert.Equal(got.AmountOwed, tc.wantOwed)
+				// remove the ID from the got transactions to account for randomly generated ID
+				var gotWithoutID []app.SharedTransaction
+				for _, txn := range got.Txns {
+					gotWithoutID = append(gotWithoutID, RemoveSharedTxnID(txn))
+				}
+				assert.ElementsMatch(gotWithoutID, tc.wantTransactions)
 			}
 		})
 	}

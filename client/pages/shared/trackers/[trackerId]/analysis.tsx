@@ -7,15 +7,57 @@ import useSWR, { useSWRConfig } from 'swr';
 import {
   calculateTotal,
   totalsByMainCategory,
+  totalsByMonth,
   totalsBySubCategory,
 } from 'utils/analysis';
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { SharedTxn } from '.';
+import { Bar } from 'react-chartjs-2';
+import Chart from 'chart.js/auto';
 
 type Inputs = {
   from: string;
   to: string;
 };
+
+Chart.register();
+// ChartJS.register(CategoryScale);
+
+function BarChart(txns: SharedTxn[]) {
+  // data consists of labels and datasets
+  // datasets are objects that take:
+  const options = {
+    responsive: true,
+    scales: {
+      x: {
+        stacked: true,
+      },
+      y: {
+        stacked: true,
+      },
+    },
+  };
+
+  const totals = totalsByMonth(txns);
+  const labels = Object.keys(totals);
+  const data = Object.values(totals);
+
+  return (
+    <Bar
+      options={options}
+      data={{
+        labels,
+        datasets: [
+          {
+            label: 'All transactions',
+            backgroundColor: 'goldenrod',
+            data,
+          },
+        ],
+      }}
+    ></Bar>
+  );
+}
 
 export default function TrackerAnalysis() {
   const router = useRouter();
@@ -106,29 +148,32 @@ export default function TrackerAnalysis() {
         {txns?.length === 0 && <div>No transactions for that time period</div>}
         {txns?.length > 0 && (
           <div>
-            <h3 className="text-xl font-medium">In this time period:</h3>
-            <p>
-              You have {txns.length} transactions, with a total cost of{' '}
-              {calculateTotal(txns)}
-            </p>
-            <p className="mt-4 text-lg font-medium">Main categories:</p>
-            <ul className="list-inside list-disc">
-              {totalsByMainCategory(txns).map((total) => (
-                <li key={total.category}>
-                  You spent {total.total} on{' '}
-                  {mainCategories[total.category].en_US}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-lg font-medium">Subcategories:</p>
-            <ul className="list-inside list-disc">
-              {totalsBySubCategory(txns).map((total) => (
-                <li key={total.category}>
-                  You spent {total.total} on{' '}
-                  {subcategories[total.category].en_US}
-                </li>
-              ))}
-            </ul>
+            <div>
+              <h3 className="text-xl font-medium">In this time period:</h3>
+              <p>
+                You have {txns.length} transactions, with a total cost of{' '}
+                {calculateTotal(txns)}
+              </p>
+              <p className="mt-4 text-lg font-medium">Main categories:</p>
+              <ul className="list-inside list-disc">
+                {totalsByMainCategory(txns).map((total) => (
+                  <li key={total.category}>
+                    You spent {total.total} on{' '}
+                    {mainCategories[total.category].en_US}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-lg font-medium">Subcategories:</p>
+              <ul className="list-inside list-disc">
+                {totalsBySubCategory(txns).map((total) => (
+                  <li key={total.category}>
+                    You spent {total.total} on{' '}
+                    {subcategories[total.category].en_US}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>{BarChart(txns)}</div>
           </div>
         )}
       </div>

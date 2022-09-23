@@ -5,6 +5,7 @@ import {
 } from 'data/categories';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { Transaction } from 'types/Transaction';
+import { epochSecToUTCMonthEN, MonthEN } from './dates';
 
 export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
   let total = 0;
@@ -12,6 +13,18 @@ export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
     total += txn.amount;
   }
   return total;
+}
+
+export function totalsByMonth(txns: Transaction[] | SharedTxn[]) {
+  const totals = {} as Record<MonthEN, number>;
+  for (const txn of txns) {
+    const month = epochSecToUTCMonthEN(txn.date);
+    if (!totals[month]) {
+      totals[month] = 0;
+    }
+    totals[month] += txn.amount;
+  }
+  return totals;
 }
 
 export function totalsByMainCategory(txns: Transaction[] | SharedTxn[]) {

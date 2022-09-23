@@ -1,5 +1,32 @@
 import { Temporal } from 'temporal-polyfill';
 
+const monthNameMapEN = {
+  1: 'January',
+  2: 'February',
+  3: 'March',
+  4: 'April',
+  5: 'May',
+  6: 'June',
+  7: 'July',
+  8: 'August',
+  9: 'September',
+  10: 'October',
+  11: 'November',
+  12: 'December',
+} as const;
+
+export type MonthEN = typeof monthNameMapEN[keyof typeof monthNameMapEN];
+
+/**
+ * Takes a date in epoch seconds format and converts it to a month name
+ * in English based on UTC timezone.
+ */
+export function epochSecToUTCMonthEN(date: number): MonthEN {
+  return monthNameMapEN[
+    Temporal.Instant.fromEpochSeconds(date).toZonedDateTimeISO('UTC').month
+  ];
+}
+
 /**
  * Takes a date in epoch seconds format and converts it to a locale string
  * to be displayed.

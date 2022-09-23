@@ -15,14 +15,21 @@ export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
   return total;
 }
 
-export function totalsByMonth(txns: Transaction[] | SharedTxn[]) {
-  const totals = {} as Record<MonthEN, number>;
+/**
+ * Takes a list of transactions and returns totals by month and main category
+ * for use in data visualization.
+ */
+export function totalsForBarChart(txns: Transaction[] | SharedTxn[]) {
+  const totals = {} as Record<
+    MonthEN,
+    Partial<Record<MainCategoryKey, number>>
+  >;
   for (const txn of txns) {
     const month = epochSecToUTCMonthEN(txn.date);
-    if (!totals[month]) {
-      totals[month] = 0;
-    }
-    totals[month] += txn.amount;
+    const mainCategory = subcategories[txn.category].mainCategory;
+    if (!totals[month]) totals[month] = {};
+    if (!totals[month][mainCategory]) totals[month][mainCategory] = 0;
+    totals[month][mainCategory] += txn.amount;
   }
   return totals;
 }

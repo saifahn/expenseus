@@ -1,30 +1,34 @@
 import TrackerLayout from 'components/LayoutTracker';
 import { fetcher } from 'config/fetcher';
-import { mainCategories, subcategories } from 'data/categories';
+import {
+  mainCategories,
+  mainCategoryKeys,
+  subcategories,
+} from 'data/categories';
 import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
 import {
   calculateTotal,
   totalsByMainCategory,
-  totalsByMonth,
   totalsBySubCategory,
+  totalsForBarChart,
 } from 'utils/analysis';
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { SharedTxn } from '.';
 import { ResponsiveBar } from '@nivo/bar';
 
 function BarChart(txns: SharedTxn[]) {
-  const totals = totalsByMonth(txns);
-  const months = Object.keys(totals);
-  const data = months.map((m) => ({
-    month: m,
-    total: totals[m],
+  const totals = totalsForBarChart(txns);
+  const entries = Object.entries(totals);
+  const data = entries.map(([month, values]) => ({
+    month,
+    ...values,
   }));
 
   return (
     <ResponsiveBar
-      keys={['total']}
+      keys={mainCategoryKeys}
       indexBy={'month'}
       data={data}
       margin={{

@@ -13,15 +13,21 @@ import {
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { SharedTxn } from '.';
 import { Bar } from 'react-chartjs-2';
-import Chart from 'chart.js/auto';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
 type Inputs = {
   from: string;
   to: string;
 };
 
-Chart.register();
-// ChartJS.register(CategoryScale);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 function BarChart(txns: SharedTxn[]) {
   // data consists of labels and datasets
@@ -55,7 +61,7 @@ function BarChart(txns: SharedTxn[]) {
           },
         ],
       }}
-    ></Bar>
+    />
   );
 }
 

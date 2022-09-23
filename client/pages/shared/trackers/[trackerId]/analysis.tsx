@@ -12,58 +12,40 @@ import {
 } from 'utils/analysis';
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { SharedTxn } from '.';
-import { Bar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
+import { ResponsiveBar } from '@nivo/bar';
+
+function BarChart(txns: SharedTxn[]) {
+  const totals = totalsByMonth(txns);
+  const months = Object.keys(totals);
+  const data = months.map((m) => ({
+    month: m,
+    total: totals[m],
+  }));
+
+  return (
+    <ResponsiveBar
+      keys={['total']}
+      indexBy={'month'}
+      data={data}
+      margin={{
+        top: 50,
+        bottom: 50,
+        right: 50,
+        left: 50,
+      }}
+      axisBottom={{
+        legend: 'month',
+        legendPosition: 'middle',
+        legendOffset: 40,
+      }}
+    />
+  );
+}
 
 type Inputs = {
   from: string;
   to: string;
 };
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
-
-function BarChart(txns: SharedTxn[]) {
-  // data consists of labels and datasets
-  // datasets are objects that take:
-  const options = {
-    responsive: true,
-    scales: {
-      x: {
-        stacked: true,
-      },
-      y: {
-        stacked: true,
-      },
-    },
-  };
-
-  const totals = totalsByMonth(txns);
-  const labels = Object.keys(totals);
-  const data = Object.values(totals);
-
-  return (
-    <Bar
-      options={options}
-      data={{
-        labels,
-        datasets: [
-          {
-            label: 'All transactions',
-            backgroundColor: 'goldenrod',
-            data,
-          },
-        ],
-      }}
-    />
-  );
-}
 
 export default function TrackerAnalysis() {
   const router = useRouter();
@@ -179,7 +161,7 @@ export default function TrackerAnalysis() {
                 ))}
               </ul>
             </div>
-            <div>{BarChart(txns)}</div>
+            <div className="h-screen">{BarChart(txns)}</div>
           </div>
         )}
       </div>

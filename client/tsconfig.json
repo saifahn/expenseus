@@ -18,13 +18,15 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "baseUrl": "./",
+    "incremental": true
   },
   "include": [
     "./jest-setup.ts",
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
-, "tests/mocks/genericFileMock.js"  ],
+    "**/*.tsx",
+    "tests/mocks/genericFileMock.js"
+  ],
   "exclude": [
     "node_modules"
   ]

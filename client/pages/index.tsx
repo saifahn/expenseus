@@ -2,7 +2,11 @@ import { useUserContext } from 'context/user';
 import useSWR from 'swr';
 import { Transaction } from 'types/Transaction';
 import { Temporal } from 'temporal-polyfill';
-import { epochSecToLocaleString, plainDateStringToEpochSec } from 'utils/dates';
+import {
+  epochSecToLocaleString,
+  epochSecToUTCYear,
+  plainDateStringToEpochSec,
+} from 'utils/dates';
 import { SharedTxn } from './shared/trackers/[trackerId]';
 import { calculatePersonalTotal } from 'utils/analysis';
 import { categoryNameFromKeyEN } from 'data/categories';
@@ -36,29 +40,63 @@ export default function Home() {
 
   return (
     <>
-      <div>Hi, {user.username}!</div>
-      {error && <div>Failed to load recent transactions</div>}
-      {res === null && <div>Loading recent transactions....</div>}
-      {res && txns.length === 0 && <div>No transactions to show</div>}
-      {txns && (
-        <p className="mt-4">
-          You have spent a total of {total} over {txns.length} transactions.
-        </p>
-      )}
-      {txns?.map((txn) => (
-        <article
-          className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"
-          key={txn.id}
-        >
-          <div className="flex justify-between">
-            <h3 className="text-lg">{txn.location}</h3>
-          </div>
-          <p>{txn.amount}</p>
-          <p>{categoryNameFromKeyEN(txn.category)}</p>
-          {txn.details && <p>{txn.details}</p>}
-          <p>{epochSecToLocaleString(txn.date)}</p>
-        </article>
-      ))}
+      <section>
+        <p className="mt-4">Hi, {user.username}!</p>
+        {error && <p>Failed to load recent transactions</p>}
+        {res === null && <p>Loading recent transactions....</p>}
+        {res && txns.length === 0 && <p>No transactions to show</p>}
+        {txns && (
+          <p className="mt-2">
+            You have spent a total of{' '}
+            <span className="font-semibold">{total}</span> over{' '}
+            <span className="font-semibold">{txns.length}</span> transactions.
+          </p>
+        )}
+        {txns && <div className="my-4">{txns.map(transactionCard)}</div>}
+      </section>
     </>
+  );
+}
+
+function formatDateForTxnCard(date: number) {
+  const currentYear = Temporal.Now.zonedDateTimeISO('UTC').year;
+  return new Date(epochSecToLocaleString(date)).toLocaleDateString(
+    ['en-GB', 'ja-JP'],
+    {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      // should be able to assume that dates without a year are from current year
+      ...(epochSecToUTCYear(date) !== currentYear && {
+        year: 'numeric',
+      }),
+    },
+  );
+}
+
+function transactionCard(txn: Transaction | SharedTxn) {
+  const date = formatDateForTxnCard(txn.date);
+
+  return (
+    <article
+      className="mt-3 rounded-lg border-2 border-zinc-200 p-3"
+      key={txn.id}
+    >
+      <div className="flex items-center">
+        <div className="mr-4 h-10 w-10 flex-shrink-0 rounded-md bg-slate-300"></div>
+        <div className="flex flex-grow">
+          <div className="flex flex-grow flex-col">
+            <p className="text-lg font-semibold leading-5">{txn.location}</p>
+            <p className="mt-1 text-sm text-slate-500">{date}</p>
+            <p className="mt-1">{categoryNameFromKeyEN(txn.category)}</p>
+            {txn.details && <p>{txn.details}</p>}
+          </div>
+          <p className="flex-shrink-0 text-lg font-medium text-slate-600">
+            {txn.amount}
+            <span className="ml-1 text-xs">円</span>
+          </p>
+        </div>
+      </div>
+    </article>
   );
 }

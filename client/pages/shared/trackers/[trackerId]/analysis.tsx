@@ -1,10 +1,6 @@
 import TrackerLayout from 'components/LayoutTracker';
 import { fetcher } from 'config/fetcher';
-import {
-  mainCategories,
-  mainCategoryKeys,
-  subcategories,
-} from 'data/categories';
+import { mainCategories, subcategories } from 'data/categories';
 import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';

@@ -1,3 +1,4 @@
+import { BarChart } from 'components/BarChart';
 import PersonalLayout from 'components/LayoutPersonal';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
@@ -102,29 +103,32 @@ export default function PersonalAnalysis() {
         {txns?.length === 0 && <div>No transactions for that time period</div>}
         {txns?.length > 0 && (
           <div>
-            <h3 className="text-xl font-medium">In this time period:</h3>
-            <p>
-              You have {txns.length} transactions, with a total cost of{' '}
-              {calculateTotal(txns)}
-            </p>
-            <p className="mt-4 text-lg font-medium">Main categories:</p>
-            <ul className="list-inside list-disc">
-              {totalsByMainCategory(txns).map((total) => (
-                <li key={total.category}>
-                  You spent {total.total} on{' '}
-                  {mainCategories[total.category].en_US}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-lg font-medium">Subcategories:</p>
-            <ul className="list-inside list-disc">
-              {totalsBySubCategory(txns).map((total) => (
-                <li key={total.category}>
-                  You spent {total.total} on{' '}
-                  {subcategories[total.category].en_US}
-                </li>
-              ))}
-            </ul>
+            <div>
+              <h3 className="text-xl font-medium">In this time period:</h3>
+              <p>
+                You have {txns.length} transactions, with a total cost of{' '}
+                {calculateTotal(txns)}
+              </p>
+              <p className="mt-4 text-lg font-medium">Main categories:</p>
+              <ul className="list-inside list-disc">
+                {totalsByMainCategory(txns).map((total) => (
+                  <li key={total.category}>
+                    You spent {total.total} on{' '}
+                    {mainCategories[total.category].en_US}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-lg font-medium">Subcategories:</p>
+              <ul className="list-inside list-disc">
+                {totalsBySubCategory(txns).map((total) => (
+                  <li key={total.category}>
+                    You spent {total.total} on{' '}
+                    {subcategories[total.category].en_US}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="h-screen">{BarChart(txns)}</div>
           </div>
         )}
       </div>

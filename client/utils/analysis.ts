@@ -5,7 +5,6 @@ import {
 } from 'data/categories';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { Transaction } from 'types/Transaction';
-import { epochSecToUTCMonthEN, MonthEN } from './dates';
 
 export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
   let total = 0;
@@ -13,25 +12,6 @@ export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
     total += txn.amount;
   }
   return total;
-}
-
-/**
- * Takes a list of transactions and returns totals by month and main category
- * for use in data visualization.
- */
-export function totalsForBarChart(txns: Transaction[] | SharedTxn[]) {
-  const totals = {} as Record<
-    MonthEN,
-    Partial<Record<MainCategoryKey, number>>
-  >;
-  for (const txn of txns) {
-    const month = epochSecToUTCMonthEN(txn.date);
-    const mainCategory = subcategories[txn.category].mainCategory;
-    if (!totals[month]) totals[month] = {};
-    if (!totals[month][mainCategory]) totals[month][mainCategory] = 0;
-    totals[month][mainCategory] += txn.amount;
-  }
-  return totals;
 }
 
 export function totalsByMainCategory(txns: Transaction[] | SharedTxn[]) {

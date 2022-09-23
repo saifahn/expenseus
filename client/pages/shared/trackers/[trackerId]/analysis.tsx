@@ -12,39 +12,10 @@ import {
   calculateTotal,
   totalsByMainCategory,
   totalsBySubCategory,
-  totalsForBarChart,
 } from 'utils/analysis';
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
+import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
-import { ResponsiveBar } from '@nivo/bar';
-
-function BarChart(txns: SharedTxn[]) {
-  const totals = totalsForBarChart(txns);
-  const entries = Object.entries(totals);
-  const data = entries.map(([month, values]) => ({
-    month,
-    ...values,
-  }));
-
-  return (
-    <ResponsiveBar
-      keys={mainCategoryKeys}
-      indexBy={'month'}
-      data={data}
-      margin={{
-        top: 50,
-        bottom: 50,
-        right: 50,
-        left: 50,
-      }}
-      axisBottom={{
-        legend: 'month',
-        legendPosition: 'middle',
-        legendOffset: 40,
-      }}
-    />
-  );
-}
 
 type Inputs = {
   from: string;

@@ -1,6 +1,5 @@
 import { useUserContext } from 'context/user';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 import { plainDateISONowString } from 'utils/dates';

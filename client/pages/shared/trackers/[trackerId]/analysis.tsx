@@ -13,6 +13,7 @@ import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
 import { ChangeEvent } from 'react';
+import AnalysisFormBase from 'components/AnalysisFormBase';
 
 type Inputs = {
   from: string;
@@ -57,61 +58,11 @@ export default function TrackerAnalysis() {
 
   return (
     <TrackerLayout>
-      <form className="mt-4" onSubmit={handleSubmit(submitCallback)}>
-        <h3 className="text-lg font-bold lowercase">Analyze transactions</h3>
-        <div className="mt-3">
-          <label className="block font-semibold lowercase text-slate-600">
-            date preset
-          </label>
-          <select
-            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center lowercase placeholder-slate-400 focus:ring-0"
-            onChange={handlePresetSelect}
-          >
-            {Object.entries(dateRanges).map(([preset, { name }]) => (
-              <option key={preset} value={preset}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mt-5">
-          <label
-            className="block font-semibold lowercase text-slate-600"
-            htmlFor="dateFrom"
-          >
-            From
-          </label>
-          <input
-            {...register('from', { required: 'Please input a date' })}
-            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center placeholder-slate-400 focus:ring-0"
-            type="date"
-            id="dateFrom"
-          />
-        </div>
-        <div className="mt-5">
-          <label
-            className="block font-semibold lowercase text-slate-600"
-            htmlFor="dateTo"
-          >
-            To
-          </label>
-          <input
-            {...register('to', { required: 'Please input a date' })}
-            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center placeholder-slate-400 focus:ring-0"
-            type="date"
-            id="dateTo"
-          />
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <button
-            className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring"
-            type="submit"
-          >
-            Get details
-          </button>
-        </div>
-      </form>
+      <AnalysisFormBase
+        register={register}
+        onSubmit={handleSubmit(submitCallback)}
+        onPresetSelect={handlePresetSelect}
+      />
       <div className="mt-6">
         {error && <div>Failed to load details</div>}
         {txns === null && <div>Loading</div>}

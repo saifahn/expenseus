@@ -78,35 +78,26 @@ export default function TrackerPage() {
 
   return (
     <TrackerLayout>
-      <Link href={`/shared/trackers/${trackerId}/create-txn`}>
-        <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
-          ➕ Create new transaction
-        </a>
-      </Link>
-      <div className="mt-2 flex">
-        <Link href={`/shared/trackers/${trackerId}/unsettled-txns`}>
-          <a className="mr-4 w-1/2 rounded-lg bg-rose-50 py-3 px-4 font-medium lowercase text-black hover:bg-rose-100  active:bg-rose-200">
-            See unsettled
-          </a>
-        </Link>
-        <Link href={`/shared/trackers/${trackerId}/analysis`}>
-          <a className="w-1/2 rounded-lg bg-emerald-50 py-3 px-4 font-medium lowercase text-black hover:bg-emerald-100 active:bg-emerald-200">
-            🔎 Analyze
-          </a>
-        </Link>
-      </div>
-      {selectedTxn ? (
-        <div className="mt-4">
-          <SharedTxnReadUpdateForm
-            txn={selectedTxn}
-            tracker={tracker}
-            onApply={() => setSelectedTxn(null)}
-            onCancel={() => setSelectedTxn(null)}
-          />
-        </div>
-      ) : (
-        tracker && (
+      <div className="relative pb-5">
+        {!selectedTxn && (
           <>
+            <Link href={`/shared/trackers/${trackerId}/create-txn`}>
+              <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
+                ➕ Create new transaction
+              </a>
+            </Link>
+            <div className="mt-2 flex">
+              <Link href={`/shared/trackers/${trackerId}/unsettled-txns`}>
+                <a className="mr-4 w-1/2 rounded-lg bg-rose-50 py-3 px-4 font-medium lowercase text-black hover:bg-rose-100  active:bg-rose-200">
+                  See unsettled
+                </a>
+              </Link>
+              <Link href={`/shared/trackers/${trackerId}/analysis`}>
+                <a className="w-1/2 rounded-lg bg-emerald-50 py-3 px-4 font-medium lowercase text-black hover:bg-emerald-100 active:bg-emerald-200">
+                  🔎 Analyze
+                </a>
+              </Link>
+            </div>
             <div className="mt-6">
               {sharedTxnsError && <div>Failed to load</div>}
               {sharedTxns === null && (
@@ -125,8 +116,23 @@ export default function TrackerPage() {
                 ))}
             </div>
           </>
-        )
-      )}
+        )}
+        <div
+          className={[
+            'absolute top-0 w-full transition-all',
+            selectedTxn ? 'opacity-100' : 'opacity-0',
+          ].join(' ')}
+        >
+          {selectedTxn && (
+            <SharedTxnReadUpdateForm
+              txn={selectedTxn}
+              tracker={tracker}
+              onApply={() => setSelectedTxn(null)}
+              onCancel={() => setSelectedTxn(null)}
+            />
+          )}
+        </div>
+      </div>
     </TrackerLayout>
   );
 }

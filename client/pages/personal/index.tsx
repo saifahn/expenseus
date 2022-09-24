@@ -54,20 +54,22 @@ export default function Personal() {
   return (
     <>
       <PersonalLayout>
-        <div className="relative">
-          <div className="pb-5">
-            {error && <div>Failed to load transactions</div>}
-            {transactions === null && (
-              <div>Loading list of transactions...</div>
-            )}
-            {transactions && transactions.length === 0 && (
-              <div>No transactions to show</div>
-            )}
-            {transactions &&
-              transactions.map((txn) => (
-                <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
-              ))}
-          </div>
+        <div className="relative pb-5">
+          {!selectedTxn && (
+            <div>
+              {error && <div>Failed to load transactions</div>}
+              {transactions === null && (
+                <div>Loading list of transactions...</div>
+              )}
+              {transactions && transactions.length === 0 && (
+                <div>No transactions to show</div>
+              )}
+              {transactions &&
+                transactions.map((txn) => (
+                  <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
+                ))}
+            </div>
+          )}
           <div
             className={[
               'absolute top-0 w-full transition-all',

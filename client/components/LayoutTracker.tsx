@@ -19,7 +19,7 @@ export default function TrackerLayout({ children }) {
         <>
           <Link href={`/shared/trackers/${trackerId}`}>
             <a>
-              <h2 className="mt-4 text-2xl underline decoration-rose-300 decoration-2 underline-offset-4 hover:decoration-rose-500">
+              <h2 className="mt-4 text-2xl underline decoration-rose-300 decoration-2 hover:decoration-rose-500">
                 {tracker.name}
               </h2>
             </a>

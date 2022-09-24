@@ -3,7 +3,6 @@ import Link from 'next/link';
 export default function PersonalLayout({ children }) {
   return (
     <>
-      <h1 className="text-4xl">Personal</h1>
       <nav className="mt-4">
         <ul className="flex">
           <li className="flex">

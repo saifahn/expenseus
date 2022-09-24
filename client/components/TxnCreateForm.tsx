@@ -25,7 +25,7 @@ export default function TxnCreateForm() {
     defaultValues: {
       location: '',
       details: '',
-      amount: 0,
+      amount: null,
       date: plainDateISONowString(),
       category: 'unspecified.unspecified',
     },
@@ -38,7 +38,7 @@ export default function TxnCreateForm() {
     );
     setValue('location', '');
     setValue('details', '');
-    setValue('amount', 0);
+    setValue('amount', null);
     setValue('category', 'unspecified.unspecified');
   };
 

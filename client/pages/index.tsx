@@ -58,7 +58,7 @@ export default function Home() {
   );
 }
 
-function formatDateForTxnCard(date: number) {
+export function formatDateForTxnCard(date: number) {
   const currentYear = Temporal.Now.zonedDateTimeISO('UTC').year;
   return new Date(epochSecToLocaleString(date)).toLocaleDateString(
     ['en-GB', 'ja-JP'],
@@ -79,7 +79,7 @@ function transactionCard(txn: Transaction | SharedTxn) {
 
   return (
     <article
-      className="mt-3 rounded-lg border-2 border-zinc-200 p-3"
+      className="mt-3 rounded-lg border-2 border-slate-200 p-3"
       key={txn.id}
     >
       <div className="flex items-center">
@@ -88,7 +88,9 @@ function transactionCard(txn: Transaction | SharedTxn) {
           <div className="flex flex-grow flex-col">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>
             <p className="mt-1 text-sm text-slate-500">{date}</p>
-            <p className="mt-1">{categoryNameFromKeyEN(txn.category)}</p>
+            <p className="mt-1 lowercase">
+              {categoryNameFromKeyEN(txn.category)}
+            </p>
             {txn.details && <p>{txn.details}</p>}
           </div>
           <p className="flex-shrink-0 text-lg font-medium text-slate-600">

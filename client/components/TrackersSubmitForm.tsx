@@ -49,33 +49,36 @@ export default function TrackersSubmitForm() {
       {error && <div>Failed to load</div>}
       {!error && !allUsers && <div>Loading all users information...</div>}
       {allUsers && (
-        <form onSubmit={handleSubmit(submitCallback)} className="border-4 p-6">
-          <h3 className="text-lg font-semibold">Create Tracker</h3>
+        <form onSubmit={handleSubmit(submitCallback)} className="bg-white">
+          <h3 className="text-lg font-semibold lowercase">Create Tracker</h3>
           <div className="mt-4">
-            <label className="block font-semibold" htmlFor="name">
+            <label className="block font-semibold lowercase" htmlFor="name">
               Name
             </label>
             <input
               {...register('name', {
                 required: 'Please input a tracker name',
               })}
-              className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+              className="focus:border-violet block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center text-xl placeholder-slate-400 focus:ring-0"
               type="text"
               id="name"
             />
           </div>
           <div className="mt-4">
-            <label className="block font-semibold">Participants</label>
-            <div>
+            <label className="block font-semibold lowercase">
+              Participants
+            </label>
+            <div className="mt-4 text-center">
               <p>
-                {user.id} <span>(you)</span>
+                {user.id} <span className="italic">(you)</span>
               </p>
+              <p className="mt-2 font-medium">and</p>
             </div>
             <select
               {...register('partner', {
                 required: 'A partner is required to create a tracker',
               })}
-              className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
+              className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center lowercase placeholder-slate-400 focus:ring-0"
             >
               {allUsers
                 .filter((u) => u.id !== user.id)
@@ -87,8 +90,8 @@ export default function TrackersSubmitForm() {
             </select>
           </div>
           <div className="mt-6 flex justify-end">
-            <button className="rounded border-4 py-2 px-4 focus:outline-none focus:ring">
-              Create tracker
+            <button className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring">
+              Create
             </button>
           </div>
         </form>

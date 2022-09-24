@@ -17,11 +17,12 @@ export default function TrackerLayout({ children }) {
       {!error && !tracker && <div>Loading tracker information...</div>}
       {tracker && (
         <>
-          <h2 className="mt-8 text-2xl">{tracker.name}</h2>
-          <h3 className="mt-2">{tracker.id}</h3>
-          {tracker.users.map((user) => (
-            <p key={user}>{user}</p>
-          ))}
+          <h2 className="mt-4 text-2xl">{tracker.name}</h2>
+          {/* <div className="mt-2">
+            {tracker.users.map((user) => (
+              <p key={user}>{user}</p>
+            ))}
+          </div> */}
           <nav className="mt-4">
             <ul className="flex">
               <li className="flex">

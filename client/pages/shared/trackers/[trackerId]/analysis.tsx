@@ -12,6 +12,7 @@ import {
 import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
 import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
+import { ChangeEvent } from 'react';
 
 type Inputs = {
   from: string;
@@ -47,54 +48,64 @@ export default function TrackerAnalysis() {
     mutate(`${trackerId}.analysis`);
   };
 
-  function handlePresetClick(presetFn) {
-    const { from, to } = presetFn();
+  function handlePresetSelect(e: ChangeEvent<HTMLSelectElement>) {
+    const preset = e.target.value;
+    const { from, to } = dateRanges[preset].presetFn();
     setValue('from', from);
     setValue('to', to);
   }
 
   return (
     <TrackerLayout>
-      <form
-        className="mt-4 border-4 p-6"
-        onSubmit={handleSubmit(submitCallback)}
-      >
-        <div className="mt-4">
-          <label className="block font-semibold" htmlFor="dateFrom">
+      <form className="mt-4" onSubmit={handleSubmit(submitCallback)}>
+        <h3 className="text-lg font-bold lowercase">Analyze transactions</h3>
+        <div className="mt-3">
+          <label className="block font-semibold lowercase text-slate-600">
+            date preset
+          </label>
+          <select
+            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center lowercase placeholder-slate-400 focus:ring-0"
+            onChange={handlePresetSelect}
+          >
+            {Object.entries(dateRanges).map(([preset, { name }]) => (
+              <option key={preset} value={preset}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mt-5">
+          <label
+            className="block font-semibold lowercase text-slate-600"
+            htmlFor="dateFrom"
+          >
             From
           </label>
           <input
             {...register('from', { required: 'Please input a date' })}
-            className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center placeholder-slate-400 focus:ring-0"
             type="date"
             id="dateFrom"
           />
         </div>
-        <div className="mt-4">
-          <label className="block font-semibold" htmlFor="dateTo">
+        <div className="mt-5">
+          <label
+            className="block font-semibold lowercase text-slate-600"
+            htmlFor="dateTo"
+          >
             To
           </label>
           <input
             {...register('to', { required: 'Please input a date' })}
-            className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center placeholder-slate-400 focus:ring-0"
             type="date"
             id="dateTo"
           />
         </div>
-        <div className="mt-4">
-          {Object.entries(dateRanges).map(([preset, { name, presetFn }]) => (
-            <button
-              onClick={() => handlePresetClick(presetFn)}
-              key={preset}
-              className="mr-2 rounded border-2 border-indigo-300 py-2 px-4 text-sm hover:border-indigo-700 focus:outline-none focus:ring"
-            >
-              {name}
-            </button>
-          ))}
-        </div>
+
         <div className="mt-4 flex justify-end">
           <button
-            className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
+            className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring"
             type="submit"
           >
             Get details

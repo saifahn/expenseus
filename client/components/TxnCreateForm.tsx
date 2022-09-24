@@ -1,4 +1,6 @@
 import { useUserContext } from 'context/user';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 import { plainDateISONowString } from 'utils/dates';
@@ -19,6 +21,7 @@ async function createTransaction(data: TxnFormInputs) {
 
 export default function TxnCreateForm() {
   const { user } = useUserContext();
+  const router = useRouter();
   const { mutate } = useSWRConfig();
   const { register, handleSubmit, setValue } = useForm<TxnFormInputs>({
     shouldUseNativeValidation: true,
@@ -48,9 +51,14 @@ export default function TxnCreateForm() {
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-4 flex justify-end">
-        <button className="rounded bg-indigo-500 py-2 px-4 font-bold text-white hover:bg-indigo-700 focus:outline-none focus:ring">
-          Create transaction
+      <div className="mt-5 flex justify-between">
+        <Link href="/personal">
+          <a className="rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring">
+            Close
+          </a>
+        </Link>
+        <button className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring">
+          Create
         </button>
       </div>
     </TxnFormBase>

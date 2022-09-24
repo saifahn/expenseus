@@ -44,6 +44,7 @@ export default function TxnFormBase({
 }: Props) {
   return (
     <form
+      className="bg-white py-3"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit();

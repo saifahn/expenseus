@@ -1,5 +1,5 @@
 import { ChangeEvent } from 'react';
-import { UseFormRegister } from 'react-hook-form';
+import { UseFormRegister, UseFormSetValue } from 'react-hook-form';
 import { dateRanges } from 'utils/dates';
 
 export type AnalysisFormInputs = {
@@ -10,14 +10,21 @@ export type AnalysisFormInputs = {
 type Props = {
   register: UseFormRegister<AnalysisFormInputs>;
   onSubmit: () => void;
-  onPresetSelect: (e: ChangeEvent<HTMLSelectElement>) => void;
+  setValue: UseFormSetValue<AnalysisFormInputs>;
 };
 
 export default function AnalysisFormBase({
   register,
   onSubmit,
-  onPresetSelect,
+  setValue,
 }: Props) {
+  function handlePresetSelect(e: ChangeEvent<HTMLSelectElement>) {
+    const preset = e.target.value;
+    const { from, to } = dateRanges[preset].presetFn();
+    setValue('from', from);
+    setValue('to', to);
+  }
+
   return (
     <form
       className="bg-white py-3"
@@ -33,7 +40,7 @@ export default function AnalysisFormBase({
         </label>
         <select
           className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center lowercase placeholder-slate-400 focus:ring-0"
-          onChange={onPresetSelect}
+          onChange={handlePresetSelect}
         >
           {Object.entries(dateRanges).map(([preset, { name }]) => (
             <option key={preset} value={preset}>

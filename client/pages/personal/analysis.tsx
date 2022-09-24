@@ -12,7 +12,7 @@ import {
   totalsByMainCategory,
   totalsBySubCategory,
 } from 'utils/analysis';
-import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
+import { plainDateStringToEpochSec, presets } from 'utils/dates';
 
 type Inputs = {
   from: string;
@@ -47,19 +47,12 @@ export default function PersonalAnalysis() {
     mutate('personal.analysis');
   };
 
-  function handlePresetSelect(e) {
-    const preset = e.target.value;
-    const { from, to } = dateRanges[preset].presetFn();
-    setValue('from', from);
-    setValue('to', to);
-  }
-
   return (
     <PersonalLayout>
       <AnalysisFormBase
         register={register}
         onSubmit={handleSubmit(submitCallback)}
-        onPresetSelect={handlePresetSelect}
+        setValue={setValue}
       />
       <div className="mt-6">
         {error && <div>Failed to load details</div>}

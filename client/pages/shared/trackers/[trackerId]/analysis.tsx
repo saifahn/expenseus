@@ -9,10 +9,9 @@ import {
   totalsByMainCategory,
   totalsBySubCategory,
 } from 'utils/analysis';
-import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
+import { plainDateStringToEpochSec, presets } from 'utils/dates';
 import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
-import { ChangeEvent } from 'react';
 import AnalysisFormBase from 'components/AnalysisFormBase';
 
 type Inputs = {
@@ -49,19 +48,12 @@ export default function TrackerAnalysis() {
     mutate(`${trackerId}.analysis`);
   };
 
-  function handlePresetSelect(e: ChangeEvent<HTMLSelectElement>) {
-    const preset = e.target.value;
-    const { from, to } = dateRanges[preset].presetFn();
-    setValue('from', from);
-    setValue('to', to);
-  }
-
   return (
     <TrackerLayout>
       <AnalysisFormBase
         register={register}
         onSubmit={handleSubmit(submitCallback)}
-        onPresetSelect={handlePresetSelect}
+        setValue={setValue}
       />
       <div className="mt-6">
         {error && <div>Failed to load details</div>}

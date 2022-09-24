@@ -5,7 +5,7 @@ import useSWR from 'swr';
 import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
 import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
-import { formatDateForTxnCard } from 'pages';
+import { formatDateForTxnCard } from 'utils/dates';
 
 type TxnOneProps = {
   txn: Transaction;
@@ -23,7 +23,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
       onClick={() => onTxnClick(txn)}
     >
       <div className="flex items-center">
-        <div className="mr-4 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xl">
+        <div className="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xl">
           {emoji}
         </div>
         <div className="flex flex-grow">

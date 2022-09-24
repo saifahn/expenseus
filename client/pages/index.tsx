@@ -60,18 +60,16 @@ export default function Home() {
 
 export function formatDateForTxnCard(date: number) {
   const currentYear = Temporal.Now.zonedDateTimeISO('UTC').year;
-  return new Date(epochSecToLocaleString(date)).toLocaleDateString(
-    ['en-GB', 'ja-JP'],
-    {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      // should be able to assume that dates without a year are from current year
-      ...(epochSecToUTCYear(date) !== currentYear && {
-        year: 'numeric',
-      }),
-    },
-  );
+  // the date is stored as a epoch seconds, Date constructor takes milliseconds
+  return new Date(date * 1000).toLocaleDateString(['en-GB', 'ja-JP'], {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    // should be able to assume that dates without a year are from current year
+    ...(epochSecToUTCYear(date) !== currentYear && {
+      year: 'numeric',
+    }),
+  });
 }
 
 function transactionCard(txn: Transaction | SharedTxn) {

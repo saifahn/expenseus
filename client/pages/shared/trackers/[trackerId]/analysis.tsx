@@ -1,10 +1,6 @@
 import TrackerLayout from 'components/LayoutTracker';
 import { fetcher } from 'config/fetcher';
-import {
-  mainCategories,
-  mainCategoryKeys,
-  subcategories,
-} from 'data/categories';
+import { mainCategories, subcategories } from 'data/categories';
 import { useRouter } from 'next/router';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
@@ -13,9 +9,10 @@ import {
   totalsByMainCategory,
   totalsBySubCategory,
 } from 'utils/analysis';
-import { dateRanges, plainDateStringToEpochSec, presets } from 'utils/dates';
+import { plainDateStringToEpochSec, presets } from 'utils/dates';
 import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
+import AnalysisFormBase from 'components/AnalysisFormBase';
 
 type Inputs = {
   from: string;
@@ -51,60 +48,13 @@ export default function TrackerAnalysis() {
     mutate(`${trackerId}.analysis`);
   };
 
-  function handlePresetClick(presetFn) {
-    const { from, to } = presetFn();
-    setValue('from', from);
-    setValue('to', to);
-  }
-
   return (
     <TrackerLayout>
-      <form
-        className="mt-4 border-4 p-6"
+      <AnalysisFormBase
+        register={register}
         onSubmit={handleSubmit(submitCallback)}
-      >
-        <div className="mt-4">
-          <label className="block font-semibold" htmlFor="dateFrom">
-            From
-          </label>
-          <input
-            {...register('from', { required: 'Please input a date' })}
-            className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-            type="date"
-            id="dateFrom"
-          />
-        </div>
-        <div className="mt-4">
-          <label className="block font-semibold" htmlFor="dateTo">
-            To
-          </label>
-          <input
-            {...register('to', { required: 'Please input a date' })}
-            className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-            type="date"
-            id="dateTo"
-          />
-        </div>
-        <div className="mt-4">
-          {Object.entries(dateRanges).map(([preset, { name, presetFn }]) => (
-            <button
-              onClick={() => handlePresetClick(presetFn)}
-              key={preset}
-              className="mr-2 rounded border-2 border-indigo-300 py-2 px-4 text-sm hover:border-indigo-700 focus:outline-none focus:ring"
-            >
-              {name}
-            </button>
-          ))}
-        </div>
-        <div className="mt-4 flex justify-end">
-          <button
-            className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
-            type="submit"
-          >
-            Get details
-          </button>
-        </div>
-      </form>
+        setValue={setValue}
+      />
       <div className="mt-6">
         {error && <div>Failed to load details</div>}
         {txns === null && <div>Loading</div>}

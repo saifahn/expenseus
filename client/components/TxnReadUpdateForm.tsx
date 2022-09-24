@@ -70,25 +70,25 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-4 flex">
+      <div className="mt-6 flex">
         <div className="flex-grow">
           <button
-            className="rounded bg-red-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-red-300"
+            className="rounded bg-red-500 py-2 px-4 font-medium lowercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-red-300"
             onClick={handleDelete}
           >
-            Delete transaction
+            Delete
           </button>
         </div>
         {formState.isDirty ? (
           <>
             <button
-              className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
+              className="rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring"
               onClick={onCancel}
             >
               Cancel
             </button>
             <button
-              className="rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring"
+              className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring"
               type="submit"
             >
               Apply
@@ -96,7 +96,7 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
           </>
         ) : (
           <button
-            className="rounded py-2 px-4 text-sm font-bold uppercase hover:bg-slate-200 focus:outline-none focus:ring"
+            className="rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring"
             onClick={onCancel}
           >
             Close

@@ -3,8 +3,7 @@ import Link from 'next/link';
 export default function SharedLayout({ children }) {
   return (
     <>
-      <h1 className="text-4xl">Shared</h1>
-      <nav className="mt-4">
+      {/* <nav className="mt-4">
         <ul className="flex">
           <li className="flex">
             <Link href="/shared">
@@ -17,7 +16,7 @@ export default function SharedLayout({ children }) {
             </Link>
           </li>
         </ul>
-      </nav>
+      </nav> */}
       <section className="mt-4">{children}</section>
     </>
   );

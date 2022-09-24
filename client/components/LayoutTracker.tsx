@@ -17,12 +17,19 @@ export default function TrackerLayout({ children }) {
       {!error && !tracker && <div>Loading tracker information...</div>}
       {tracker && (
         <>
-          <h2 className="mt-8 text-2xl">{tracker.name}</h2>
-          <h3 className="mt-2">{tracker.id}</h3>
-          {tracker.users.map((user) => (
-            <p key={user}>{user}</p>
-          ))}
-          <nav className="mt-4">
+          <Link href={`/shared/trackers/${trackerId}`}>
+            <a>
+              <h2 className="mt-4 text-2xl underline decoration-rose-300 decoration-2 hover:decoration-rose-500">
+                {tracker.name}
+              </h2>
+            </a>
+          </Link>
+          {/* <div className="mt-2">
+            {tracker.users.map((user) => (
+              <p key={user}>{user}</p>
+            ))}
+          </div> */}
+          {/* <nav className="mt-4">
             <ul className="flex">
               <li className="flex">
                 <Link href={`/shared/trackers/${trackerId}`}>
@@ -40,7 +47,7 @@ export default function TrackerLayout({ children }) {
                 </Link>
               </li>
             </ul>
-          </nav>
+          </nav> */}
           {children}
         </>
       )}

@@ -44,28 +44,18 @@ export default function TxnFormBase({
 }: Props) {
   return (
     <form
-      className="border-4 p-6"
+      className="bg-white py-3"
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit();
       }}
     >
-      {title && <h3 className="text-lg font-semibold">{title}</h3>}
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="location">
-          Location
-        </label>
-        <input
-          {...register('location', {
-            required: 'Please input a location',
-          })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          id="location"
-          type="text"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="amount">
+      {title && <h3 className="text-lg font-bold lowercase">{title}</h3>}
+      <div className="mt-3">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="amount"
+        >
           Amount
         </label>
         <input
@@ -73,29 +63,52 @@ export default function TxnFormBase({
             min: { value: 1, message: 'Please input a positive amount' },
             required: 'Please input an amount',
           })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          className="focus:border-violet block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center text-xl placeholder-slate-400 focus:ring-0"
           id="amount"
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
+          placeholder="93872円"
         />
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="date">
+      <div className="mt-5">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="location"
+        >
+          Description
+        </label>
+        <input
+          {...register('location', {
+            required: 'Please input a description',
+          })}
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
+          id="location"
+          type="text"
+          placeholder="what and where?"
+        />
+      </div>
+      <div className="mt-5">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="date"
+        >
           Date
         </label>
         <input
           {...register('date', { required: 'Please input a date' })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
           type="date"
           id="date"
         />
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold">Category</label>
+      <div className="mt-5">
+        <label className="block font-semibold lowercase text-slate-600">
+          Category
+        </label>
         <select
           {...register('category')}
-          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 lowercase placeholder-slate-400 focus:ring-0"
         >
           {mainCategoryKeys.map((mainKey) => (
             <optgroup key={mainKey} label={mainCategories[mainKey].en_US}>
@@ -108,15 +121,19 @@ export default function TxnFormBase({
           ))}
         </select>
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="details">
+      <div className="mt-5">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="details"
+        >
           Details
         </label>
         <input
           {...register('details')}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
           id="details"
           type="text"
+          placeholder="any other details?"
         />
       </div>
       {children}

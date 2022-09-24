@@ -1,7 +1,7 @@
 import TrackerLayout from 'components/LayoutTracker';
 import { useRouter } from 'next/router';
 import useSWR, { mutate } from 'swr';
-import { SharedTxn } from '.';
+import { SharedTxn, SharedTxnOne } from '.';
 
 type UnsettledResponse = {
   transactions: SharedTxn[];
@@ -51,8 +51,11 @@ export default function UnsettledTxnPage() {
             {response.debtor} owes {response.debtee} {response.amountOwed} for{' '}
             {response.transactions.length} transactions
           </p>
+          {response.transactions.map((txn) => (
+            <SharedTxnOne txn={txn} key={txn.id} />
+          ))}
           <button
-            className="mt-4 rounded bg-indigo-500 py-2 px-4 text-sm font-bold uppercase text-white hover:bg-indigo-700 focus:outline-none focus:ring active:bg-blue-300"
+            className="mt-4 rounded bg-violet-100 py-2 px-4 font-medium lowercase hover:bg-violet-200 focus:outline-none focus:ring active:bg-violet-300"
             onClick={handleSettleUp}
           >
             Settle up

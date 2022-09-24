@@ -29,17 +29,25 @@ export interface SharedTxn {
  */
 type SharedTxnOneProps = {
   txn: SharedTxn;
-  onTxnClick: (txn: SharedTxn) => void;
+  onTxnClick?: (txn: SharedTxn) => void;
 };
 
-function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
+export function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
   const date = formatDateForTxnCard(txn.date);
+  function handleClick(txn: SharedTxn) {
+    if (onTxnClick) {
+      onTxnClick(txn);
+    }
+    return;
+  }
 
   return (
     <article
-      className="mt-3 cursor-pointer rounded-lg border-2 border-slate-200 p-3 hover:bg-slate-200 active:bg-slate-300"
+      className={`mt-3  rounded-lg border-2 border-slate-200 p-3 ${
+        onTxnClick && 'cursor-pointer hover:bg-slate-200 active:bg-slate-300'
+      }`}
       key={txn.id}
-      onClick={() => onTxnClick(txn)}
+      onClick={() => handleClick(txn)}
     >
       <div className="flex items-center">
         <div className="mr-4 h-10 w-10 flex-shrink-0 rounded-md bg-slate-300"></div>

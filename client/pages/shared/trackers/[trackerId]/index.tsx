@@ -51,13 +51,13 @@ function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
               {categoryNameFromKeyEN(txn.category)}
             </p>
             {txn.details && <p>{txn.details}</p>}
+            <p className="mt-1 text-sm text-slate-400">{txn.payer}</p>
           </div>
           <div className="flex flex-shrink-0 flex-col items-end">
             <p className="text-lg font-medium text-slate-600">
               {txn.amount}
               <span className="ml-1 text-xs">円</span>
             </p>
-            <p className="text-sm text-slate-400">{txn.payer}</p>
           </div>
         </div>
       </div>

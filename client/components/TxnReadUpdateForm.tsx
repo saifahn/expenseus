@@ -70,7 +70,7 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-5 flex">
+      <div className="mt-6 flex">
         <div className="flex-grow">
           <button
             className="rounded bg-red-500 py-2 px-4 font-medium lowercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-red-300"

@@ -63,7 +63,7 @@ export default function SharedTxnFormBase({
         setHasCustomSplit(false);
         onSubmit();
       }}
-      className=""
+      className="bg-white py-3"
     >
       {title && <h3 className="text-lg font-bold lowercase">{title}</h3>}
       <div className="mt-3">
@@ -119,14 +119,17 @@ export default function SharedTxnFormBase({
         />
       </div>
       <div className="mt-4">
-        <label className="block font-semibold" htmlFor="payer">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="payer"
+        >
           Payer
         </label>
         <select
           {...register('payer', {
             required: 'Please select a payer',
           })}
-          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 lowercase placeholder-slate-400 focus:ring-0"
         >
           {tracker.users.map((userId) => (
             <option key={userId} value={userId}>

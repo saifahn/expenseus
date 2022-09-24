@@ -23,7 +23,7 @@ export default function TrackerLayout({ children }) {
               <p key={user}>{user}</p>
             ))}
           </div> */}
-          <nav className="mt-4">
+          {/* <nav className="mt-4">
             <ul className="flex">
               <li className="flex">
                 <Link href={`/shared/trackers/${trackerId}`}>
@@ -41,7 +41,7 @@ export default function TrackerLayout({ children }) {
                 </Link>
               </li>
             </ul>
-          </nav>
+          </nav> */}
           {children}
         </>
       )}

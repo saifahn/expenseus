@@ -14,6 +14,11 @@ export default function SharedIndex() {
 
   return (
     <SharedLayout>
+      <Link href="/shared/trackers/create">
+        <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
+          Create new tracker +
+        </a>
+      </Link>
       {error && <div>Failed to load: {error}</div>}
       {data === null && <div>Loading...</div>}
       {data && data.length === 0 && <div>You are not part of any trackers</div>}
@@ -32,11 +37,6 @@ export default function SharedIndex() {
             </a>
           </Link>
         ))}
-      <Link href="/shared/trackers/create">
-        <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
-          Create new tracker +
-        </a>
-      </Link>
     </SharedLayout>
   );
 }

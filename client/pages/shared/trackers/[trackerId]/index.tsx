@@ -2,6 +2,7 @@ import TrackerLayout from 'components/LayoutTracker';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
 import { categoryNameFromKeyEN, SubcategoryKey } from 'data/categories';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import useSWR, { mutate } from 'swr';
@@ -65,6 +66,11 @@ export default function TrackerPage() {
 
   return (
     <TrackerLayout>
+      <Link href={`/shared/trackers/${trackerId}/create-txn`}>
+        <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
+          Create new transaction +
+        </a>
+      </Link>
       {selectedTxn ? (
         <div className="mt-4">
           <SharedTxnReadUpdateForm
@@ -77,11 +83,7 @@ export default function TrackerPage() {
       ) : (
         tracker && (
           <>
-            <div className="mt-4">
-              <SharedTxnCreateForm tracker={tracker} />
-            </div>
-            <div className="mt-8">
-              <h3 className="mt-4 text-2xl">Transactions</h3>
+            <div className="mt-6">
               {sharedTxnsError && <div>Failed to load</div>}
               {sharedTxns === null && (
                 <div>Loading list of transactions...</div>

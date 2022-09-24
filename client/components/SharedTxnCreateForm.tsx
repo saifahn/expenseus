@@ -1,4 +1,5 @@
 import { useUserContext } from 'context/user';
+import Link from 'next/link';
 import { Tracker } from 'pages/shared/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
@@ -69,7 +70,12 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-4 flex justify-end">
+      <div className="mt-5 flex justify-end">
+        <Link href={`/shared/trackers/${tracker.id}`}>
+          <a className="mr-2 rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring">
+            Close
+          </a>
+        </Link>
         <button className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring">
           Create
         </button>

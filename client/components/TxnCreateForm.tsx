@@ -51,9 +51,9 @@ export default function TxnCreateForm() {
       register={register}
       onSubmit={handleSubmit(submitCallback)}
     >
-      <div className="mt-5 flex justify-between">
+      <div className="mt-5 flex justify-end">
         <Link href="/personal">
-          <a className="rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring">
+          <a className="mr-2 rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring">
             Close
           </a>
         </Link>

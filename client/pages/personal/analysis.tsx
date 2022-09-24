@@ -54,17 +54,22 @@ export default function PersonalAnalysis() {
         onSubmit={handleSubmit(submitCallback)}
         setValue={setValue}
       />
-      <div className="mt-6">
+      <div className="my-6">
         {error && <div>Failed to load details</div>}
         {txns === null && <div>Loading</div>}
         {txns?.length === 0 && <div>No transactions for that time period</div>}
         {txns?.length > 0 && (
           <div>
-            <div>
-              <h3 className="text-xl font-medium">In this time period:</h3>
+            <div className="h-screen">{BarChart(txns)}</div>
+            <div className="mt-4">
               <p>
-                You have {txns.length} transactions, with a total cost of{' '}
-                {calculateTotal(txns)}
+                In the period between {getValues().from} and {getValues().to},
+                you have{' '}
+                <span className="font-semibold">
+                  {txns.length} transactions
+                </span>
+                , with a total cost of{' '}
+                <span className="font-semibold">{calculateTotal(txns)}</span>.
               </p>
               <p className="mt-4 text-lg font-medium">Main categories:</p>
               <ul className="list-inside list-disc">
@@ -85,7 +90,6 @@ export default function PersonalAnalysis() {
                 ))}
               </ul>
             </div>
-            <div className="h-screen">{BarChart(txns)}</div>
           </div>
         )}
       </div>

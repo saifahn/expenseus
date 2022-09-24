@@ -2,6 +2,7 @@ import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { Transaction } from 'types/Transaction';
 import { ResponsiveBar } from '@nivo/bar';
 import {
+  categoryColours,
   MainCategoryKey,
   mainCategoryKeys,
   subcategories,
@@ -46,6 +47,7 @@ export function BarChart(txns: SharedTxn[] | Transaction[]) {
         right: 50,
         left: 50,
       }}
+      colors={categoryColours}
       axisBottom={{
         legend: 'month',
         legendPosition: 'middle',

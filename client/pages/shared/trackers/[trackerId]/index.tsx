@@ -1,9 +1,13 @@
 import TrackerLayout from 'components/LayoutTracker';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
-import { categoryNameFromKeyEN, SubcategoryKey } from 'data/categories';
+import {
+  categoryNameFromKeyEN,
+  getEmojiForTxnCard,
+  SubcategoryKey,
+} from 'data/categories';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { formatDateForTxnCard } from 'pages';
+import { formatDateForTxnCard } from 'utils/dates';
 import React, { useState } from 'react';
 import useSWR from 'swr';
 import { Tracker } from '..';
@@ -33,6 +37,7 @@ type SharedTxnOneProps = {
 };
 
 export function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
+  const emoji = getEmojiForTxnCard(txn.category);
   const date = formatDateForTxnCard(txn.date);
   function handleClick(txn: SharedTxn) {
     if (onTxnClick) {
@@ -50,7 +55,9 @@ export function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
       onClick={() => handleClick(txn)}
     >
       <div className="flex items-center">
-        <div className="mr-4 h-10 w-10 flex-shrink-0 rounded-md bg-slate-300"></div>
+        <div className="mx-2 h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xl">
+          {emoji}
+        </div>
         <div className="flex flex-grow">
           <div className="flex flex-grow flex-col">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>

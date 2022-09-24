@@ -111,7 +111,10 @@ export default function TxnFormBase({
           className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 lowercase placeholder-slate-400 focus:ring-0"
         >
           {mainCategoryKeys.map((mainKey) => (
-            <optgroup key={mainKey} label={mainCategories[mainKey].en_US}>
+            <optgroup
+              key={mainKey}
+              label={`${mainCategories[mainKey].emoji} ${mainCategories[mainKey].en_US}`}
+            >
               {categories[mainKey].map((subKey) => (
                 <option key={subKey} value={subKey}>
                   {categoryNameFromKeyEN(subKey)}

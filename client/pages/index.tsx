@@ -2,14 +2,11 @@ import { useUserContext } from 'context/user';
 import useSWR from 'swr';
 import { Transaction } from 'types/Transaction';
 import { Temporal } from 'temporal-polyfill';
-import {
-  epochSecToLocaleString,
-  epochSecToUTCYear,
-  plainDateStringToEpochSec,
-} from 'utils/dates';
+import { epochSecToLocaleString, plainDateStringToEpochSec } from 'utils/dates';
 import { SharedTxn } from './shared/trackers/[trackerId]';
 import { calculatePersonalTotal } from 'utils/analysis';
-import { categoryNameFromKeyEN } from 'data/categories';
+import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
+import { formatDateForTxnCard } from 'utils/dates';
 
 type AllTxnsResponse = {
   transactions: Transaction[];
@@ -58,21 +55,8 @@ export default function Home() {
   );
 }
 
-export function formatDateForTxnCard(date: number) {
-  const currentYear = Temporal.Now.zonedDateTimeISO('UTC').year;
-  // the date is stored as a epoch seconds, Date constructor takes milliseconds
-  return new Date(date * 1000).toLocaleDateString(['en-GB', 'ja-JP'], {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    // should be able to assume that dates without a year are from current year
-    ...(epochSecToUTCYear(date) !== currentYear && {
-      year: 'numeric',
-    }),
-  });
-}
-
 function transactionCard(txn: Transaction | SharedTxn) {
+  const emoji = getEmojiForTxnCard(txn.category);
   const date = formatDateForTxnCard(txn.date);
 
   return (
@@ -81,7 +65,9 @@ function transactionCard(txn: Transaction | SharedTxn) {
       key={txn.id}
     >
       <div className="flex items-center">
-        <div className="mr-4 h-10 w-10 flex-shrink-0 rounded-md bg-slate-300"></div>
+        <div className="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xl">
+          {emoji}
+        </div>
         <div className="flex flex-grow">
           <div className="flex flex-grow flex-col">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>

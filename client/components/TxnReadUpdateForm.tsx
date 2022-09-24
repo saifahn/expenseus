@@ -82,7 +82,7 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
         {formState.isDirty ? (
           <>
             <button
-              className="rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring"
+              className="mr-3 rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring"
               onClick={onCancel}
             >
               Cancel

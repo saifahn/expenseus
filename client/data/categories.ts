@@ -1,56 +1,99 @@
 export const mainCategories = {
   unspecified: {
     en_US: 'Unspecified',
+    emoji: '🏷',
+    colour: '#a7f3d0', // emerald 200
   },
   food: {
     en_US: 'Food & Drink',
+    emoji: '🍻',
+    colour: '#ddd6fe', // violet 200
   },
   daily: {
     en_US: 'Daily',
+    emoji: '🧽',
+    colour: '#fecdd3', // rose 200
   },
   transport: {
     en_US: 'Transport',
+    emoji: '🚆',
+    colour: '#6ee7b7', // emerald 300
   },
   utilities: {
     en_US: 'Utilities',
+    emoji: '💡',
+    colour: '#c4b5fd', // violet 300
   },
   entertainment: {
     en_US: 'Entertainment',
+    emoji: '🎥',
+    colour: '#fda4af', // rose 300
   },
   clothing: {
     en_US: 'Clothing',
+    emoji: '👚',
+    colour: '#34d399', // emerald 400
   },
   beauty: {
     en_US: 'Beauty',
+    emoji: '💇',
+    colour: '#a78bfa', // violet 400
   },
   travel: {
     en_US: 'Travel',
+    emoji: '✈️',
+    colour: '#fb7185', // rose 400
   },
   home: {
     en_US: 'Home',
+    emoji: '🍴',
+    colour: '#10b981', // emerald 500
   },
   medical: {
     en_US: 'Medical',
+    emoji: '🩺',
+    colour: '#8b5cf6', // violet 500
   },
   social: {
     en_US: 'Social',
+    emoji: '🫂',
+    colour: '#f43f5e', // rose 500
   },
   education: {
     en_US: 'Education',
+    emoji: '🎓',
+    colour: '#059669', // emerald 600
   },
   housing: {
     en_US: 'Housing',
+    emoji: '🏠',
+    colour: '#7c3aed', // violet 600
   },
   insurance: {
     en_US: 'Insurance',
+    emoji: '🛡️',
+    colour: '#e11d48', // rose 600
   },
   car: {
     en_US: 'Car',
+    emoji: '🚗',
+    colour: '#047857', // emerald 700
   },
   other: {
     en_US: 'Other',
+    emoji: '🔸',
+    colour: '#6d28d9', // violet 700
   },
 };
+
+export function getEmojiForTxnCard(key: SubcategoryKey) {
+  const mc = subcategories[key].mainCategory;
+  return mainCategories[mc].emoji;
+}
+
+export const categoryColours = Object.values(mainCategories).map(
+  (item) => item.colour,
+);
 
 export type MainCategoryKey = keyof typeof mainCategories;
 

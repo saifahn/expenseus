@@ -4,8 +4,8 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
-import { categoryNameFromKeyEN } from 'data/categories';
-import { formatDateForTxnCard } from 'pages';
+import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
+import { formatDateForTxnCard } from 'utils/dates';
 
 type TxnOneProps = {
   txn: Transaction;
@@ -13,6 +13,7 @@ type TxnOneProps = {
 };
 
 function TxnOne({ txn, onTxnClick }: TxnOneProps) {
+  const emoji = getEmojiForTxnCard(txn.category);
   const date = formatDateForTxnCard(txn.date);
 
   return (
@@ -22,7 +23,9 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
       onClick={() => onTxnClick(txn)}
     >
       <div className="flex items-center">
-        <div className="mr-4 h-10 w-10 flex-shrink-0 rounded-md bg-slate-300"></div>
+        <div className="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xl">
+          {emoji}
+        </div>
         <div className="flex flex-grow">
           <div className="flex flex-grow flex-col">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>

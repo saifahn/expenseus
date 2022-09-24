@@ -17,7 +17,13 @@ export default function TrackerLayout({ children }) {
       {!error && !tracker && <div>Loading tracker information...</div>}
       {tracker && (
         <>
-          <h2 className="mt-4 text-2xl">{tracker.name}</h2>
+          <Link href={`/shared/trackers/${trackerId}`}>
+            <a>
+              <h2 className="mt-4 text-2xl underline decoration-rose-300 decoration-2 underline-offset-4 hover:decoration-rose-500">
+                {tracker.name}
+              </h2>
+            </a>
+          </Link>
           {/* <div className="mt-2">
             {tracker.users.map((user) => (
               <p key={user}>{user}</p>

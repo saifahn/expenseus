@@ -16,7 +16,7 @@ export default function SharedIndex() {
     <SharedLayout>
       <Link href="/shared/trackers/create">
         <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
-          Create new tracker +
+          ➕ Create new tracker
         </a>
       </Link>
       {error && <div>Failed to load: {error}</div>}

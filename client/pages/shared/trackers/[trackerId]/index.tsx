@@ -1,5 +1,4 @@
 import TrackerLayout from 'components/LayoutTracker';
-import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
 import { categoryNameFromKeyEN, SubcategoryKey } from 'data/categories';
 import Link from 'next/link';
@@ -68,9 +67,21 @@ export default function TrackerPage() {
     <TrackerLayout>
       <Link href={`/shared/trackers/${trackerId}/create-txn`}>
         <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
-          Create new transaction +
+          ➕ Create new transaction
         </a>
       </Link>
+      <div className="mt-2 flex">
+        <Link href={`/shared/trackers/${trackerId}/unsettled-txns`}>
+          <a className="mr-4 w-1/2 rounded-lg bg-rose-50 py-3 px-4 font-medium lowercase text-black hover:bg-rose-100  active:bg-rose-200">
+            See unsettled
+          </a>
+        </Link>
+        <Link href={`/shared/trackers/${trackerId}/analysis`}>
+          <a className="w-1/2 rounded-lg bg-emerald-50 py-3 px-4 font-medium lowercase text-black hover:bg-emerald-100 active:bg-emerald-200">
+            🔎 Analyze
+          </a>
+        </Link>
+      </div>
       {selectedTxn ? (
         <div className="mt-4">
           <SharedTxnReadUpdateForm

@@ -26,7 +26,7 @@ export default function Layout({ children }) {
                 <Link href="/">
                   <a
                     className={
-                      path === '/' && 'border-b-4 border-b-violet-500 pb-1'
+                      path === '/' ? 'border-b-4 border-b-violet-500 pb-1' : ''
                     }
                   >
                     Home
@@ -37,8 +37,9 @@ export default function Layout({ children }) {
                 <Link href="/personal">
                   <a
                     className={
-                      basePath === 'personal' &&
-                      'border-b-4 border-b-violet-500 pb-1'
+                      basePath === 'personal'
+                        ? 'border-b-4 border-b-violet-500 pb-1'
+                        : ''
                     }
                   >
                     Personal
@@ -49,8 +50,9 @@ export default function Layout({ children }) {
                 <Link href="/shared">
                   <a
                     className={
-                      basePath === 'shared' &&
-                      'border-b-4 border-b-violet-500 pb-1'
+                      basePath === 'shared'
+                        ? 'border-b-4 border-b-violet-500 pb-1'
+                        : ''
                     }
                   >
                     Shared

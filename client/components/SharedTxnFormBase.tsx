@@ -4,6 +4,7 @@ import {
   mainCategories,
   mainCategoryKeys,
   subcategories,
+  categoryNameFromKeyEN,
 } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
 import React, { useState } from 'react';
@@ -59,52 +60,60 @@ export default function SharedTxnFormBase({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        setHasCustomSplit(false);
         onSubmit();
       }}
-      className="border-4 p-6"
+      className=""
     >
-      {title && <h3 className="text-lg font-semibold">{title}</h3>}
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="location">
-          Location
-        </label>
-        <input
-          {...register('location', {
-            required: 'Please input a location',
-          })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
-          id="location"
-        />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="amount">
+      {title && <h3 className="text-lg font-bold lowercase">{title}</h3>}
+      <div className="mt-3">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="amount"
+        >
           Amount
         </label>
         <input
           {...register('amount', {
-            min: {
-              value: 1,
-              message: 'Please input a positive amount',
-            },
+            min: { value: 1, message: 'Please input a positive amount' },
             required: 'Please input an amount',
           })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          className="focus:border-violet block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 text-center text-xl placeholder-slate-400 focus:ring-0"
+          id="amount"
           type="text"
           inputMode="numeric"
           pattern="[0-9]*"
-          id="amount"
+          placeholder="93872円"
         />
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="date">
+      <div className="mt-5">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="location"
+        >
+          Description
+        </label>
+        <input
+          {...register('location', {
+            required: 'Please input a description',
+          })}
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
+          id="location"
+          type="text"
+          placeholder="what and where?"
+        />
+      </div>
+
+      <div className="mt-5">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="date"
+        >
           Date
         </label>
         <input
-          {...register('date', {
-            required: 'Please input a date',
-          })}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+          {...register('date', { required: 'Please input a date' })}
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
           type="date"
           id="date"
         />
@@ -126,57 +135,76 @@ export default function SharedTxnFormBase({
           ))}
         </select>
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="settled">
-          Settled?
+      <div className="mt-5">
+        <label className="block font-semibold lowercase text-slate-600">
+          Category
         </label>
-        <input {...register('settled')} type="checkbox" id="settled" />
-      </div>
-      <div className="mt-4">
-        <label className="block font-semibold">Category</label>
         <select
           {...register('category')}
-          className="mt-2 block rounded bg-white bg-clip-padding bg-no-repeat px-3 py-2 text-base font-normal text-gray-700 outline outline-1 transition ease-in-out focus:border-indigo-600 focus:bg-white focus:text-gray-700"
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 lowercase placeholder-slate-400 focus:ring-0"
         >
           {mainCategoryKeys.map((mainKey) => (
             <optgroup key={mainKey} label={mainCategories[mainKey].en_US}>
               {categories[mainKey].map((subKey) => (
                 <option key={subKey} value={subKey}>
-                  {subcategories[subKey].en_US}
+                  {categoryNameFromKeyEN(subKey)}
                 </option>
               ))}
             </optgroup>
           ))}
         </select>
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="details">
+      <div className="mt-5">
+        <label
+          className="block font-semibold lowercase text-slate-600"
+          htmlFor="details"
+        >
           Details
         </label>
         <input
           {...register('details')}
-          className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
-          type="text"
+          className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
           id="details"
+          type="text"
+          placeholder="any other details?"
         />
       </div>
-      <div className="mt-4">
-        <label className="block font-semibold" htmlFor="details">
-          Custom split?
+      <div className="mt-5 inline-flex items-center">
+        <input
+          {...register('settled')}
+          type="checkbox"
+          id="settled"
+          className="mr-2"
+        />
+        <label
+          className="font-semibold lowercase text-slate-600"
+          htmlFor="settled"
+        >
+          Transaction has been settled
         </label>
+      </div>
+      <div className="mt-5">
         <input
           type="checkbox"
           checked={hasCustomSplit}
           onChange={(e) => {
             setHasCustomSplit(e.target.checked);
           }}
+          className="mr-2"
+          id="customSplit"
         />
+        <label
+          className="font-semibold lowercase text-slate-600"
+          htmlFor="customSplit"
+        >
+          Custom split
+        </label>
       </div>
       {hasCustomSplit && (
-        <div className="mt-4">
+        <div className="mt-2">
           <input
             {...register('split')}
-            className="mt-2 w-full appearance-none rounded border py-2 px-3 leading-tight focus:outline-none focus:ring"
+            className="focus:border-violet mt-2 block w-full appearance-none border-0 border-b-2 border-slate-200 px-4 placeholder-slate-400 focus:ring-0"
             type="text"
           />
         </div>

@@ -36,7 +36,7 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
     shouldUseNativeValidation: true,
     defaultValues: {
       location: '',
-      amount: 0,
+      amount: null,
       date: plainDateISONowString(),
       settled: false,
       payer: user.id,
@@ -54,11 +54,12 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       createSharedTxn(data, tracker),
     );
     setValue('location', '');
-    setValue('amount', 0);
+    setValue('amount', null);
     setValue('settled', false);
     setValue('participants', '');
     setValue('category', 'unspecified.unspecified');
     setValue('details', '');
+    setValue('split', `${tracker.users[0]}:0.50,${tracker.users[1]}:0.50`);
   };
 
   return (
@@ -69,8 +70,8 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       onSubmit={handleSubmit(submitCallback)}
     >
       <div className="mt-4 flex justify-end">
-        <button className="rounded bg-indigo-500 py-2 px-4 font-bold text-white hover:bg-indigo-700 focus:outline-none focus:ring">
-          Create transaction
+        <button className="rounded bg-violet-500 py-2 px-4 font-medium lowercase text-white hover:bg-violet-700 focus:outline-none focus:ring">
+          Create
         </button>
       </div>
     </SharedTxnFormBase>

@@ -12,7 +12,7 @@ export const mainCategories = {
     en_US: 'Transport',
   },
   utilities: {
-    en_US: 'Daily',
+    en_US: 'Utilities',
   },
   entertainment: {
     en_US: 'Entertainment',

@@ -21,7 +21,7 @@ export default function Layout({ children }) {
           <div>Loading...</div>
         ) : (
           <nav className="mt-4">
-            <ul className="flex items-center font-medium lowercase">
+            <ul className="flex items-center text-lg font-medium lowercase">
               <li>
                 <Link href="/">
                   <a

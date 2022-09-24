@@ -51,7 +51,7 @@ export default function TxnCreateForm() {
     >
       <div className="mt-6 flex justify-end">
         <Link href="/personal">
-          <a className="mr-2 rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring">
+          <a className="mr-3 rounded py-2 px-4 font-medium lowercase hover:bg-slate-200 focus:outline-none focus:ring">
             Close
           </a>
         </Link>

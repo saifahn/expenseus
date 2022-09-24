@@ -3,9 +3,9 @@ import SharedTxnReadUpdateForm from 'components/SharedTxnReadUpdateForm';
 import { categoryNameFromKeyEN, SubcategoryKey } from 'data/categories';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { formatDateForTxnCard } from 'pages';
 import React, { useState } from 'react';
-import useSWR, { mutate } from 'swr';
-import { epochSecToLocaleString } from 'utils/dates';
+import useSWR from 'swr';
 import { Tracker } from '..';
 
 export interface SharedTxn {
@@ -33,21 +33,34 @@ type SharedTxnOneProps = {
 };
 
 function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
+  const date = formatDateForTxnCard(txn.date);
+
   return (
     <article
-      className="mt-4 cursor-pointer border-2 p-2 hover:bg-slate-200 active:bg-slate-300"
-      onClick={() => onTxnClick(txn)}
+      className="mt-3 cursor-pointer rounded-lg border-2 border-slate-200 p-3 hover:bg-slate-200 active:bg-slate-300"
       key={txn.id}
+      onClick={() => onTxnClick(txn)}
     >
-      <div className="flex justify-between">
-        <h3 className="text-lg">{txn.location}</h3>
+      <div className="flex items-center">
+        <div className="mr-4 h-10 w-10 flex-shrink-0 rounded-md bg-slate-300"></div>
+        <div className="flex flex-grow">
+          <div className="flex flex-grow flex-col">
+            <p className="text-lg font-semibold leading-5">{txn.location}</p>
+            <p className="mt-1 text-sm text-slate-500">{date}</p>
+            <p className="mt-1 lowercase">
+              {categoryNameFromKeyEN(txn.category)}
+            </p>
+            {txn.details && <p>{txn.details}</p>}
+          </div>
+          <div className="flex flex-shrink-0 flex-col items-end">
+            <p className="text-lg font-medium text-slate-600">
+              {txn.amount}
+              <span className="ml-1 text-xs">円</span>
+            </p>
+            <p className="text-sm text-slate-400">{txn.payer}</p>
+          </div>
+        </div>
       </div>
-      <p>
-        {txn.amount} paid by {txn.payer}
-      </p>
-      <p>{categoryNameFromKeyEN(txn.category)}</p>
-      <p>{epochSecToLocaleString(txn.date)}</p>
-      {txn.details && <p>{txn.details}</p>}
     </article>
   );
 }

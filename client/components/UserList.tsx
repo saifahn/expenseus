@@ -1,10 +1,10 @@
 import useSWR from 'swr';
 
-export interface User {
+export type User = {
   username: string;
   name: string;
   id: string;
-}
+};
 
 export default function UserList() {
   const { data: users, error } = useSWR<User[]>(
@@ -12,7 +12,7 @@ export default function UserList() {
   );
 
   return (
-    <section className="p-6 border-dotted border-4 border-indigo-800">
+    <section className="border-4 border-dotted border-indigo-800 p-6">
       <h2 className="text-2xl">Users</h2>
       {error && <div>Failed to load users</div>}
       {!error && !users && <div>Loading user information...</div>}
@@ -20,7 +20,7 @@ export default function UserList() {
         users.map((user) => {
           return (
             <article
-              className="p-4 mt-4 border-dotted border-2 border-pink-800"
+              className="mt-4 border-2 border-dotted border-pink-800 p-4"
               key={user.id}
             >
               <h3 className="text-xl">{user.username}</h3>

@@ -10,6 +10,11 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 // TODO: load from env variable
 const endpoint = 'http://localhost:8000';
 
+export type ddbWithConfig = {
+  ddb: DynamoDBDocumentClient;
+  tableName: string;
+};
+
 export function setUpDdb(tableName: string) {
   const ddbClient = new DynamoDBClient({ endpoint });
   const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
@@ -19,10 +24,10 @@ export function setUpDdb(tableName: string) {
   };
 }
 
-const tablePrimaryKey = 'PK',
+export const tablePartitionKey = 'PK',
   tableSortKey = 'SK',
   gsi1Name = 'GSI1',
-  gsi1PrimaryKey = 'GSI1PK',
+  gsi1PartitionKey = 'GSI1PK',
   gsi1SortKey = 'GSI1SK',
   unsettledTxnsIndexName = 'UnsettledTransactions',
   unsettledTxnsIndexPK = 'PK',
@@ -33,7 +38,7 @@ function createTableCommand(tableName: string) {
     TableName: tableName,
     KeySchema: [
       {
-        AttributeName: tablePrimaryKey,
+        AttributeName: tablePartitionKey,
         KeyType: 'HASH',
       },
       {
@@ -43,7 +48,7 @@ function createTableCommand(tableName: string) {
     ],
     AttributeDefinitions: [
       {
-        AttributeName: tablePrimaryKey,
+        AttributeName: tablePartitionKey,
         AttributeType: 'S',
       },
       {
@@ -51,7 +56,7 @@ function createTableCommand(tableName: string) {
         AttributeType: 'S',
       },
       {
-        AttributeName: gsi1PrimaryKey,
+        AttributeName: gsi1PartitionKey,
         AttributeType: 'S',
       },
       {
@@ -68,7 +73,7 @@ function createTableCommand(tableName: string) {
         IndexName: gsi1Name,
         KeySchema: [
           {
-            AttributeName: gsi1PrimaryKey,
+            AttributeName: gsi1PartitionKey,
             KeyType: 'HASH',
           },
           {

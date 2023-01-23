@@ -1,11 +1,13 @@
 import { createTableIfNotExists, deleteTable } from 'ddb/schema';
 
 describe('Users', () => {
+  beforeEach(async () => {
+    await createTableIfNotExists('test-table');
+  });
+
   afterEach(async () => {
     await deleteTable('test-table');
   });
 
-  it('creates a table successfully', async () => {
-    expect(createTableIfNotExists('test-table')).resolves.not.toThrowError();
-  });
+  it('creates and tears down properly', async () => {});
 });

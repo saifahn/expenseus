@@ -14,7 +14,7 @@ const userKeyPrefix = 'user',
   userEntityType = 'user',
   allUsersKey = 'users';
 
-const makeUserIdKey = (id: string) => `${userKeyPrefix}#${id}`;
+export const makeUserIdKey = (id: string) => `${userKeyPrefix}#${id}`;
 
 export class UserAlreadyExistsError extends Error {
   constructor() {

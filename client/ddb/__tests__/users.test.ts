@@ -12,7 +12,7 @@ describe('Users', () => {
     await deleteTable('test-table');
   });
 
-  it('creates a user correctly', async () => {
+  test('a user can be created correctly', async () => {
     let users = await getAllUsers(d);
     expect(users).toHaveLength(0);
 
@@ -38,7 +38,7 @@ describe('Users', () => {
     expect(users).toContainEqual(expected);
   });
 
-  it('throws a UserAlreadyExistsError when trying to create a user with the same id', async () => {
+  test('a UserAlreadyExistsError is thrown when trying to create a user with an existing id', async () => {
     const testUser = {
       id: 'test-user',
       username: 'TestUser',

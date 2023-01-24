@@ -1,5 +1,5 @@
 import { createTableIfNotExists, deleteTable, setUpDdb } from 'ddb/schema';
-import { createUser, getAllUsers } from 'ddb/users';
+import { createUser, getAllUsers, UserAlreadyExistsError } from 'ddb/users';
 
 const d = setUpDdb('test-table');
 
@@ -36,5 +36,25 @@ describe('Users', () => {
       Name: 'Test User',
     };
     expect(users).toContainEqual(expected);
+  });
+
+  it('throws a UserAlreadyExistsError when trying to create a user with the same id', async () => {
+    const testUser = {
+      id: 'test-user',
+      username: 'TestUser',
+      name: 'Test User',
+    };
+    await createUser(d, testUser);
+
+    const users = await getAllUsers(d);
+    expect(users).toHaveLength(1);
+
+    expect(
+      createUser(d, {
+        id: 'test-user',
+        username: 'different-name',
+        name: 'Someone Different?',
+      }),
+    ).rejects.toThrowError(UserAlreadyExistsError);
   });
 });

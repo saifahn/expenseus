@@ -9,6 +9,8 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 // TODO: load from env variable
 const endpoint = 'http://localhost:8000';
+const accessKeyId = 'dummy-id';
+const secretAccessKey = 'dummy-secret';
 
 export type ddbWithConfig = {
   ddb: DynamoDBDocumentClient;
@@ -16,7 +18,13 @@ export type ddbWithConfig = {
 };
 
 export function setUpDdb(tableName: string) {
-  const ddbClient = new DynamoDBClient({ endpoint });
+  const ddbClient = new DynamoDBClient({
+    endpoint,
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+  });
   const ddbDocClient = DynamoDBDocumentClient.from(ddbClient);
   return {
     ddb: ddbDocClient,

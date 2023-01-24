@@ -16,6 +16,12 @@ const userKeyPrefix = 'user',
 
 const makeUserIdKey = (id: string) => `${userKeyPrefix}#${id}`;
 
+export class UserAlreadyExistsError extends Error {
+  constructor() {
+    super();
+  }
+}
+
 export async function createUser(d: ddbWithConfig, user: User) {
   const userIdKey = makeUserIdKey(user.id);
   const userItem = {
@@ -38,9 +44,9 @@ export async function createUser(d: ddbWithConfig, user: User) {
     );
     return result;
   } catch (err) {
-    // if (err instanceof ConditionalCheckFailedException) {
-    //   throw new UserAlreadyExistsError()
-    // }
+    if (err instanceof ConditionalCheckFailedException) {
+      throw new UserAlreadyExistsError();
+    }
     throw err;
   }
 }

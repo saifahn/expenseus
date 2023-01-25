@@ -92,5 +92,5 @@ export async function getTxnsByUserId(d: ddbWithConfig, id: string) {
       ScanIndexForward: false,
     }),
   );
-  return result.Items;
+  return (result.Items as TxnItem[]) ?? [];
 }

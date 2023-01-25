@@ -11,21 +11,32 @@ describe('Transactions', () => {
   afterEach(async () => {
     await deleteTable('test-table');
   });
+
   test('a txn can be created successfully', async () => {
     let txns = await getTxnsByUserId(d, 'test-user');
     expect(txns).toHaveLength(0);
 
-    await createTxn(d, {
+    const testTxn = {
       userId: 'test-user',
       location: 'test-location',
       amount: 12345,
       date: 1000000,
       category: 'unspecified.unspecified',
       details: '',
-    });
+    } as const;
+    await createTxn(d, testTxn);
 
     txns = await getTxnsByUserId(d, 'test-user');
     expect(txns).toHaveLength(1);
-    // improvement: check that the cluck is the right one
+    expect(txns[0]).toEqual(
+      expect.objectContaining({
+        UserID: testTxn.userId,
+        Location: testTxn.location,
+        Amount: testTxn.amount,
+        Date: testTxn.date,
+        Category: testTxn.category,
+        Details: testTxn.details,
+      }),
+    );
   });
 });

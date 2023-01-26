@@ -1,7 +1,22 @@
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
-import { createTxn, getTxnsByUserId, updateTxn } from 'ddb/txns';
+import { createTxn, getTxnsByUserId, TxnItem, updateTxn } from 'ddb/txns';
+import { Transaction } from 'types/Transaction';
 
 const d = setUpDdb('test-table');
+
+// helper function to assert details from txnItem match an original txn
+function assertEqualDetails(txnItem: TxnItem, txn: Transaction) {
+  expect(txnItem).toEqual(
+    expect.objectContaining({
+      UserID: txn.userId,
+      Location: txn.location,
+      Amount: txn.amount,
+      Date: txn.date,
+      Category: txn.category,
+      Details: txn.details,
+    }),
+  );
+}
 
 describe('Transactions', () => {
   beforeEach(async () => {
@@ -28,16 +43,7 @@ describe('Transactions', () => {
 
     txns = await getTxnsByUserId(d, 'test-user');
     expect(txns).toHaveLength(1);
-    expect(txns[0]).toEqual(
-      expect.objectContaining({
-        UserID: testTxn.userId,
-        Location: testTxn.location,
-        Amount: testTxn.amount,
-        Date: testTxn.date,
-        Category: testTxn.category,
-        Details: testTxn.details,
-      }),
-    );
+    assertEqualDetails(txns[0], testTxn);
   });
 
   test('a txn can be updated successfully', async () => {
@@ -52,16 +58,7 @@ describe('Transactions', () => {
     await createTxn(d, testTxn);
     let txns = await getTxnsByUserId(d, 'test-user');
     const createdTxn = txns[0];
-    expect(createdTxn).toEqual(
-      expect.objectContaining({
-        UserID: testTxn.userId,
-        Location: testTxn.location,
-        Amount: testTxn.amount,
-        Date: testTxn.date,
-        Category: testTxn.category,
-        Details: testTxn.details,
-      }),
-    );
+    assertEqualDetails(createdTxn, testTxn);
 
     const updatedTxn = {
       ...testTxn,
@@ -71,16 +68,7 @@ describe('Transactions', () => {
     };
     await updateTxn(d, updatedTxn);
     txns = await getTxnsByUserId(d, 'test-user');
-    expect(txns[0]).toEqual(
-      expect.objectContaining({
-        UserID: updatedTxn.userId,
-        Location: updatedTxn.location,
-        Amount: updatedTxn.amount,
-        Date: updatedTxn.date,
-        Category: updatedTxn.category,
-        Details: updatedTxn.details,
-      }),
-    );
+    assertEqualDetails(txns[0], updatedTxn);
   });
 
   test.todo(

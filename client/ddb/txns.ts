@@ -1,6 +1,6 @@
 import { Transaction } from 'types/Transaction';
 import {
-  ddbWithConfig,
+  DDBWithConfig,
   gsi1Name,
   gsi1PartitionKey,
   gsi1SortKey,
@@ -37,7 +37,7 @@ export type TxnItem = {
 
 const ulid = monotonicFactory();
 
-export async function createTxn(d: ddbWithConfig, txn: Transaction) {
+export async function createTxn(d: DDBWithConfig, txn: Transaction) {
   const txnId = ulid(txn.date);
   const userIdKey = makeUserIdKey(txn.userId);
   const txnIdKey = makeTxnIdKey(txnId);

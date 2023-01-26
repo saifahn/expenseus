@@ -2,7 +2,7 @@ import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { User } from 'components/UserList';
 import {
-  ddbWithConfig,
+  DDBWithConfig,
   gsi1Name,
   gsi1PartitionKey,
   gsi1SortKey,
@@ -22,7 +22,7 @@ export class UserAlreadyExistsError extends Error {
   }
 }
 
-export async function createUser(d: ddbWithConfig, user: User) {
+export async function createUser(d: DDBWithConfig, user: User) {
   const userIdKey = makeUserIdKey(user.id);
   const userItem = {
     [tablePartitionKey]: userIdKey,
@@ -51,7 +51,7 @@ export async function createUser(d: ddbWithConfig, user: User) {
   }
 }
 
-export async function getAllUsers(d: ddbWithConfig) {
+export async function getAllUsers(d: DDBWithConfig) {
   const res = await d.ddb.send(
     new QueryCommand({
       TableName: d.tableName,

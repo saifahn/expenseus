@@ -12,7 +12,7 @@ const endpoint = 'http://localhost:8000';
 const accessKeyId = 'dummy-id';
 const secretAccessKey = 'dummy-secret';
 
-export type ddbWithConfig = {
+export type DDBWithConfig = {
   ddb: DynamoDBDocumentClient;
   tableName: string;
 };

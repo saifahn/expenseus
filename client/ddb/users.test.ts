@@ -1,15 +1,16 @@
 import { createTableIfNotExists, deleteTable, setUpDdb } from 'ddb/schema';
 import { createUser, getAllUsers, UserAlreadyExistsError } from 'ddb/users';
 
-const d = setUpDdb('test-table');
+const userTestTable = 'user-test-table';
+const d = setUpDdb(userTestTable);
 
 describe('Users', () => {
   beforeEach(async () => {
-    await createTableIfNotExists('test-table');
+    await createTableIfNotExists(userTestTable);
   });
 
   afterEach(async () => {
-    await deleteTable('test-table');
+    await deleteTable(userTestTable);
   });
 
   test('a user can be created correctly', async () => {

@@ -129,7 +129,6 @@ export async function createTableIfNotExists(tableName: string) {
   const d = setUpDdb(tableName);
   try {
     await d.ddb.send(createTableCommand(tableName));
-    console.log('Table created successfully.');
   } catch (err) {
     if (err instanceof ResourceInUseException) {
       console.log(`Table exists. Continuing...`);
@@ -147,8 +146,10 @@ export async function deleteTable(tableName: string) {
         TableName: tableName,
       }),
     );
-    console.log('Table deleted.');
   } catch (err) {
-    console.error('something went wrong while trying to delete the table');
+    if (err instanceof ResourceInUseException) {
+      console.error('Tried to delete a non-existent table. Continuing...');
+    }
+    throw err;
   }
 }

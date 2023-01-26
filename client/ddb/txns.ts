@@ -10,7 +10,7 @@ import {
 import { monotonicFactory } from 'ulid';
 import { makeUserIdKey } from './users';
 import { SubcategoryKey } from 'data/categories';
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { ItemDoesNotExistError } from './errors';
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 
@@ -97,6 +97,23 @@ export async function updateTxn(d: DDBWithConfig, txn: Transaction) {
     }
     throw err;
   }
+}
+
+export async function deleteTxn(
+  d: DDBWithConfig,
+  { txnId, userId }: { txnId: string; userId: string },
+) {
+  const userIdKey = makeUserIdKey(userId);
+  const txnIdKey = makeTxnIdKey(txnId);
+  await d.ddb.send(
+    new DeleteCommand({
+      TableName: d.tableName,
+      Key: {
+        [tablePartitionKey]: userIdKey,
+        [tableSortKey]: txnIdKey,
+      },
+    }),
+  );
 }
 
 export async function getTxnsByUserId(d: DDBWithConfig, id: string) {

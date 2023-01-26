@@ -71,9 +71,17 @@ describe('Transactions', () => {
     assertEqualDetails(txns[0], updatedTxn);
   });
 
-  test.todo(
-    'an error will be thrown if a txn that does not exist is attempted to be updated',
-  );
+  test('an error will be thrown if a txn that does not exist is attempted to be updated', async () => {
+    const updatedTxn = {
+      userId: 'test-user',
+      location: 'test-location',
+      amount: 12345,
+      date: 1000 * 1000,
+      category: 'unspecified.unspecified',
+      details: '',
+    } as const;
+    expect(updateTxn(d, updatedTxn)).rejects.toThrowError();
+  });
 
   test.todo('a txn can be deleted successfully');
 });

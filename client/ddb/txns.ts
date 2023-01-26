@@ -37,17 +37,16 @@ export type TxnItem = {
 
 const ulid = monotonicFactory();
 
-export async function createTxn(d: DDBWithConfig, txn: Transaction) {
-  const txnId = ulid(txn.date);
+function txnToTxnItem(txn: Transaction): TxnItem {
   const userIdKey = makeUserIdKey(txn.userId);
-  const txnIdKey = makeTxnIdKey(txnId);
+  const txnIdKey = makeTxnIdKey(txn.id);
   const txnDateIdKey = makeTxnDateIdKey(txn);
 
-  const txnItem: TxnItem = {
+  return {
     [tablePartitionKey]: userIdKey,
     [tableSortKey]: txnIdKey,
     EntityType: txnEntityType,
-    ID: txnId,
+    ID: txn.id,
     UserID: txn.userId,
     Location: txn.location,
     Details: txn.details,
@@ -57,6 +56,12 @@ export async function createTxn(d: DDBWithConfig, txn: Transaction) {
     [gsi1SortKey]: txnDateIdKey,
     Category: txn.category,
   };
+}
+
+export async function createTxn(d: DDBWithConfig, txn: Transaction) {
+  const txnId = ulid(txn.date);
+  txn.id = txnId;
+  const txnItem = txnToTxnItem(txn);
 
   await d.ddb.send(
     new PutCommand({

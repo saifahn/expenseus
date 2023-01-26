@@ -1,3 +1,4 @@
+import { ItemDoesNotExistError } from 'ddb/errors';
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
 import { createTxn, getTxnsByUserId, TxnItem, updateTxn } from 'ddb/txns';
 import { Transaction } from 'types/Transaction';
@@ -71,8 +72,9 @@ describe('Transactions', () => {
     assertEqualDetails(txns[0], updatedTxn);
   });
 
-  test('an error will be thrown if a txn that does not exist is attempted to be updated', async () => {
+  test('a ItemDoesNotExist error will be thrown if a txn that does not exist is attempted to be updated', async () => {
     const updatedTxn = {
+      id: 'non-existent-txn',
       userId: 'test-user',
       location: 'test-location',
       amount: 12345,
@@ -80,7 +82,9 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    expect(updateTxn(d, updatedTxn)).rejects.toThrowError();
+    expect(updateTxn(d, updatedTxn)).rejects.toThrowError(
+      ItemDoesNotExistError,
+    );
   });
 
   test.todo('a txn can be deleted successfully');

@@ -11,6 +11,8 @@ import { monotonicFactory } from 'ulid';
 import { makeUserIdKey } from './users';
 import { SubcategoryKey } from 'data/categories';
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { ItemDoesNotExistError } from './errors';
+import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 
 const txnKeyPrefix = 'txn',
   txnEntityType = 'transaction',
@@ -78,16 +80,23 @@ export async function createTxn(d: DDBWithConfig, txn: Transaction) {
 export async function updateTxn(d: DDBWithConfig, txn: Transaction) {
   const txnItem = txnToTxnItem(txn);
 
-  await d.ddb.send(
-    new PutCommand({
-      TableName: d.tableName,
-      Item: txnItem,
-      ExpressionAttributeNames: {
-        '#SK': tableSortKey,
-      },
-      ConditionExpression: 'attribute_exists(#SK)',
-    }),
-  );
+  try {
+    await d.ddb.send(
+      new PutCommand({
+        TableName: d.tableName,
+        Item: txnItem,
+        ExpressionAttributeNames: {
+          '#SK': tableSortKey,
+        },
+        ConditionExpression: 'attribute_exists(#SK)',
+      }),
+    );
+  } catch (err) {
+    if (err instanceof ConditionalCheckFailedException) {
+      throw new ItemDoesNotExistError();
+    }
+    throw err;
+  }
 }
 
 export async function getTxnsByUserId(d: DDBWithConfig, id: string) {

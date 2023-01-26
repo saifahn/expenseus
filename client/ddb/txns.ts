@@ -75,7 +75,22 @@ export async function createTxn(d: DDBWithConfig, txn: Transaction) {
   );
 }
 
-export async function getTxnsByUserId(d: ddbWithConfig, id: string) {
+export async function updateTxn(d: DDBWithConfig, txn: Transaction) {
+  const txnItem = txnToTxnItem(txn);
+
+  await d.ddb.send(
+    new PutCommand({
+      TableName: d.tableName,
+      Item: txnItem,
+      ExpressionAttributeNames: {
+        '#SK': tableSortKey,
+      },
+      ConditionExpression: 'attribute_exists(#SK)',
+    }),
+  );
+}
+
+export async function getTxnsByUserId(d: DDBWithConfig, id: string) {
   const userIdKey = makeUserIdKey(id);
   const allTxnsPrefix = `${txnKeyPrefix}#`;
 

@@ -3,6 +3,7 @@ import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
 import {
   createTxn,
   deleteTxn,
+  getBetweenDates,
   getTxnsByUserId,
   TxnItem,
   updateTxn,
@@ -98,7 +99,7 @@ describe('Transactions', () => {
       userId: 'test-user',
       location: 'test-location',
       amount: 12345,
-      date: 1000000,
+      date: 1000 * 1000,
       category: 'unspecified.unspecified',
       details: '',
     } as const;
@@ -109,6 +110,34 @@ describe('Transactions', () => {
     await deleteTxn(d, { txnId: txns[0].ID, userId: txns[0].UserID });
 
     txns = await getTxnsByUserId(d, 'test-user');
+    expect(txns).toHaveLength(0);
+  });
+
+  test('txns can be retrieved for a given user between a date range', async () => {
+    const testTxn = {
+      userId: 'test-user',
+      location: 'test-location',
+      amount: 12345,
+      date: 1000 * 1000,
+      category: 'unspecified.unspecified',
+      details: '',
+    } as const;
+    await createTxn(d, testTxn);
+
+    let txns = await getBetweenDates(d, {
+      userId: testTxn.userId,
+      from: 1000 * 1000,
+      to: 1000 * 1500,
+    });
+    expect(txns).toHaveLength(1);
+    assertEqualDetails(txns[0], testTxn);
+
+    // a date range outside returns none
+    txns = await getBetweenDates(d, {
+      userId: testTxn.userId,
+      from: 2000 * 1000,
+      to: 2000 * 1500,
+    });
     expect(txns).toHaveLength(0);
   });
 });

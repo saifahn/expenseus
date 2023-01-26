@@ -21,6 +21,7 @@ const txnKeyPrefix = 'txn',
 const makeTxnIdKey = (id: string) => `${txnKeyPrefix}#${id}`;
 const makeTxnDateIdKey = (txn: Transaction) =>
   `${txnKeyPrefix}#${txn.date}#${txn.id}`;
+const makeTxnDateKey = (date: number) => `${txnKeyPrefix}#${date}`;
 
 export type TxnItem = {
   [tablePartitionKey]: string;
@@ -139,4 +140,32 @@ export async function getTxnsByUserId(d: DDBWithConfig, id: string) {
     }),
   );
   return (result.Items as TxnItem[]) ?? [];
+}
+
+export async function getBetweenDates(
+  d: DDBWithConfig,
+  { userId, from, to }: { userId: string; from: number; to: number },
+) {
+  const userIdKey = makeUserIdKey(userId);
+  const txnDateFromKey = makeTxnDateKey(from);
+  const txnDateToKey = makeTxnDateKey(to);
+
+  const result = await d.ddb.send(
+    new QueryCommand({
+      TableName: d.tableName,
+      IndexName: gsi1Name,
+      ExpressionAttributeNames: {
+        '#GSI1PK': gsi1PartitionKey,
+        '#GSI1SK': gsi1SortKey,
+      },
+      ExpressionAttributeValues: {
+        ':userKey': userIdKey,
+        ':txnDateFromKey': txnDateFromKey,
+        ':txnDateToKey': txnDateToKey,
+      },
+      KeyConditionExpression:
+        '#GSI1PK = :userKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
+    }),
+  );
+  return (result.Items as TxnItem[]) || [];
 }

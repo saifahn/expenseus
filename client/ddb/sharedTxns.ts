@@ -41,7 +41,11 @@ export type SharedTxnItem = {
 
 const ulid = monotonicFactory();
 
+/**
+ * Creates a shared transaction based on the given input.
+ */
 export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
+  // TODO: update the 2nd arg type so that it has to be without an ID
   const txnId = ulid(txn.date);
   const txnIdKey = makeSharedTxnIdKey(txnId);
   const txnDateIdKey = makeSharedTxnDateIdKey(txn);
@@ -92,7 +96,11 @@ export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
   );
 }
 
+/**
+ * Updates a shared transaction based on the given input.
+ */
 export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
+  // TODO: update the 2nd arg type so it has to have an ID
   const txnIdKey = makeSharedTxnIdKey(txn.id);
   const txnDateIdKey = makeSharedTxnDateIdKey(txn);
 
@@ -162,6 +170,9 @@ export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
   }
 }
 
+/**
+ * Retrieves all shared transactions from the tracker with the given tracker ID.
+ */
 export async function getTxnsByTracker(d: DDBWithConfig, trackerId: string) {
   const trackerIdKey = makeTrackerIdKey(trackerId);
 

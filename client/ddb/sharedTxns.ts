@@ -11,12 +11,16 @@ import {
   gsi1Name,
   tablePartitionKey,
   tableSortKey,
+  unsettledTxnsIndexName,
+  unsettledTxnsIndexPK,
+  unsettledTxnsIndexSK,
 } from './schema';
 import { makeTrackerIdKey } from './trackers';
 import { makeUserIdKey } from './users';
 
 const sharedTxnKeyPrefix = 'txn.shared',
-  sharedTxnEntityType = 'sharedTransaction';
+  sharedTxnEntityType = 'sharedTransaction',
+  unsettledFlagTrue = 'X';
 
 const makeSharedTxnIdKey = (id: string) => `${sharedTxnKeyPrefix}#${id}`;
 const makeSharedTxnDateIdKey = (txn: SharedTxn) =>
@@ -37,6 +41,7 @@ export type SharedTxnItem = {
   Participants: string[];
   Payer: string;
   Details: string;
+  Unsettled?: typeof unsettledFlagTrue;
 };
 
 const ulid = monotonicFactory();
@@ -50,6 +55,7 @@ export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
   const txnIdKey = makeSharedTxnIdKey(txnId);
   const txnDateIdKey = makeSharedTxnDateIdKey(txn);
 
+  // TODO: add type for this as well?
   const item = {
     [tableSortKey]: txnIdKey,
     [gsi1SortKey]: txnDateIdKey,
@@ -63,6 +69,7 @@ export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
     Location: txn.location,
     Payer: txn.payer,
     Details: txn.details,
+    ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
   };
 
   // store the representation of the tracker under each user so trackers can
@@ -235,5 +242,30 @@ export async function getTxnsByTracker(d: DDBWithConfig, trackerId: string) {
     }),
   );
 
+  return (result.Items as SharedTxnItem[]) ?? [];
+}
+
+export async function getUnsettledTxnsByTracker(
+  d: DDBWithConfig,
+  trackerId: string,
+) {
+  const trackerIdKey = makeTrackerIdKey(trackerId);
+
+  const result = await d.ddb.send(
+    new QueryCommand({
+      TableName: d.tableName,
+      IndexName: unsettledTxnsIndexName,
+      ExpressionAttributeNames: {
+        '#unsettledPK': unsettledTxnsIndexPK,
+        '#unsettledSK': unsettledTxnsIndexSK,
+      },
+      ExpressionAttributeValues: {
+        ':trackerIdKey': trackerIdKey,
+        ':true': unsettledFlagTrue,
+      },
+      KeyConditionExpression:
+        '#unsettledPK = :trackerIdKey and #unsettledSK = :true',
+    }),
+  );
   return (result.Items as SharedTxnItem[]) ?? [];
 }

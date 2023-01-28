@@ -5,6 +5,7 @@ import {
   createSharedTxn,
   deleteSharedTxn,
   getTxnsByTracker,
+  getUnsettledTxnsByTracker,
   SharedTxnItem,
   updateSharedTxn,
 } from './sharedTxns';
@@ -48,11 +49,11 @@ describe('Shared Transactions', () => {
     let txns = await getTxnsByTracker(d, 'test-tracker');
     expect(txns).toHaveLength(0);
 
-    const initialTxnDetails = {
+    const initialTxnDetails: SharedTxn = {
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified' as const,
+      category: 'unspecified.unspecified',
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -66,11 +67,11 @@ describe('Shared Transactions', () => {
   });
 
   test('a shared txn can be updated successfully', async () => {
-    const initialTxnDetails = {
+    const initialTxnDetails: SharedTxn = {
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified' as const,
+      category: 'unspecified.unspecified',
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -92,12 +93,12 @@ describe('Shared Transactions', () => {
   });
 
   test('an error will be thrown when trying to update a non-existent shared txn', async () => {
-    const txnDetails = {
+    const txnDetails: SharedTxn = {
       id: 'non-existent',
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified' as const,
+      category: 'unspecified.unspecified',
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -109,11 +110,11 @@ describe('Shared Transactions', () => {
   });
 
   test('a shared txn can be deleted successfully', async () => {
-    const initialTxnDetails = {
+    const initialTxnDetails: SharedTxn = {
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified' as const,
+      category: 'unspecified.unspecified',
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -131,5 +132,35 @@ describe('Shared Transactions', () => {
     });
     txns = await getTxnsByTracker(d, 'test-tracker');
     expect(txns).toHaveLength(0);
+  });
+
+  test('it is possible to retrieve only unsettled txns', async () => {
+    const unsettledTxn: SharedTxn = {
+      date: 1000 * 1000,
+      location: 'somewhere unsettling',
+      amount: 12345,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+      unsettled: true,
+    };
+    const settledTxn: SharedTxn = {
+      date: 1000 * 1000,
+      location: 'this is the sound of already settling',
+      amount: 345,
+      category: 'beauty.cosmetics',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    await createSharedTxn(d, unsettledTxn);
+    await createSharedTxn(d, settledTxn);
+
+    const txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(1);
+    assertContainsTxnWithEqualDetails(txns, unsettledTxn);
   });
 });

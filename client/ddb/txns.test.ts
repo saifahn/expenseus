@@ -4,6 +4,7 @@ import {
   createTxn,
   deleteTxn,
   getBetweenDates,
+  getTxn,
   getTxnsByUserId,
   TxnItem,
   updateTxn,
@@ -53,6 +54,27 @@ describe('Transactions', () => {
     txns = await getTxnsByUserId(d, 'test-user');
     expect(txns).toHaveLength(1);
     assertEqualDetails(txns[0], testTxn);
+  });
+
+  test('a txn can be retrieved successfully', async () => {
+    const testTxn = {
+      userId: 'test-user',
+      location: 'test-location',
+      amount: 12345,
+      date: 1000000,
+      category: 'unspecified.unspecified',
+      details: '',
+    } as const;
+    await createTxn(d, testTxn);
+    const txns = await getTxnsByUserId(d, 'test-user');
+    const createdTxn = txns[0];
+
+    const result = await getTxn(d, {
+      txnId: createdTxn.ID,
+      userId: testTxn.userId,
+    });
+
+    assertEqualDetails(result, testTxn);
   });
 
   test('a txn can be updated successfully', async () => {

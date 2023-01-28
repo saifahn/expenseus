@@ -10,7 +10,12 @@ import {
 import { monotonicFactory } from 'ulid';
 import { makeUserIdKey } from './users';
 import { SubcategoryKey } from 'data/categories';
-import { DeleteCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DeleteCommand,
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { ItemDoesNotExistError } from './errors';
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 
@@ -76,6 +81,25 @@ export async function createTxn(d: DDBWithConfig, txn: Transaction) {
       ConditionExpression: 'attribute_not_exists(#SK)',
     }),
   );
+}
+
+export async function getTxn(
+  d: DDBWithConfig,
+  { txnId, userId }: { txnId: string; userId: string },
+) {
+  const userIdKey = makeUserIdKey(userId);
+  const txnIdKey = makeTxnIdKey(txnId);
+
+  const results = await d.ddb.send(
+    new GetCommand({
+      TableName: d.tableName,
+      Key: {
+        [tablePartitionKey]: userIdKey,
+        [tableSortKey]: txnIdKey,
+      },
+    }),
+  );
+  return results.Item as TxnItem;
 }
 
 export async function updateTxn(d: DDBWithConfig, txn: Transaction) {

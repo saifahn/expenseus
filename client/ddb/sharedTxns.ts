@@ -1,4 +1,5 @@
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { SubcategoryKey } from 'data/categories';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { monotonicFactory } from 'ulid';
 import {
@@ -18,6 +19,23 @@ const sharedTxnKeyPrefix = 'txn.shared',
 const makeSharedTxnIdKey = (id: string) => `${sharedTxnKeyPrefix}#${id}`;
 const makeSharedTxnDateIdKey = (txn: SharedTxn) =>
   `${sharedTxnKeyPrefix}#${txn.date}#${txn.id}`;
+
+export type SharedTxnItem = {
+  [tablePartitionKey]: string;
+  [tableSortKey]: string;
+  [gsi1PartitionKey]: string;
+  [gsi1SortKey]: string;
+  EntityType: typeof sharedTxnEntityType;
+  ID: string;
+  Date: number;
+  Amount: number;
+  Location: string;
+  Tracker: string;
+  Category: SubcategoryKey;
+  Participants: string[];
+  Payer: string;
+  Details: string;
+};
 
 const ulid = monotonicFactory();
 
@@ -72,6 +90,54 @@ export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
   );
 }
 
+export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
+  const txnIdKey = makeSharedTxnIdKey(txn.id);
+  const txnDateIdKey = makeSharedTxnDateIdKey(txn);
+
+  const item = {
+    [tableSortKey]: txnIdKey,
+    [gsi1SortKey]: txnDateIdKey,
+    EntityType: sharedTxnEntityType,
+    ID: txn.id,
+    Category: txn.category,
+    Tracker: txn.tracker,
+    Participants: txn.participants,
+    Date: txn.date,
+    Amount: txn.amount,
+    Location: txn.location,
+    Payer: txn.payer,
+    Details: txn.details,
+  };
+
+  for (const user of txn.participants) {
+    const userIdKey = makeUserIdKey(user);
+    const uItem = {
+      ...item,
+      [tablePartitionKey]: userIdKey,
+      [gsi1PartitionKey]: userIdKey,
+    };
+    await d.ddb.send(
+      new PutCommand({
+        TableName: d.tableName,
+        Item: uItem,
+      }),
+    );
+  }
+
+  const trackerIdKey = makeTrackerIdKey(txn.tracker);
+  const trackerItem = {
+    ...item,
+    [tablePartitionKey]: trackerIdKey,
+    [gsi1PartitionKey]: trackerIdKey,
+  };
+  await d.ddb.send(
+    new PutCommand({
+      TableName: d.tableName,
+      Item: trackerItem,
+    }),
+  );
+}
+
 export async function getTxnsByTracker(d: DDBWithConfig, trackerId: string) {
   const trackerIdKey = makeTrackerIdKey(trackerId);
 
@@ -94,5 +160,5 @@ export async function getTxnsByTracker(d: DDBWithConfig, trackerId: string) {
     }),
   );
 
-  return result.Items;
+  return (result.Items as SharedTxnItem[]) ?? [];
 }

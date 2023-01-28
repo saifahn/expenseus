@@ -124,6 +124,7 @@ export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
     Location: txn.location,
     Payer: txn.payer,
     Details: txn.details,
+    ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
   };
 
   for (const user of txn.participants) {

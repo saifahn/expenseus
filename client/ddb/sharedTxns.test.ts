@@ -163,4 +163,39 @@ describe('Shared Transactions', () => {
     expect(txns).toHaveLength(1);
     assertContainsTxnWithEqualDetails(txns, unsettledTxn);
   });
+
+  test('a shared txn can be updated to be marked as settled successfully', async () => {
+    const initialTxn: SharedTxn = {
+      date: 1000 * 1000,
+      location: '',
+      amount: 34567,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    await createSharedTxn(d, initialTxn);
+    let txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(0);
+    txns = await getTxnsByTracker(d, 'test-tracker');
+
+    let updatedTxn: SharedTxn = {
+      ...initialTxn,
+      id: txns[0].ID,
+      unsettled: true,
+    };
+    await updateSharedTxn(d, updatedTxn);
+    txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(1);
+
+    // mark it as settled manually
+    updatedTxn = {
+      ...updatedTxn,
+      unsettled: false,
+    };
+    await updateSharedTxn(d, updatedTxn);
+    txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(0);
+  });
 });

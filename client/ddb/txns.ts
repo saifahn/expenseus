@@ -38,8 +38,6 @@ export type TxnItem = {
   Category: SubcategoryKey;
 };
 
-const ulid = monotonicFactory();
-
 function txnToTxnItem(txn: Transaction): TxnItem {
   const userIdKey = makeUserIdKey(txn.userId);
   const txnIdKey = makeTxnIdKey(txn.id);
@@ -60,6 +58,8 @@ function txnToTxnItem(txn: Transaction): TxnItem {
     Category: txn.category,
   };
 }
+
+const ulid = monotonicFactory();
 
 export async function createTxn(d: DDBWithConfig, txn: Transaction) {
   const txnId = ulid(txn.date);

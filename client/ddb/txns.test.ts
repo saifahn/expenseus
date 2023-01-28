@@ -134,11 +134,11 @@ describe('Transactions', () => {
     assertEqualDetails(txns[0], testTxn);
 
     // a date range outside returns none
-    // txns = await getBetweenDates(d, {
-    //   userId: testTxn.userId,
-    //   from: 2000 * 1000,
-    //   to: 2000 * 1500,
-    // });
-    // expect(txns).toHaveLength(0);
+    txns = await getBetweenDates(d, {
+      userId: testTxn.userId,
+      from: 2000 * 1000,
+      to: 2000 * 1500,
+    });
+    expect(txns).toHaveLength(0);
   });
 });

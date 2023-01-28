@@ -12,7 +12,8 @@ import { makeUserIdKey } from './users';
 const trackerKeyPrefix = 'tracker',
   trackerEntityType = 'tracker',
   allTrackersKey = 'trackers';
-const makeTrackerIdKey = (id: string) => `${trackerKeyPrefix}#${id}`;
+
+export const makeTrackerIdKey = (id: string) => `${trackerKeyPrefix}#${id}`;
 
 export async function createTracker(
   d: DDBWithConfig,

@@ -31,16 +31,16 @@ const makeTxnDateKey = (date: number) => `${txnKeyPrefix}#${date}`;
 export type TxnItem = {
   [tablePartitionKey]: string;
   [tableSortKey]: string;
+  [gsi1PartitionKey]: string;
+  [gsi1SortKey]: string;
   EntityType: typeof txnEntityType;
   ID: string;
   UserID: string;
-  Location: string;
-  Details: string;
-  Amount: number;
   Date: number;
-  [gsi1PartitionKey]: string;
-  [gsi1SortKey]: string;
+  Amount: number;
+  Location: string;
   Category: SubcategoryKey;
+  Details: string;
 };
 
 function txnToTxnItem(txn: Transaction): TxnItem {

@@ -42,11 +42,11 @@ const ulid = monotonicFactory();
 export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
   const txnId = ulid(txn.date);
   const txnIdKey = makeSharedTxnIdKey(txnId);
-  const txnDateKey = makeSharedTxnDateIdKey(txn);
+  const txnDateIdKey = makeSharedTxnDateIdKey(txn);
 
   const item = {
     [tableSortKey]: txnIdKey,
-    [gsi1SortKey]: txnDateKey,
+    [gsi1SortKey]: txnDateIdKey,
     EntityType: sharedTxnEntityType,
     ID: txnId,
     Category: txn.category,

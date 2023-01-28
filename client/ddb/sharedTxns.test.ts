@@ -1,12 +1,37 @@
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
+import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import {
   createSharedTxn,
   getTxnsByTracker,
+  SharedTxnItem,
   updateSharedTxn,
 } from './sharedTxns';
 
 const sharedTxnsTestTable = 'shared-txns-test-table';
 const d = setUpDdb(sharedTxnsTestTable);
+
+/**
+ * A helper function to check that the retrieved txns contain a txn with the
+ * same details. We can't compare them directly because the ID is missing in the
+ * original txn, and the SharedTxnItem and SharedTxn have different properties
+ */
+function assertContainsTxnWithEqualDetails(
+  txns: SharedTxnItem[],
+  txn: SharedTxn,
+) {
+  expect(txns).toContainEqual(
+    expect.objectContaining({
+      Date: txn.date,
+      Location: txn.location,
+      Amount: txn.amount,
+      Category: txn.category,
+      Payer: txn.payer,
+      Participants: txn.participants,
+      Tracker: txn.tracker,
+      Details: txn.details,
+    }),
+  );
+}
 
 describe('Shared Transactions', () => {
   beforeEach(async () => {
@@ -35,6 +60,7 @@ describe('Shared Transactions', () => {
 
     txns = await getTxnsByTracker(d, 'test-tracker');
     expect(txns).toHaveLength(1);
+    assertContainsTxnWithEqualDetails(txns, initialTxnDetails);
   });
 
   test('a shared txn can be updated successfully', async () => {
@@ -60,17 +86,6 @@ describe('Shared Transactions', () => {
     };
     await updateSharedTxn(d, updatedTxnDetails);
     txns = await getTxnsByTracker(d, 'test-tracker');
-    expect(txns).toContainEqual(
-      expect.objectContaining({
-        Date: updatedTxnDetails.date,
-        Location: updatedTxnDetails.location,
-        Amount: updatedTxnDetails.amount,
-        Category: updatedTxnDetails.category,
-        Payer: updatedTxnDetails.payer,
-        Participants: updatedTxnDetails.participants,
-        Tracker: updatedTxnDetails.tracker,
-        Details: updatedTxnDetails.details,
-      }),
-    );
+    assertContainsTxnWithEqualDetails(txns, updatedTxnDetails);
   });
 });

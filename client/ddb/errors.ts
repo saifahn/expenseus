@@ -1,5 +1,5 @@
 export class ItemDoesNotExistError extends Error {
-  constructor() {
-    super();
+  constructor(message?: string) {
+    super(message);
   }
 }

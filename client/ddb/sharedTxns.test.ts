@@ -1,5 +1,6 @@
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
+import { ItemDoesNotExistError } from './errors';
 import {
   createSharedTxn,
   getTxnsByTracker,
@@ -87,5 +88,22 @@ describe('Shared Transactions', () => {
     await updateSharedTxn(d, updatedTxnDetails);
     txns = await getTxnsByTracker(d, 'test-tracker');
     assertContainsTxnWithEqualDetails(txns, updatedTxnDetails);
+  });
+
+  test('an error will be thrown when trying to update a non-existent shared txn', async () => {
+    const txnDetails = {
+      id: 'non-existent',
+      date: 1000 * 1000,
+      location: 'somewhere',
+      amount: 12345,
+      category: 'unspecified.unspecified' as const,
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    expect(updateSharedTxn(d, txnDetails)).rejects.toThrow(
+      ItemDoesNotExistError,
+    );
   });
 });

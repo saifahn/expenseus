@@ -1,7 +1,9 @@
+import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { SubcategoryKey } from 'data/categories';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { monotonicFactory } from 'ulid';
+import { ItemDoesNotExistError } from './errors';
 import {
   DDBWithConfig,
   gsi1PartitionKey,
@@ -116,12 +118,23 @@ export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
       [tablePartitionKey]: userIdKey,
       [gsi1PartitionKey]: userIdKey,
     };
-    await d.ddb.send(
-      new PutCommand({
-        TableName: d.tableName,
-        Item: uItem,
-      }),
-    );
+    try {
+      await d.ddb.send(
+        new PutCommand({
+          TableName: d.tableName,
+          Item: uItem,
+          ExpressionAttributeNames: {
+            '#SK': tableSortKey,
+          },
+          ConditionExpression: 'attribute_exists(#SK)',
+        }),
+      );
+    } catch (err) {
+      if (err instanceof ConditionalCheckFailedException) {
+        throw new ItemDoesNotExistError('shared txn does not exist');
+      }
+      throw err;
+    }
   }
 
   const trackerIdKey = makeTrackerIdKey(txn.tracker);
@@ -130,12 +143,23 @@ export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
     [tablePartitionKey]: trackerIdKey,
     [gsi1PartitionKey]: trackerIdKey,
   };
-  await d.ddb.send(
-    new PutCommand({
-      TableName: d.tableName,
-      Item: trackerItem,
-    }),
-  );
+  try {
+    await d.ddb.send(
+      new PutCommand({
+        TableName: d.tableName,
+        Item: trackerItem,
+        ExpressionAttributeNames: {
+          '#SK': tableSortKey,
+        },
+        ConditionExpression: 'attribute_exists(#SK)',
+      }),
+    );
+  } catch (err) {
+    if (err instanceof ConditionalCheckFailedException) {
+      throw new ItemDoesNotExistError('shared txn does not exist');
+    }
+    throw err;
+  }
 }
 
 export async function getTxnsByTracker(d: DDBWithConfig, trackerId: string) {

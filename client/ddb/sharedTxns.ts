@@ -1,5 +1,5 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { DeleteCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { SubcategoryKey } from 'data/categories';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { monotonicFactory } from 'ulid';
@@ -168,6 +168,46 @@ export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
     }
     throw err;
   }
+}
+
+type DeleteSharedTxnInput = {
+  tracker: string;
+  txnId: string;
+  participants: string[];
+};
+
+/**
+ * Deletes a shared transaction based on the given input
+ */
+export async function deleteSharedTxn(
+  d: DDBWithConfig,
+  input: DeleteSharedTxnInput,
+) {
+  const txnIdKey = makeSharedTxnIdKey(input.txnId);
+
+  for (const user of input.participants) {
+    const userIdKey = makeUserIdKey(user);
+    await d.ddb.send(
+      new DeleteCommand({
+        TableName: d.tableName,
+        Key: {
+          [tablePartitionKey]: userIdKey,
+          [tableSortKey]: txnIdKey,
+        },
+      }),
+    );
+  }
+
+  const trackerIdKey = makeTrackerIdKey(input.tracker);
+  await d.ddb.send(
+    new DeleteCommand({
+      TableName: d.tableName,
+      Key: {
+        [tablePartitionKey]: trackerIdKey,
+        [tableSortKey]: txnIdKey,
+      },
+    }),
+  );
 }
 
 /**

@@ -3,6 +3,7 @@ import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { ItemDoesNotExistError } from './errors';
 import {
   createSharedTxn,
+  deleteSharedTxn,
   getTxnsByTracker,
   SharedTxnItem,
   updateSharedTxn,
@@ -105,5 +106,30 @@ describe('Shared Transactions', () => {
     expect(updateSharedTxn(d, txnDetails)).rejects.toThrow(
       ItemDoesNotExistError,
     );
+  });
+
+  test('a shared txn can be deleted successfully', async () => {
+    const initialTxnDetails = {
+      date: 1000 * 1000,
+      location: 'somewhere',
+      amount: 12345,
+      category: 'unspecified.unspecified' as const,
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    await createSharedTxn(d, initialTxnDetails);
+    let txns = await getTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(1);
+    const createdTxn = txns[0];
+
+    await deleteSharedTxn(d, {
+      tracker: createdTxn.Tracker,
+      txnId: createdTxn.ID,
+      participants: createdTxn.Participants,
+    });
+    txns = await getTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(0);
   });
 });

@@ -1,6 +1,6 @@
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
 import * as ulid from 'ulid';
-import { createTracker, getTracker } from './trackers';
+import { createTracker, getTracker, getTrackersByUser } from './trackers';
 
 jest.mock('ulid');
 let mockedUlid = jest.mocked(ulid);
@@ -32,6 +32,16 @@ describe('Trackers', () => {
 
     const notTracker = await getTracker(d, 'non-existent');
     expect(notTracker).toBeFalsy();
+
+    const user01Trackers = await getTrackersByUser(d, 'user-01');
+    expect(user01Trackers).toHaveLength(1);
+
+    const user02Trackers = await getTrackersByUser(d, 'user-02');
+    expect(user02Trackers).toHaveLength(1);
+
+    const notUserTrackers = await getTrackersByUser(d, 'not-user');
+    expect(notUserTrackers).toHaveLength(0);
+
     mockedUlid.ulid.mockReset();
   });
 });

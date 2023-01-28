@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { ulid } from 'ulid';
 import {
   DDBWithConfig,
@@ -71,4 +71,27 @@ export async function getTracker(d: DDBWithConfig, id: string) {
   );
 
   return result.Item;
+}
+
+export async function getTrackersByUser(d: DDBWithConfig, userId: string) {
+  const userIdKey = makeUserIdKey(userId);
+  const allTrackerPrefix = `${trackerKeyPrefix}#`;
+
+  const result = await d.ddb.send(
+    new QueryCommand({
+      TableName: d.tableName,
+      ExpressionAttributeNames: {
+        '#PK': tablePartitionKey,
+        '#SK': tableSortKey,
+      },
+      ExpressionAttributeValues: {
+        ':userKey': userIdKey,
+        ':allTrackerPrefix': allTrackerPrefix,
+      },
+      KeyConditionExpression:
+        '#PK = :userKey and begins_with(#SK, :allTrackerPrefix)',
+    }),
+  );
+
+  return result.Items;
 }

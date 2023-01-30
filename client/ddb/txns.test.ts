@@ -1,5 +1,9 @@
 import { ItemDoesNotExistError } from 'ddb/errors';
-import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
+import {
+  setUpDdb,
+  createTableIfNotExists,
+  TESTONLY_deleteTable,
+} from 'ddb/schema';
 import { makeTxnRepository, TxnItem } from 'ddb/txns';
 import { Transaction } from 'types/Transaction';
 
@@ -34,7 +38,7 @@ describe('Transactions', () => {
   });
 
   afterEach(async () => {
-    await deleteTable(txnTestTable);
+    await TESTONLY_deleteTable(txnTestTable);
   });
 
   test('a txn can be created successfully', async () => {

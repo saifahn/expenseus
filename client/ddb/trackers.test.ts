@@ -1,4 +1,8 @@
-import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
+import {
+  setUpDdb,
+  createTableIfNotExists,
+  TESTONLY_deleteTable,
+} from 'ddb/schema';
 import * as ulid from 'ulid';
 import { makeTrackerRepository } from './trackers';
 
@@ -16,7 +20,7 @@ describe('Trackers', () => {
   });
 
   afterEach(async () => {
-    await deleteTable(trackersTestTable);
+    await TESTONLY_deleteTable(trackersTestTable);
   });
 
   test('a tracker can be created and retrieved successfully', async () => {

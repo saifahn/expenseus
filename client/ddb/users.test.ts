@@ -1,4 +1,8 @@
-import { createTableIfNotExists, deleteTable, setUpDdb } from 'ddb/schema';
+import {
+  createTableIfNotExists,
+  TESTONLY_deleteTable,
+  setUpDdb,
+} from 'ddb/schema';
 import { makeUserRepository } from 'ddb/users';
 import { UserAlreadyExistsError } from 'ddb/errors';
 
@@ -12,7 +16,7 @@ describe('Users', () => {
   });
 
   afterEach(async () => {
-    await deleteTable(userTestTable);
+    await TESTONLY_deleteTable(userTestTable);
   });
 
   test('a user can be created correctly', async () => {

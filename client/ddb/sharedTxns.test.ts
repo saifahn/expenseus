@@ -1,4 +1,8 @@
-import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
+import {
+  setUpDdb,
+  createTableIfNotExists,
+  TESTONLY_deleteTable,
+} from 'ddb/schema';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { ItemDoesNotExistError } from './errors';
 import { makeSharedTxnRepository, SharedTxnItem } from './sharedTxns';
@@ -45,7 +49,7 @@ describe('Shared Transactions', () => {
   });
 
   afterEach(async () => {
-    await deleteTable(sharedTxnsTestTable);
+    await TESTONLY_deleteTable(sharedTxnsTestTable);
   });
 
   test('a shared txn can be created and retrieved correctly', async () => {

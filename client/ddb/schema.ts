@@ -138,7 +138,7 @@ export async function createTableIfNotExists(tableName: string) {
   }
 }
 
-export async function deleteTable(tableName: string) {
+export async function TESTONLY_deleteTable(tableName: string) {
   const d = setUpDdb(tableName);
   try {
     await d.ddb.send(

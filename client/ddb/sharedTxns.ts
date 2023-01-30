@@ -28,6 +28,8 @@ const sharedTxnKeyPrefix = 'txn.shared',
   unsettledFlagTrue = 'X';
 
 const makeSharedTxnIdKey = (id: string) => `${sharedTxnKeyPrefix}#${id}`;
+const makeSharedTxnDateKey = (date: number) =>
+  `${sharedTxnKeyPrefix}#${date.toString()}`;
 const makeSharedTxnDateIdKey = (txn: SharedTxn) =>
   `${sharedTxnKeyPrefix}#${txn.date}#${txn.id}`;
 
@@ -295,6 +297,42 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     return (result.Items as SharedTxnItem[]) ?? [];
   }
 
+  type TrackerBetweenDatesInput = {
+    tracker: string;
+    from: number;
+    to: number;
+  };
+
+  async function getTxnsByTrackerBetweenDates({
+    tracker,
+    from,
+    to,
+  }: TrackerBetweenDatesInput) {
+    const trackerIdKey = makeTrackerIdKey(tracker);
+    const txnDateFromKey = makeSharedTxnDateKey(from);
+    const txnDateToKey = makeSharedTxnDateKey(to);
+
+    const results = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':trackerKey': trackerIdKey,
+          ':txnDateFromKey': txnDateFromKey,
+          ':txnDateToKey': txnDateToKey,
+        },
+        KeyConditionExpression:
+          '#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
+      }),
+    );
+
+    return (results.Items as SharedTxnItem[]) ?? [];
+  }
+
   async function getUnsettledTxnsByTracker(trackerId: string) {
     const trackerIdKey = makeTrackerIdKey(trackerId);
 
@@ -323,6 +361,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     deleteSharedTxn,
     settleTxns,
     getTxnsByTracker,
+    getTxnsByTrackerBetweenDates,
     getUnsettledTxnsByTracker,
   };
 }

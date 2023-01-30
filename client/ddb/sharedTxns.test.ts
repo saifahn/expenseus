@@ -10,6 +10,7 @@ const {
   updateSharedTxn,
   deleteSharedTxn,
   getTxnsByTracker,
+  getTxnsByTrackerBetweenDates,
   getUnsettledTxnsByTracker,
   settleTxns,
 } = makeSharedTxnRepository(d);
@@ -236,6 +237,58 @@ describe('Shared Transactions', () => {
     await settleTxns(settleInput);
     // check the length of unsettled txns
     txns = await getUnsettledTxnsByTracker('test-tracker');
+    expect(txns).toHaveLength(0);
+  });
+
+  test('txns can be retrieved from a tracker between dates', async () => {
+    const first: SharedTxn = {
+      date: 1000 * 1000,
+      location: '',
+      amount: 34567,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    const second: SharedTxn = {
+      date: 2000 * 1000,
+      location: '',
+      amount: 99999,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'a-different-tracker',
+      details: '',
+    };
+    await createSharedTxn(first);
+    await createSharedTxn(second);
+
+    let input = {
+      tracker: first.tracker,
+      from: 1000 * 1000,
+      to: 1500 * 1000,
+    };
+    let txns = await getTxnsByTrackerBetweenDates(input);
+    expect(txns).toHaveLength(1);
+    assertContainsTxnWithEqualDetails(txns, first);
+
+    // same tracker, no txns in date range
+    input = {
+      tracker: first.tracker,
+      from: 2000 * 1000,
+      to: 3000 * 1000,
+    };
+    txns = await getTxnsByTrackerBetweenDates(input);
+    expect(txns).toHaveLength(0);
+
+    // different tracker, no results in date range
+    input = {
+      tracker: 'no-results-tracker',
+      from: 1000 * 1000,
+      to: 1500 * 1000,
+    };
+    txns = await getTxnsByTrackerBetweenDates(input);
     expect(txns).toHaveLength(0);
   });
 });

@@ -15,20 +15,41 @@ const trackerKeyPrefix = 'tracker',
 
 export const makeTrackerIdKey = (id: string) => `${trackerKeyPrefix}#${id}`;
 
-export async function createTracker(
-  d: DDBWithConfig,
-  { users, name }: { users: string[]; name: string },
-) {
-  const id = ulid();
-  const trackerIdKey = makeTrackerIdKey(id);
-  for (const user of users) {
-    const userIdKey = makeUserIdKey(user);
+export function makeTrackerRepository({ ddb, tableName }: DDBWithConfig) {
+  async function createTracker({
+    users,
+    name,
+  }: {
+    users: string[];
+    name: string;
+  }) {
+    const id = ulid();
+    const trackerIdKey = makeTrackerIdKey(id);
+    for (const user of users) {
+      const userIdKey = makeUserIdKey(user);
 
-    await d.ddb.send(
+      await ddb.send(
+        new PutCommand({
+          TableName: tableName,
+          Item: {
+            [tablePartitionKey]: userIdKey,
+            [tableSortKey]: trackerIdKey,
+            EntityType: trackerEntityType,
+            ID: id,
+            Name: name,
+            Users: users,
+            [gsi1PartitionKey]: allTrackersKey,
+            [gsi1SortKey]: trackerIdKey,
+          },
+        }),
+      );
+    }
+
+    await ddb.send(
       new PutCommand({
-        TableName: d.tableName,
+        TableName: tableName,
         Item: {
-          [tablePartitionKey]: userIdKey,
+          [tablePartitionKey]: trackerIdKey,
           [tableSortKey]: trackerIdKey,
           EntityType: trackerEntityType,
           ID: id,
@@ -41,58 +62,48 @@ export async function createTracker(
     );
   }
 
-  await d.ddb.send(
-    new PutCommand({
-      TableName: d.tableName,
-      Item: {
-        [tablePartitionKey]: trackerIdKey,
-        [tableSortKey]: trackerIdKey,
-        EntityType: trackerEntityType,
-        ID: id,
-        Name: name,
-        Users: users,
-        [gsi1PartitionKey]: allTrackersKey,
-        [gsi1SortKey]: trackerIdKey,
-      },
-    }),
-  );
-}
+  async function getTracker(id: string) {
+    const trackerIdKey = makeTrackerIdKey(id);
 
-export async function getTracker(d: DDBWithConfig, id: string) {
-  const trackerIdKey = makeTrackerIdKey(id);
+    const result = await ddb.send(
+      new GetCommand({
+        TableName: tableName,
+        Key: {
+          [tablePartitionKey]: trackerIdKey,
+          [tableSortKey]: trackerIdKey,
+        },
+      }),
+    );
 
-  const result = await d.ddb.send(
-    new GetCommand({
-      TableName: d.tableName,
-      Key: {
-        [tablePartitionKey]: trackerIdKey,
-        [tableSortKey]: trackerIdKey,
-      },
-    }),
-  );
+    return result.Item;
+  }
 
-  return result.Item;
-}
+  async function getTrackersByUser(userId: string) {
+    const userIdKey = makeUserIdKey(userId);
+    const allTrackerPrefix = `${trackerKeyPrefix}#`;
 
-export async function getTrackersByUser(d: DDBWithConfig, userId: string) {
-  const userIdKey = makeUserIdKey(userId);
-  const allTrackerPrefix = `${trackerKeyPrefix}#`;
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        ExpressionAttributeNames: {
+          '#PK': tablePartitionKey,
+          '#SK': tableSortKey,
+        },
+        ExpressionAttributeValues: {
+          ':userKey': userIdKey,
+          ':allTrackerPrefix': allTrackerPrefix,
+        },
+        KeyConditionExpression:
+          '#PK = :userKey and begins_with(#SK, :allTrackerPrefix)',
+      }),
+    );
 
-  const result = await d.ddb.send(
-    new QueryCommand({
-      TableName: d.tableName,
-      ExpressionAttributeNames: {
-        '#PK': tablePartitionKey,
-        '#SK': tableSortKey,
-      },
-      ExpressionAttributeValues: {
-        ':userKey': userIdKey,
-        ':allTrackerPrefix': allTrackerPrefix,
-      },
-      KeyConditionExpression:
-        '#PK = :userKey and begins_with(#SK, :allTrackerPrefix)',
-    }),
-  );
+    return result.Items;
+  }
 
-  return result.Items;
+  return {
+    createTracker,
+    getTracker,
+    getTrackersByUser,
+  };
 }

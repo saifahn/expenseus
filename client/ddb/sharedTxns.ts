@@ -51,99 +51,125 @@ export type SharedTxnItem = {
 
 const ulid = monotonicFactory();
 
-/**
- * Creates a shared transaction based on the given input.
- */
-export async function createSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
-  // TODO: update the 2nd arg type so that it has to be without an ID
-  const txnId = ulid(txn.date);
-  const txnIdKey = makeSharedTxnIdKey(txnId);
-  const txnDateIdKey = makeSharedTxnDateIdKey(txn);
+export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
+  /**
+   * Creates a shared transaction based on the given input.
+   */
+  async function createSharedTxn(txn: SharedTxn) {
+    // TODO: update the 2nd arg type so that it has to be without an ID
+    const txnId = ulid(txn.date);
+    const txnIdKey = makeSharedTxnIdKey(txnId);
+    const txnDateIdKey = makeSharedTxnDateIdKey(txn);
 
-  // TODO: add type for this as well?
-  const item = {
-    [tableSortKey]: txnIdKey,
-    [gsi1SortKey]: txnDateIdKey,
-    EntityType: sharedTxnEntityType,
-    ID: txnId,
-    Category: txn.category,
-    Tracker: txn.tracker,
-    Participants: txn.participants,
-    Date: txn.date,
-    Amount: txn.amount,
-    Location: txn.location,
-    Payer: txn.payer,
-    Details: txn.details,
-    ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
-  };
-
-  // store the representation of the tracker under each user so trackers can
-  // be retrieved for them
-  for (const user of txn.participants) {
-    const userIdKey = makeUserIdKey(user);
-    const uItem = {
-      ...item,
-      [tablePartitionKey]: userIdKey,
-      [gsi1PartitionKey]: userIdKey,
+    // TODO: add type for this as well?
+    const item = {
+      [tableSortKey]: txnIdKey,
+      [gsi1SortKey]: txnDateIdKey,
+      EntityType: sharedTxnEntityType,
+      ID: txnId,
+      Category: txn.category,
+      Tracker: txn.tracker,
+      Participants: txn.participants,
+      Date: txn.date,
+      Amount: txn.amount,
+      Location: txn.location,
+      Payer: txn.payer,
+      Details: txn.details,
+      ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
     };
-    await d.ddb.send(
+
+    // store the representation of the tracker under each user so trackers can
+    // be retrieved for them
+    for (const user of txn.participants) {
+      const userIdKey = makeUserIdKey(user);
+      const uItem = {
+        ...item,
+        [tablePartitionKey]: userIdKey,
+        [gsi1PartitionKey]: userIdKey,
+      };
+      await ddb.send(
+        new PutCommand({
+          TableName: tableName,
+          Item: uItem,
+        }),
+      );
+    }
+
+    const trackerIdKey = makeTrackerIdKey(txn.tracker);
+    const trackerItem = {
+      ...item,
+      [tablePartitionKey]: trackerIdKey,
+      [gsi1PartitionKey]: trackerIdKey,
+    };
+    await ddb.send(
       new PutCommand({
-        TableName: d.tableName,
-        Item: uItem,
+        TableName: tableName,
+        Item: trackerItem,
       }),
     );
   }
 
-  const trackerIdKey = makeTrackerIdKey(txn.tracker);
-  const trackerItem = {
-    ...item,
-    [tablePartitionKey]: trackerIdKey,
-    [gsi1PartitionKey]: trackerIdKey,
-  };
-  await d.ddb.send(
-    new PutCommand({
-      TableName: d.tableName,
-      Item: trackerItem,
-    }),
-  );
-}
+  /**
+   * Updates a shared transaction based on the given input.
+   */
+  async function updateSharedTxn(txn: SharedTxn) {
+    // TODO: update the 2nd arg type so it has to have an ID
+    const txnIdKey = makeSharedTxnIdKey(txn.id);
+    const txnDateIdKey = makeSharedTxnDateIdKey(txn);
 
-/**
- * Updates a shared transaction based on the given input.
- */
-export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
-  // TODO: update the 2nd arg type so it has to have an ID
-  const txnIdKey = makeSharedTxnIdKey(txn.id);
-  const txnDateIdKey = makeSharedTxnDateIdKey(txn);
+    const item = {
+      [tableSortKey]: txnIdKey,
+      [gsi1SortKey]: txnDateIdKey,
+      EntityType: sharedTxnEntityType,
+      ID: txn.id,
+      Category: txn.category,
+      Tracker: txn.tracker,
+      Participants: txn.participants,
+      Date: txn.date,
+      Amount: txn.amount,
+      Location: txn.location,
+      Payer: txn.payer,
+      Details: txn.details,
+      ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
+    };
 
-  const item = {
-    [tableSortKey]: txnIdKey,
-    [gsi1SortKey]: txnDateIdKey,
-    EntityType: sharedTxnEntityType,
-    ID: txn.id,
-    Category: txn.category,
-    Tracker: txn.tracker,
-    Participants: txn.participants,
-    Date: txn.date,
-    Amount: txn.amount,
-    Location: txn.location,
-    Payer: txn.payer,
-    Details: txn.details,
-    ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
-  };
+    for (const user of txn.participants) {
+      const userIdKey = makeUserIdKey(user);
+      const uItem = {
+        ...item,
+        [tablePartitionKey]: userIdKey,
+        [gsi1PartitionKey]: userIdKey,
+      };
+      try {
+        await ddb.send(
+          new PutCommand({
+            TableName: tableName,
+            Item: uItem,
+            ExpressionAttributeNames: {
+              '#SK': tableSortKey,
+            },
+            ConditionExpression: 'attribute_exists(#SK)',
+          }),
+        );
+      } catch (err) {
+        if (err instanceof ConditionalCheckFailedException) {
+          throw new ItemDoesNotExistError('shared txn does not exist');
+        }
+        throw err;
+      }
+    }
 
-  for (const user of txn.participants) {
-    const userIdKey = makeUserIdKey(user);
-    const uItem = {
+    const trackerIdKey = makeTrackerIdKey(txn.tracker);
+    const trackerItem = {
       ...item,
-      [tablePartitionKey]: userIdKey,
-      [gsi1PartitionKey]: userIdKey,
+      [tablePartitionKey]: trackerIdKey,
+      [gsi1PartitionKey]: trackerIdKey,
     };
     try {
-      await d.ddb.send(
+      await ddb.send(
         new PutCommand({
-          TableName: d.tableName,
-          Item: uItem,
+          TableName: tableName,
+          Item: trackerItem,
           ExpressionAttributeNames: {
             '#SK': tableSortKey,
           },
@@ -158,105 +184,61 @@ export async function updateSharedTxn(d: DDBWithConfig, txn: SharedTxn) {
     }
   }
 
-  const trackerIdKey = makeTrackerIdKey(txn.tracker);
-  const trackerItem = {
-    ...item,
-    [tablePartitionKey]: trackerIdKey,
-    [gsi1PartitionKey]: trackerIdKey,
+  type DeleteSharedTxnInput = {
+    tracker: string;
+    txnId: string;
+    participants: string[];
   };
-  try {
-    await d.ddb.send(
-      new PutCommand({
-        TableName: d.tableName,
-        Item: trackerItem,
-        ExpressionAttributeNames: {
-          '#SK': tableSortKey,
-        },
-        ConditionExpression: 'attribute_exists(#SK)',
-      }),
-    );
-  } catch (err) {
-    if (err instanceof ConditionalCheckFailedException) {
-      throw new ItemDoesNotExistError('shared txn does not exist');
+
+  /**
+   * Deletes a shared transaction based on the given input
+   */
+  async function deleteSharedTxn(input: DeleteSharedTxnInput) {
+    const txnIdKey = makeSharedTxnIdKey(input.txnId);
+
+    for (const user of input.participants) {
+      const userIdKey = makeUserIdKey(user);
+      await ddb.send(
+        new DeleteCommand({
+          TableName: tableName,
+          Key: {
+            [tablePartitionKey]: userIdKey,
+            [tableSortKey]: txnIdKey,
+          },
+        }),
+      );
     }
-    throw err;
-  }
-}
 
-type DeleteSharedTxnInput = {
-  tracker: string;
-  txnId: string;
-  participants: string[];
-};
-
-/**
- * Deletes a shared transaction based on the given input
- */
-export async function deleteSharedTxn(
-  d: DDBWithConfig,
-  input: DeleteSharedTxnInput,
-) {
-  const txnIdKey = makeSharedTxnIdKey(input.txnId);
-
-  for (const user of input.participants) {
-    const userIdKey = makeUserIdKey(user);
-    await d.ddb.send(
+    const trackerIdKey = makeTrackerIdKey(input.tracker);
+    await ddb.send(
       new DeleteCommand({
-        TableName: d.tableName,
-        Key: {
-          [tablePartitionKey]: userIdKey,
-          [tableSortKey]: txnIdKey,
-        },
-      }),
-    );
-  }
-
-  const trackerIdKey = makeTrackerIdKey(input.tracker);
-  await d.ddb.send(
-    new DeleteCommand({
-      TableName: d.tableName,
-      Key: {
-        [tablePartitionKey]: trackerIdKey,
-        [tableSortKey]: txnIdKey,
-      },
-    }),
-  );
-}
-
-type SettleTxnInput = {
-  id: string;
-  trackerId: string;
-  participants: string[];
-};
-
-/**
- * Settles transactions for the given input.
- */
-export async function settleTxns(d: DDBWithConfig, txns: SettleTxnInput[]) {
-  for (const txn of txns) {
-    const trackerIdKey = makeTrackerIdKey(txn.trackerId);
-    const txnIdKey = makeSharedTxnIdKey(txn.id);
-    await d.ddb.send(
-      new UpdateCommand({
-        TableName: d.tableName,
+        TableName: tableName,
         Key: {
           [tablePartitionKey]: trackerIdKey,
           [tableSortKey]: txnIdKey,
         },
-        ExpressionAttributeNames: {
-          '#unsettled': 'Unsettled',
-        },
-        UpdateExpression: 'REMOVE #unsettled',
       }),
     );
+  }
 
-    for (const user of txn.participants) {
-      const userIdKey = makeUserIdKey(user);
-      await d.ddb.send(
+  type SettleTxnInput = {
+    id: string;
+    trackerId: string;
+    participants: string[];
+  };
+
+  /**
+   * Settles transactions for the given input.
+   */
+  async function settleTxns(txns: SettleTxnInput[]) {
+    for (const txn of txns) {
+      const trackerIdKey = makeTrackerIdKey(txn.trackerId);
+      const txnIdKey = makeSharedTxnIdKey(txn.id);
+      await ddb.send(
         new UpdateCommand({
-          TableName: d.tableName,
+          TableName: tableName,
           Key: {
-            [tablePartitionKey]: userIdKey,
+            [tablePartitionKey]: trackerIdKey,
             [tableSortKey]: txnIdKey,
           },
           ExpressionAttributeNames: {
@@ -265,59 +247,82 @@ export async function settleTxns(d: DDBWithConfig, txns: SettleTxnInput[]) {
           UpdateExpression: 'REMOVE #unsettled',
         }),
       );
+
+      for (const user of txn.participants) {
+        const userIdKey = makeUserIdKey(user);
+        await ddb.send(
+          new UpdateCommand({
+            TableName: tableName,
+            Key: {
+              [tablePartitionKey]: userIdKey,
+              [tableSortKey]: txnIdKey,
+            },
+            ExpressionAttributeNames: {
+              '#unsettled': 'Unsettled',
+            },
+            UpdateExpression: 'REMOVE #unsettled',
+          }),
+        );
+      }
     }
   }
-}
 
-/**
- * Retrieves all shared transactions from the tracker with the given tracker ID.
- */
-export async function getTxnsByTracker(d: DDBWithConfig, trackerId: string) {
-  const trackerIdKey = makeTrackerIdKey(trackerId);
+  /**
+   * Retrieves all shared transactions from the tracker with the given tracker I
+   */
+  async function getTxnsByTracker(trackerId: string) {
+    const trackerIdKey = makeTrackerIdKey(trackerId);
 
-  const result = await d.ddb.send(
-    new QueryCommand({
-      TableName: d.tableName,
-      IndexName: gsi1Name,
-      ExpressionAttributeNames: {
-        '#GSI1PK': gsi1PartitionKey,
-        '#GSI1SK': gsi1SortKey,
-      },
-      ExpressionAttributeValues: {
-        ':trackerIdKey': trackerIdKey,
-        ':sharedTxnKeyPrefix': sharedTxnKeyPrefix,
-      },
-      // return in descending order
-      ScanIndexForward: false,
-      KeyConditionExpression:
-        '#GSI1PK = :trackerIdKey and begins_with(#GSI1SK, :sharedTxnKeyPrefix)',
-    }),
-  );
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':trackerIdKey': trackerIdKey,
+          ':sharedTxnKeyPrefix': sharedTxnKeyPrefix,
+        },
+        // return in descending order
+        ScanIndexForward: false,
+        KeyConditionExpression:
+          '#GSI1PK = :trackerIdKey and begins_with(#GSI1SK, :sharedTxnKeyPrefix)',
+      }),
+    );
 
-  return (result.Items as SharedTxnItem[]) ?? [];
-}
+    return (result.Items as SharedTxnItem[]) ?? [];
+  }
 
-export async function getUnsettledTxnsByTracker(
-  d: DDBWithConfig,
-  trackerId: string,
-) {
-  const trackerIdKey = makeTrackerIdKey(trackerId);
+  async function getUnsettledTxnsByTracker(trackerId: string) {
+    const trackerIdKey = makeTrackerIdKey(trackerId);
 
-  const result = await d.ddb.send(
-    new QueryCommand({
-      TableName: d.tableName,
-      IndexName: unsettledTxnsIndexName,
-      ExpressionAttributeNames: {
-        '#unsettledPK': unsettledTxnsIndexPK,
-        '#unsettledSK': unsettledTxnsIndexSK,
-      },
-      ExpressionAttributeValues: {
-        ':trackerIdKey': trackerIdKey,
-        ':true': unsettledFlagTrue,
-      },
-      KeyConditionExpression:
-        '#unsettledPK = :trackerIdKey and #unsettledSK = :true',
-    }),
-  );
-  return (result.Items as SharedTxnItem[]) ?? [];
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: unsettledTxnsIndexName,
+        ExpressionAttributeNames: {
+          '#unsettledPK': unsettledTxnsIndexPK,
+          '#unsettledSK': unsettledTxnsIndexSK,
+        },
+        ExpressionAttributeValues: {
+          ':trackerIdKey': trackerIdKey,
+          ':true': unsettledFlagTrue,
+        },
+        KeyConditionExpression:
+          '#unsettledPK = :trackerIdKey and #unsettledSK = :true',
+      }),
+    );
+    return (result.Items as SharedTxnItem[]) ?? [];
+  }
+
+  return {
+    createSharedTxn,
+    updateSharedTxn,
+    deleteSharedTxn,
+    settleTxns,
+    getTxnsByTracker,
+    getUnsettledTxnsByTracker,
+  };
 }

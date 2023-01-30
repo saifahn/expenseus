@@ -1,18 +1,18 @@
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { ItemDoesNotExistError } from './errors';
-import {
+import { makeSharedTxnRepository, SharedTxnItem } from './sharedTxns';
+
+const sharedTxnsTestTable = 'shared-txns-test-table';
+const d = setUpDdb(sharedTxnsTestTable);
+const {
   createSharedTxn,
+  updateSharedTxn,
   deleteSharedTxn,
   getTxnsByTracker,
   getUnsettledTxnsByTracker,
   settleTxns,
-  SharedTxnItem,
-  updateSharedTxn,
-} from './sharedTxns';
-
-const sharedTxnsTestTable = 'shared-txns-test-table';
-const d = setUpDdb(sharedTxnsTestTable);
+} = makeSharedTxnRepository(d);
 
 /**
  * A helper function to check that the retrieved txns contain a txn with the
@@ -47,7 +47,7 @@ describe('Shared Transactions', () => {
   });
 
   test('a shared txn can be created and retrieved correctly', async () => {
-    let txns = await getTxnsByTracker(d, 'test-tracker');
+    let txns = await getTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(0);
 
     const initialTxnDetails: SharedTxn = {
@@ -60,9 +60,9 @@ describe('Shared Transactions', () => {
       tracker: 'test-tracker',
       details: '',
     };
-    await createSharedTxn(d, initialTxnDetails);
+    await createSharedTxn(initialTxnDetails);
 
-    txns = await getTxnsByTracker(d, 'test-tracker');
+    txns = await getTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(1);
     assertContainsTxnWithEqualDetails(txns, initialTxnDetails);
   });
@@ -78,8 +78,8 @@ describe('Shared Transactions', () => {
       tracker: 'test-tracker',
       details: '',
     };
-    await createSharedTxn(d, initialTxnDetails);
-    let txns = await getTxnsByTracker(d, 'test-tracker');
+    await createSharedTxn(initialTxnDetails);
+    let txns = await getTxnsByTracker('test-tracker');
     const createdTxn = txns[0];
 
     const updatedTxnDetails = {
@@ -88,8 +88,8 @@ describe('Shared Transactions', () => {
       location: 'somewhere-else',
       amount: 99999,
     };
-    await updateSharedTxn(d, updatedTxnDetails);
-    txns = await getTxnsByTracker(d, 'test-tracker');
+    await updateSharedTxn(updatedTxnDetails);
+    txns = await getTxnsByTracker('test-tracker');
     assertContainsTxnWithEqualDetails(txns, updatedTxnDetails);
   });
 
@@ -105,9 +105,7 @@ describe('Shared Transactions', () => {
       tracker: 'test-tracker',
       details: '',
     };
-    expect(updateSharedTxn(d, txnDetails)).rejects.toThrow(
-      ItemDoesNotExistError,
-    );
+    expect(updateSharedTxn(txnDetails)).rejects.toThrow(ItemDoesNotExistError);
   });
 
   test('a shared txn can be deleted successfully', async () => {
@@ -121,17 +119,17 @@ describe('Shared Transactions', () => {
       tracker: 'test-tracker',
       details: '',
     };
-    await createSharedTxn(d, initialTxnDetails);
-    let txns = await getTxnsByTracker(d, 'test-tracker');
+    await createSharedTxn(initialTxnDetails);
+    let txns = await getTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(1);
     const createdTxn = txns[0];
 
-    await deleteSharedTxn(d, {
+    await deleteSharedTxn({
       tracker: createdTxn.Tracker,
       txnId: createdTxn.ID,
       participants: createdTxn.Participants,
     });
-    txns = await getTxnsByTracker(d, 'test-tracker');
+    txns = await getTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(0);
   });
 
@@ -157,10 +155,10 @@ describe('Shared Transactions', () => {
       tracker: 'test-tracker',
       details: '',
     };
-    await createSharedTxn(d, unsettledTxn);
-    await createSharedTxn(d, settledTxn);
+    await createSharedTxn(unsettledTxn);
+    await createSharedTxn(settledTxn);
 
-    const txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    const txns = await getUnsettledTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(1);
     assertContainsTxnWithEqualDetails(txns, unsettledTxn);
   });
@@ -176,18 +174,18 @@ describe('Shared Transactions', () => {
       tracker: 'test-tracker',
       details: '',
     };
-    await createSharedTxn(d, initialTxn);
-    let txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    await createSharedTxn(initialTxn);
+    let txns = await getUnsettledTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(0);
-    txns = await getTxnsByTracker(d, 'test-tracker');
+    txns = await getTxnsByTracker('test-tracker');
 
     let updatedTxn: SharedTxn = {
       ...initialTxn,
       id: txns[0].ID,
       unsettled: true,
     };
-    await updateSharedTxn(d, updatedTxn);
-    txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    await updateSharedTxn(updatedTxn);
+    txns = await getUnsettledTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(1);
 
     // mark it as settled manually
@@ -195,8 +193,8 @@ describe('Shared Transactions', () => {
       ...updatedTxn,
       unsettled: false,
     };
-    await updateSharedTxn(d, updatedTxn);
-    txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    await updateSharedTxn(updatedTxn);
+    txns = await getUnsettledTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(0);
   });
 
@@ -224,10 +222,10 @@ describe('Shared Transactions', () => {
       details: '',
       unsettled: true,
     };
-    await createSharedTxn(d, first);
-    await createSharedTxn(d, second);
+    await createSharedTxn(first);
+    await createSharedTxn(second);
     // check the length of the unsettled txns
-    let txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    let txns = await getUnsettledTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(2);
     // trigger the settling
     const settleInput = txns.map((txn) => ({
@@ -235,9 +233,9 @@ describe('Shared Transactions', () => {
       trackerId: txn.Tracker,
       participants: txn.Participants,
     }));
-    await settleTxns(d, settleInput);
+    await settleTxns(settleInput);
     // check the length of unsettled txns
-    txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    txns = await getUnsettledTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(0);
   });
 });

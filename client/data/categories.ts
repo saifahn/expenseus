@@ -101,14 +101,15 @@ export const mainCategoryKeys = Object.keys(
   mainCategories,
 ) as MainCategoryKey[];
 
-type SubCategories = {
-  [k: string]: {
-    mainCategory: MainCategoryKey;
-    en_US: string;
-  };
-};
+// use when satisfies is supported?
+// type SubCategories = {
+//   [k: string]: {
+//     mainCategory: MainCategoryKey;
+//     en_US: string;
+//   };
+// };
 
-export const subcategories: SubCategories = {
+export const subcategories = {
   'unspecified.unspecified': {
     mainCategory: 'unspecified',
     en_US: 'Unspecified',
@@ -303,7 +304,7 @@ export const subcategories: SubCategories = {
   },
 };
 
-export type SubcategoryKey = Extract<keyof typeof subcategories, string>;
+export type SubcategoryKey = keyof typeof subcategories;
 
 const categoryKeys = Object.keys(subcategories) as SubcategoryKey[];
 

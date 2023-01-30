@@ -13,7 +13,7 @@ import useSWR from 'swr';
 import { Tracker } from '..';
 
 export interface SharedTxn {
-  id: string;
+  id?: string;
   location: string;
   amount: number;
   date: number;

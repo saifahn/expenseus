@@ -1,8 +1,10 @@
 import { createTableIfNotExists, deleteTable, setUpDdb } from 'ddb/schema';
-import { createUser, getAllUsers, UserAlreadyExistsError } from 'ddb/users';
+import { makeUserRepository } from 'ddb/users';
+import { UserAlreadyExistsError } from 'ddb/errors';
 
 const userTestTable = 'user-test-table';
 const d = setUpDdb(userTestTable);
+const { createUser, getAllUsers } = makeUserRepository(d);
 
 describe('Users', () => {
   beforeEach(async () => {
@@ -14,7 +16,7 @@ describe('Users', () => {
   });
 
   test('a user can be created correctly', async () => {
-    let users = await getAllUsers(d);
+    let users = await getAllUsers();
     expect(users).toHaveLength(0);
 
     const testUser = {
@@ -22,9 +24,9 @@ describe('Users', () => {
       username: 'TestUser',
       name: 'Test User',
     };
-    await createUser(d, testUser);
+    await createUser(testUser);
 
-    users = await getAllUsers(d);
+    users = await getAllUsers();
     expect(users).toHaveLength(1);
     const expected = {
       EntityType: 'user',
@@ -45,13 +47,13 @@ describe('Users', () => {
       username: 'TestUser',
       name: 'Test User',
     };
-    await createUser(d, testUser);
+    await createUser(testUser);
 
-    const users = await getAllUsers(d);
+    const users = await getAllUsers();
     expect(users).toHaveLength(1);
 
     expect(
-      createUser(d, {
+      createUser({
         id: 'test-user',
         username: 'different-name',
         name: 'Someone Different?',

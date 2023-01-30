@@ -3,3 +3,9 @@ export class ItemDoesNotExistError extends Error {
     super(message);
   }
 }
+
+export class UserAlreadyExistsError extends Error {
+  constructor() {
+    super();
+  }
+}

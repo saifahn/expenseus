@@ -297,7 +297,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     return (result.Items as SharedTxnItem[]) ?? [];
   }
 
-  type TrackerBetweenDatesInput = {
+  type ByTrackerBetweenDatesInput = {
     tracker: string;
     from: number;
     to: number;
@@ -307,7 +307,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     tracker,
     from,
     to,
-  }: TrackerBetweenDatesInput) {
+  }: ByTrackerBetweenDatesInput) {
     const trackerIdKey = makeTrackerIdKey(tracker);
     const txnDateFromKey = makeSharedTxnDateKey(from);
     const txnDateToKey = makeSharedTxnDateKey(to);
@@ -322,6 +322,42 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
         },
         ExpressionAttributeValues: {
           ':trackerKey': trackerIdKey,
+          ':txnDateFromKey': txnDateFromKey,
+          ':txnDateToKey': txnDateToKey,
+        },
+        KeyConditionExpression:
+          '#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
+      }),
+    );
+
+    return (results.Items as SharedTxnItem[]) ?? [];
+  }
+
+  type ByUserBetweenDatesInput = {
+    user: string;
+    from: number;
+    to: number;
+  };
+
+  async function getTxnsByUserBetweenDates({
+    user,
+    from,
+    to,
+  }: ByUserBetweenDatesInput) {
+    const userIdKey = makeUserIdKey(user);
+    const txnDateFromKey = makeSharedTxnDateKey(from);
+    const txnDateToKey = makeSharedTxnDateKey(to);
+
+    const results = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':trackerKey': userIdKey,
           ':txnDateFromKey': txnDateFromKey,
           ':txnDateToKey': txnDateToKey,
         },
@@ -362,6 +398,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     settleTxns,
     getTxnsByTracker,
     getTxnsByTrackerBetweenDates,
+    getTxnsByUserBetweenDates,
     getUnsettledTxnsByTracker,
   };
 }

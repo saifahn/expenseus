@@ -11,6 +11,7 @@ const {
   deleteSharedTxn,
   getTxnsByTracker,
   getTxnsByTrackerBetweenDates,
+  getTxnsByUserBetweenDates,
   getUnsettledTxnsByTracker,
   settleTxns,
 } = makeSharedTxnRepository(d);
@@ -240,7 +241,7 @@ describe('Shared Transactions', () => {
     expect(txns).toHaveLength(0);
   });
 
-  test('txns can be retrieved from a tracker between dates', async () => {
+  test('txns are retrieved correctly by tracker between dates', async () => {
     const first: SharedTxn = {
       date: 1000 * 1000,
       location: '',
@@ -289,6 +290,58 @@ describe('Shared Transactions', () => {
       to: 1500 * 1000,
     };
     txns = await getTxnsByTrackerBetweenDates(input);
+    expect(txns).toHaveLength(0);
+  });
+
+  test('txns are retrieved correctly by user between dates', async () => {
+    const first: SharedTxn = {
+      date: 1000 * 1000,
+      location: '',
+      amount: 34567,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    const second: SharedTxn = {
+      date: 2000 * 1000,
+      location: '',
+      amount: 99999,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-03'],
+      tracker: 'a-different-tracker',
+      details: '',
+    };
+    await createSharedTxn(first);
+    await createSharedTxn(second);
+
+    let input = {
+      user: 'user-01',
+      from: 1000 * 1000,
+      to: 2500 * 1000,
+    };
+    let txns = await getTxnsByUserBetweenDates(input);
+    expect(txns).toHaveLength(2);
+    assertContainsTxnWithEqualDetails(txns, first);
+
+    // same user, outside dates
+    input = {
+      user: 'user-01',
+      from: 3000 * 1000,
+      to: 4000 * 1000,
+    };
+    txns = await getTxnsByUserBetweenDates(input);
+    expect(txns).toHaveLength(0);
+
+    // different user, no results
+    input = {
+      user: 'no-results-user',
+      from: 1000 * 1000,
+      to: 1500 * 1000,
+    };
+    txns = await getTxnsByUserBetweenDates(input);
     expect(txns).toHaveLength(0);
   });
 });

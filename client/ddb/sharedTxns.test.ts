@@ -11,7 +11,7 @@ const {
   deleteSharedTxn,
   getTxnsByTracker,
   getTxnsByTrackerBetweenDates,
-  getTxnsByUserBetweenDates,
+  getSharedTxnsByUserBetweenDates,
   getUnsettledTxnsByTracker,
   settleTxns,
 } = makeSharedTxnRepository(d);
@@ -322,7 +322,7 @@ describe('Shared Transactions', () => {
       from: 1000 * 1000,
       to: 2500 * 1000,
     };
-    let txns = await getTxnsByUserBetweenDates(input);
+    let txns = await getSharedTxnsByUserBetweenDates(input);
     expect(txns).toHaveLength(2);
     assertContainsTxnWithEqualDetails(txns, first);
 
@@ -332,7 +332,7 @@ describe('Shared Transactions', () => {
       from: 3000 * 1000,
       to: 4000 * 1000,
     };
-    txns = await getTxnsByUserBetweenDates(input);
+    txns = await getSharedTxnsByUserBetweenDates(input);
     expect(txns).toHaveLength(0);
 
     // different user, no results
@@ -341,7 +341,7 @@ describe('Shared Transactions', () => {
       from: 1000 * 1000,
       to: 1500 * 1000,
     };
-    txns = await getTxnsByUserBetweenDates(input);
+    txns = await getSharedTxnsByUserBetweenDates(input);
     expect(txns).toHaveLength(0);
   });
 });

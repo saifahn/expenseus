@@ -223,12 +223,140 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     );
   }
 
+  /**
+   * Retrieves all shared transactions from the tracker with the given tracker ID.
+   */
+  async function getTxnsByTracker(trackerId: string) {
+    const trackerIdKey = makeTrackerIdKey(trackerId);
+
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':trackerIdKey': trackerIdKey,
+          ':sharedTxnKeyPrefix': sharedTxnKeyPrefix,
+        },
+        // return in descending order
+        ScanIndexForward: false,
+        KeyConditionExpression:
+          '#GSI1PK = :trackerIdKey and begins_with(#GSI1SK, :sharedTxnKeyPrefix)',
+      }),
+    );
+
+    return (result.Items as SharedTxnItem[]) ?? [];
+  }
+
+  type ByTrackerBetweenDatesInput = {
+    tracker: string;
+    from: number;
+    to: number;
+  };
+  /**
+   * Retrieves transactions between the given dates for the given tracker ID.
+   */
+  async function getTxnsByTrackerBetweenDates({
+    tracker,
+    from,
+    to,
+  }: ByTrackerBetweenDatesInput) {
+    const trackerIdKey = makeTrackerIdKey(tracker);
+    const txnDateFromKey = makeSharedTxnDateKey(from);
+    const txnDateToKey = makeSharedTxnDateKey(to);
+
+    const results = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':trackerKey': trackerIdKey,
+          ':txnDateFromKey': txnDateFromKey,
+          ':txnDateToKey': txnDateToKey,
+        },
+        KeyConditionExpression:
+          '#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
+      }),
+    );
+
+    return (results.Items as SharedTxnItem[]) ?? [];
+  }
+
+  type ByUserBetweenDatesInput = {
+    user: string;
+    from: number;
+    to: number;
+  };
+  /**
+   * Retrieves shared transactions between the given dates for the given user ID.
+   */
+  async function getSharedTxnsByUserBetweenDates({
+    user,
+    from,
+    to,
+  }: ByUserBetweenDatesInput) {
+    const userIdKey = makeUserIdKey(user);
+    const txnDateFromKey = makeSharedTxnDateKey(from);
+    const txnDateToKey = makeSharedTxnDateKey(to);
+
+    const results = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':trackerKey': userIdKey,
+          ':txnDateFromKey': txnDateFromKey,
+          ':txnDateToKey': txnDateToKey,
+        },
+        KeyConditionExpression:
+          '#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
+      }),
+    );
+
+    return (results.Items as SharedTxnItem[]) ?? [];
+  }
+
+  /**
+   * Retrieves unsettled transactions from the tracker with the given tracker ID.
+   */
+  async function getUnsettledTxnsByTracker(trackerId: string) {
+    const trackerIdKey = makeTrackerIdKey(trackerId);
+
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: unsettledTxnsIndexName,
+        ExpressionAttributeNames: {
+          '#unsettledPK': unsettledTxnsIndexPK,
+          '#unsettledSK': unsettledTxnsIndexSK,
+        },
+        ExpressionAttributeValues: {
+          ':trackerIdKey': trackerIdKey,
+          ':true': unsettledFlagTrue,
+        },
+        KeyConditionExpression:
+          '#unsettledPK = :trackerIdKey and #unsettledSK = :true',
+      }),
+    );
+    return (result.Items as SharedTxnItem[]) ?? [];
+  }
+
   type SettleTxnInput = {
     id: string;
     trackerId: string;
     participants: string[];
   };
-
   /**
    * Settles transactions for the given input.
    */
@@ -269,136 +397,14 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
     }
   }
 
-  /**
-   * Retrieves all shared transactions from the tracker with the given tracker I
-   */
-  async function getTxnsByTracker(trackerId: string) {
-    const trackerIdKey = makeTrackerIdKey(trackerId);
-
-    const result = await ddb.send(
-      new QueryCommand({
-        TableName: tableName,
-        IndexName: gsi1Name,
-        ExpressionAttributeNames: {
-          '#GSI1PK': gsi1PartitionKey,
-          '#GSI1SK': gsi1SortKey,
-        },
-        ExpressionAttributeValues: {
-          ':trackerIdKey': trackerIdKey,
-          ':sharedTxnKeyPrefix': sharedTxnKeyPrefix,
-        },
-        // return in descending order
-        ScanIndexForward: false,
-        KeyConditionExpression:
-          '#GSI1PK = :trackerIdKey and begins_with(#GSI1SK, :sharedTxnKeyPrefix)',
-      }),
-    );
-
-    return (result.Items as SharedTxnItem[]) ?? [];
-  }
-
-  type ByTrackerBetweenDatesInput = {
-    tracker: string;
-    from: number;
-    to: number;
-  };
-
-  async function getTxnsByTrackerBetweenDates({
-    tracker,
-    from,
-    to,
-  }: ByTrackerBetweenDatesInput) {
-    const trackerIdKey = makeTrackerIdKey(tracker);
-    const txnDateFromKey = makeSharedTxnDateKey(from);
-    const txnDateToKey = makeSharedTxnDateKey(to);
-
-    const results = await ddb.send(
-      new QueryCommand({
-        TableName: tableName,
-        IndexName: gsi1Name,
-        ExpressionAttributeNames: {
-          '#GSI1PK': gsi1PartitionKey,
-          '#GSI1SK': gsi1SortKey,
-        },
-        ExpressionAttributeValues: {
-          ':trackerKey': trackerIdKey,
-          ':txnDateFromKey': txnDateFromKey,
-          ':txnDateToKey': txnDateToKey,
-        },
-        KeyConditionExpression:
-          '#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
-      }),
-    );
-
-    return (results.Items as SharedTxnItem[]) ?? [];
-  }
-
-  type ByUserBetweenDatesInput = {
-    user: string;
-    from: number;
-    to: number;
-  };
-
-  async function getTxnsByUserBetweenDates({
-    user,
-    from,
-    to,
-  }: ByUserBetweenDatesInput) {
-    const userIdKey = makeUserIdKey(user);
-    const txnDateFromKey = makeSharedTxnDateKey(from);
-    const txnDateToKey = makeSharedTxnDateKey(to);
-
-    const results = await ddb.send(
-      new QueryCommand({
-        TableName: tableName,
-        IndexName: gsi1Name,
-        ExpressionAttributeNames: {
-          '#GSI1PK': gsi1PartitionKey,
-          '#GSI1SK': gsi1SortKey,
-        },
-        ExpressionAttributeValues: {
-          ':trackerKey': userIdKey,
-          ':txnDateFromKey': txnDateFromKey,
-          ':txnDateToKey': txnDateToKey,
-        },
-        KeyConditionExpression:
-          '#GSI1PK = :trackerKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
-      }),
-    );
-
-    return (results.Items as SharedTxnItem[]) ?? [];
-  }
-
-  async function getUnsettledTxnsByTracker(trackerId: string) {
-    const trackerIdKey = makeTrackerIdKey(trackerId);
-
-    const result = await ddb.send(
-      new QueryCommand({
-        TableName: tableName,
-        IndexName: unsettledTxnsIndexName,
-        ExpressionAttributeNames: {
-          '#unsettledPK': unsettledTxnsIndexPK,
-          '#unsettledSK': unsettledTxnsIndexSK,
-        },
-        ExpressionAttributeValues: {
-          ':trackerIdKey': trackerIdKey,
-          ':true': unsettledFlagTrue,
-        },
-        KeyConditionExpression:
-          '#unsettledPK = :trackerIdKey and #unsettledSK = :true',
-      }),
-    );
-    return (result.Items as SharedTxnItem[]) ?? [];
-  }
-
   return {
     createSharedTxn,
     updateSharedTxn,
     deleteSharedTxn,
-    settleTxns,
     getTxnsByTracker,
     getTxnsByTrackerBetweenDates,
-    getTxnsByUserBetweenDates,
+    getSharedTxnsByUserBetweenDates,
     getUnsettledTxnsByTracker,
+    settleTxns,
   };
 }

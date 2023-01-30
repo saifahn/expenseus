@@ -6,6 +6,7 @@ import {
   deleteSharedTxn,
   getTxnsByTracker,
   getUnsettledTxnsByTracker,
+  settleTxns,
   SharedTxnItem,
   updateSharedTxn,
 } from './sharedTxns';
@@ -195,6 +196,47 @@ describe('Shared Transactions', () => {
       unsettled: false,
     };
     await updateSharedTxn(d, updatedTxn);
+    txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(0);
+  });
+
+  test('all shared txns can be settled at once', async () => {
+    // create two unsettled transactions
+    const first: SharedTxn = {
+      date: 1000 * 1000,
+      location: '',
+      amount: 34567,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+      unsettled: true,
+    };
+    const second: SharedTxn = {
+      date: 2000 * 1000,
+      location: '',
+      amount: 99999,
+      category: 'unspecified.unspecified',
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+      unsettled: true,
+    };
+    await createSharedTxn(d, first);
+    await createSharedTxn(d, second);
+    // check the length of the unsettled txns
+    let txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
+    expect(txns).toHaveLength(2);
+    // trigger the settling
+    const settleInput = txns.map((txn) => ({
+      id: txn.ID,
+      trackerId: txn.Tracker,
+      participants: txn.Participants,
+    }));
+    await settleTxns(d, settleInput);
+    // check the length of unsettled txns
     txns = await getUnsettledTxnsByTracker(d, 'test-tracker');
     expect(txns).toHaveLength(0);
   });

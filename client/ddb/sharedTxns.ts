@@ -1,5 +1,10 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
-import { DeleteCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  DeleteCommand,
+  PutCommand,
+  QueryCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { SubcategoryKey } from 'data/categories';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { monotonicFactory } from 'ulid';
@@ -216,6 +221,52 @@ export async function deleteSharedTxn(
       },
     }),
   );
+}
+
+type SettleTxnInput = {
+  id: string;
+  trackerId: string;
+  participants: string[];
+};
+
+/**
+ * Settles transactions for the given input.
+ */
+export async function settleTxns(d: DDBWithConfig, txns: SettleTxnInput[]) {
+  for (const txn of txns) {
+    const trackerIdKey = makeTrackerIdKey(txn.trackerId);
+    const txnIdKey = makeSharedTxnIdKey(txn.id);
+    await d.ddb.send(
+      new UpdateCommand({
+        TableName: d.tableName,
+        Key: {
+          [tablePartitionKey]: trackerIdKey,
+          [tableSortKey]: txnIdKey,
+        },
+        ExpressionAttributeNames: {
+          '#unsettled': 'Unsettled',
+        },
+        UpdateExpression: 'REMOVE #unsettled',
+      }),
+    );
+
+    for (const user of txn.participants) {
+      const userIdKey = makeUserIdKey(user);
+      await d.ddb.send(
+        new UpdateCommand({
+          TableName: d.tableName,
+          Key: {
+            [tablePartitionKey]: userIdKey,
+            [tableSortKey]: txnIdKey,
+          },
+          ExpressionAttributeNames: {
+            '#unsettled': 'Unsettled',
+          },
+          UpdateExpression: 'REMOVE #unsettled',
+        }),
+      );
+    }
+  }
 }
 
 /**

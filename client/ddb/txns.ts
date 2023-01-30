@@ -66,130 +66,146 @@ function txnToTxnItem(txn: Transaction): TxnItem {
 
 const ulid = monotonicFactory();
 
-export async function createTxn(d: DDBWithConfig, txn: Transaction) {
-  const txnId = ulid(txn.date);
-  txn.id = txnId;
-  const txnItem = txnToTxnItem(txn);
+export function makeTxnRepository({ ddb, tableName }: DDBWithConfig) {
+  async function createTxn(txn: Transaction) {
+    const txnId = ulid(txn.date);
+    txn.id = txnId;
+    const txnItem = txnToTxnItem(txn);
 
-  await d.ddb.send(
-    new PutCommand({
-      TableName: d.tableName,
-      Item: txnItem,
-      ExpressionAttributeNames: {
-        '#SK': tableSortKey,
-      },
-      ConditionExpression: 'attribute_not_exists(#SK)',
-    }),
-  );
-}
-
-export async function getTxn(
-  d: DDBWithConfig,
-  { txnId, userId }: { txnId: string; userId: string },
-) {
-  const userIdKey = makeUserIdKey(userId);
-  const txnIdKey = makeTxnIdKey(txnId);
-
-  const results = await d.ddb.send(
-    new GetCommand({
-      TableName: d.tableName,
-      Key: {
-        [tablePartitionKey]: userIdKey,
-        [tableSortKey]: txnIdKey,
-      },
-    }),
-  );
-  return results.Item as TxnItem;
-}
-
-export async function updateTxn(d: DDBWithConfig, txn: Transaction) {
-  const txnItem = txnToTxnItem(txn);
-
-  try {
-    await d.ddb.send(
+    await ddb.send(
       new PutCommand({
-        TableName: d.tableName,
+        TableName: tableName,
         Item: txnItem,
         ExpressionAttributeNames: {
           '#SK': tableSortKey,
         },
-        ConditionExpression: 'attribute_exists(#SK)',
+        ConditionExpression: 'attribute_not_exists(#SK)',
       }),
     );
-  } catch (err) {
-    if (err instanceof ConditionalCheckFailedException) {
-      throw new ItemDoesNotExistError();
-    }
-    throw err;
   }
-}
 
-export async function deleteTxn(
-  d: DDBWithConfig,
-  { txnId, userId }: { txnId: string; userId: string },
-) {
-  const userIdKey = makeUserIdKey(userId);
-  const txnIdKey = makeTxnIdKey(txnId);
-  await d.ddb.send(
-    new DeleteCommand({
-      TableName: d.tableName,
-      Key: {
-        [tablePartitionKey]: userIdKey,
-        [tableSortKey]: txnIdKey,
-      },
-    }),
-  );
-}
+  async function getTxn({ txnId, userId }: { txnId: string; userId: string }) {
+    const userIdKey = makeUserIdKey(userId);
+    const txnIdKey = makeTxnIdKey(txnId);
 
-export async function getTxnsByUserId(d: DDBWithConfig, id: string) {
-  const userIdKey = makeUserIdKey(id);
-  const allTxnsPrefix = `${txnKeyPrefix}#`;
+    const results = await ddb.send(
+      new GetCommand({
+        TableName: tableName,
+        Key: {
+          [tablePartitionKey]: userIdKey,
+          [tableSortKey]: txnIdKey,
+        },
+      }),
+    );
+    return results.Item as TxnItem;
+  }
 
-  const result = await d.ddb.send(
-    new QueryCommand({
-      TableName: d.tableName,
-      IndexName: gsi1Name,
-      ExpressionAttributeNames: {
-        '#GSI1PK': gsi1PartitionKey,
-        '#GSI1SK': gsi1SortKey,
-      },
-      ExpressionAttributeValues: {
-        ':userKey': userIdKey,
-        ':allTxnPrefix': allTxnsPrefix,
-      },
-      KeyConditionExpression:
-        '#GSI1PK = :userKey and begins_with(#GSI1SK, :allTxnPrefix)',
-      // return in descending order
-      ScanIndexForward: false,
-    }),
-  );
-  return (result.Items as TxnItem[]) ?? [];
-}
+  async function updateTxn(txn: Transaction) {
+    const txnItem = txnToTxnItem(txn);
 
-export async function getBetweenDates(
-  d: DDBWithConfig,
-  { userId, from, to }: { userId: string; from: number; to: number },
-) {
-  const userIdKey = makeUserIdKey(userId);
-  const txnDateFromKey = makeTxnDateKey(from);
-  const txnDateToKey = makeTxnDateKey(to);
+    try {
+      await ddb.send(
+        new PutCommand({
+          TableName: tableName,
+          Item: txnItem,
+          ExpressionAttributeNames: {
+            '#SK': tableSortKey,
+          },
+          ConditionExpression: 'attribute_exists(#SK)',
+        }),
+      );
+    } catch (err) {
+      if (err instanceof ConditionalCheckFailedException) {
+        throw new ItemDoesNotExistError();
+      }
+      throw err;
+    }
+  }
 
-  const result = await d.ddb.send(
-    new QueryCommand({
-      TableName: d.tableName,
-      IndexName: gsi1Name,
-      ExpressionAttributeNames: {
-        '#GSI1PK': gsi1PartitionKey,
-        '#GSI1SK': gsi1SortKey,
-      },
-      ExpressionAttributeValues: {
-        ':userKey': userIdKey,
-        ':txnDateFromKey': txnDateFromKey,
-        ':txnDateToKey': txnDateToKey,
-      },
-      KeyConditionExpression:
-        '#GSI1PK = :userKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
-    }),
-  );
-  return (result.Items as TxnItem[]) || [];
+  async function deleteTxn({
+    txnId,
+    userId,
+  }: {
+    txnId: string;
+    userId: string;
+  }) {
+    const userIdKey = makeUserIdKey(userId);
+    const txnIdKey = makeTxnIdKey(txnId);
+    await ddb.send(
+      new DeleteCommand({
+        TableName: tableName,
+        Key: {
+          [tablePartitionKey]: userIdKey,
+          [tableSortKey]: txnIdKey,
+        },
+      }),
+    );
+  }
+
+  async function getTxnsByUserId(id: string) {
+    const userIdKey = makeUserIdKey(id);
+    const allTxnsPrefix = `${txnKeyPrefix}#`;
+
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':userKey': userIdKey,
+          ':allTxnPrefix': allTxnsPrefix,
+        },
+        KeyConditionExpression:
+          '#GSI1PK = :userKey and begins_with(#GSI1SK, :allTxnPrefix)',
+        // return in descending order
+        ScanIndexForward: false,
+      }),
+    );
+    return (result.Items as TxnItem[]) ?? [];
+  }
+
+  async function getBetweenDates({
+    userId,
+    from,
+    to,
+  }: {
+    userId: string;
+    from: number;
+    to: number;
+  }) {
+    const userIdKey = makeUserIdKey(userId);
+    const txnDateFromKey = makeTxnDateKey(from);
+    const txnDateToKey = makeTxnDateKey(to);
+
+    const result = await ddb.send(
+      new QueryCommand({
+        TableName: tableName,
+        IndexName: gsi1Name,
+        ExpressionAttributeNames: {
+          '#GSI1PK': gsi1PartitionKey,
+          '#GSI1SK': gsi1SortKey,
+        },
+        ExpressionAttributeValues: {
+          ':userKey': userIdKey,
+          ':txnDateFromKey': txnDateFromKey,
+          ':txnDateToKey': txnDateToKey,
+        },
+        KeyConditionExpression:
+          '#GSI1PK = :userKey and #GSI1SK BETWEEN :txnDateFromKey AND :txnDateToKey',
+      }),
+    );
+    return (result.Items as TxnItem[]) || [];
+  }
+
+  return {
+    createTxn,
+    getTxn,
+    updateTxn,
+    deleteTxn,
+    getTxnsByUserId,
+    getBetweenDates,
+  };
 }

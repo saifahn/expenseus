@@ -1,18 +1,18 @@
 import { ItemDoesNotExistError } from 'ddb/errors';
 import { setUpDdb, createTableIfNotExists, deleteTable } from 'ddb/schema';
-import {
+import { makeTxnRepository, TxnItem } from 'ddb/txns';
+import { Transaction } from 'types/Transaction';
+
+const txnTestTable = 'txn-test-table';
+const d = setUpDdb(txnTestTable);
+const {
   createTxn,
   deleteTxn,
   getBetweenDates,
   getTxn,
   getTxnsByUserId,
-  TxnItem,
   updateTxn,
-} from 'ddb/txns';
-import { Transaction } from 'types/Transaction';
-
-const txnTestTable = 'txn-test-table';
-const d = setUpDdb(txnTestTable);
+} = makeTxnRepository(d);
 
 // helper function to assert details from txnItem match an original txn
 function assertEqualDetails(txnItem: TxnItem, txn: Transaction) {
@@ -38,7 +38,7 @@ describe('Transactions', () => {
   });
 
   test('a txn can be created successfully', async () => {
-    let txns = await getTxnsByUserId(d, 'test-user');
+    let txns = await getTxnsByUserId('test-user');
     expect(txns).toHaveLength(0);
 
     const testTxn = {
@@ -49,9 +49,9 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    await createTxn(d, testTxn);
+    await createTxn(testTxn);
 
-    txns = await getTxnsByUserId(d, 'test-user');
+    txns = await getTxnsByUserId('test-user');
     expect(txns).toHaveLength(1);
     assertEqualDetails(txns[0], testTxn);
   });
@@ -65,11 +65,11 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    await createTxn(d, testTxn);
-    const txns = await getTxnsByUserId(d, 'test-user');
+    await createTxn(testTxn);
+    const txns = await getTxnsByUserId('test-user');
     const createdTxn = txns[0];
 
-    const result = await getTxn(d, {
+    const result = await getTxn({
       txnId: createdTxn.ID,
       userId: testTxn.userId,
     });
@@ -86,8 +86,8 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    await createTxn(d, testTxn);
-    let txns = await getTxnsByUserId(d, 'test-user');
+    await createTxn(testTxn);
+    let txns = await getTxnsByUserId('test-user');
     const createdTxn = txns[0];
     assertEqualDetails(createdTxn, testTxn);
 
@@ -97,8 +97,8 @@ describe('Transactions', () => {
       location: 'updated-location',
       amount: 999999,
     };
-    await updateTxn(d, updatedTxn);
-    txns = await getTxnsByUserId(d, 'test-user');
+    await updateTxn(updatedTxn);
+    txns = await getTxnsByUserId('test-user');
     assertEqualDetails(txns[0], updatedTxn);
   });
 
@@ -112,9 +112,7 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    expect(updateTxn(d, updatedTxn)).rejects.toThrowError(
-      ItemDoesNotExistError,
-    );
+    expect(updateTxn(updatedTxn)).rejects.toThrowError(ItemDoesNotExistError);
   });
 
   test('a txn can be deleted successfully', async () => {
@@ -126,13 +124,13 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    await createTxn(d, testTxn);
-    let txns = await getTxnsByUserId(d, 'test-user');
+    await createTxn(testTxn);
+    let txns = await getTxnsByUserId('test-user');
     expect(txns).toHaveLength(1);
 
-    await deleteTxn(d, { txnId: txns[0].ID, userId: txns[0].UserID });
+    await deleteTxn({ txnId: txns[0].ID, userId: txns[0].UserID });
 
-    txns = await getTxnsByUserId(d, 'test-user');
+    txns = await getTxnsByUserId('test-user');
     expect(txns).toHaveLength(0);
   });
 
@@ -145,9 +143,9 @@ describe('Transactions', () => {
       category: 'unspecified.unspecified',
       details: '',
     } as const;
-    await createTxn(d, testTxn);
+    await createTxn(testTxn);
 
-    let txns = await getBetweenDates(d, {
+    let txns = await getBetweenDates({
       userId: testTxn.userId,
       from: 1000 * 1000,
       to: 1000 * 1500,
@@ -156,7 +154,7 @@ describe('Transactions', () => {
     assertEqualDetails(txns[0], testTxn);
 
     // a date range outside returns none
-    txns = await getBetweenDates(d, {
+    txns = await getBetweenDates({
       userId: testTxn.userId,
       from: 2000 * 1000,
       to: 2000 * 1500,

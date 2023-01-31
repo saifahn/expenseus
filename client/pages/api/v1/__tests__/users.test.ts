@@ -45,6 +45,7 @@ describe('/api/v1/users API endpoint', () => {
     usersRepo.mockImplementationOnce(() => {
       return {
         createUser: jest.fn(),
+        getUser: jest.fn(),
         getAllUsers: jest.fn(async () => [testUserItem]),
       };
     });
@@ -65,7 +66,7 @@ describe('/api/v1/users API endpoint', () => {
     expect(result).toContainEqual(expected);
   });
 
-  it('returns an error when called with a non-GET method', async () => {
+  it('returns a 405 error when called with a non-GET method', async () => {
     const { req, res } = mockReqRes('POST');
     await usersHandler(req, res);
 

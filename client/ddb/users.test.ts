@@ -86,4 +86,9 @@ describe('Users', () => {
     };
     expect(user).toEqual(expected);
   });
+
+  test('it returns undefined when a non-existent user is attempted to be retrieved', async () => {
+    const user = await getUser('non-existent-user');
+    expect(user).toBeUndefined();
+  });
 });

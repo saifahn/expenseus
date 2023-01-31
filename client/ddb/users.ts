@@ -1,5 +1,5 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { User } from 'components/UserList';
 import {
   DDBWithConfig,
@@ -66,6 +66,25 @@ export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
     }
   }
 
+  async function getUser(id: string) {
+    const userIdKey = makeUserIdKey(id);
+    try {
+      const result = await ddb.send(
+        new GetCommand({
+          TableName: tableName,
+          Key: {
+            [tablePartitionKey]: userIdKey,
+            [tableSortKey]: userIdKey,
+          },
+        }),
+      );
+      return result.Item;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
+
   async function getAllUsers() {
     const res = await ddb.send(
       new QueryCommand({
@@ -83,5 +102,5 @@ export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
     return (res.Items! as UserItem[]) || [];
   }
 
-  return { createUser, getAllUsers };
+  return { createUser, getUser, getAllUsers };
 }

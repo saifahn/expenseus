@@ -17,6 +17,17 @@ const userKeyPrefix = 'user',
 
 export const makeUserIdKey = (id: string) => `${userKeyPrefix}#${id}`;
 
+export type UserItem = {
+  [tablePartitionKey]: string;
+  [tableSortKey]: string;
+  EntityType: typeof userEntityType;
+  ID: string;
+  Username: string;
+  Name: string;
+  [gsi1PartitionKey]: typeof allUsersKey;
+  [gsi1SortKey]: string;
+};
+
 export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
   async function createUser(user: User) {
     const userIdKey = makeUserIdKey(user.id);
@@ -61,7 +72,7 @@ export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
         KeyConditionExpression: '#GSI1PK = :usersKey',
       }),
     );
-    return res.Items!;
+    return (res.Items! as UserItem[]) || [];
   }
 
   return { createUser, getAllUsers };

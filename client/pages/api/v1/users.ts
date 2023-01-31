@@ -1,5 +1,5 @@
 import { setUpDdb } from 'ddb/schema';
-import { makeUserRepository } from 'ddb/users';
+import { makeUserRepository, userItemsToUsers } from 'ddb/users';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function usersHandler(
@@ -13,7 +13,8 @@ export default async function usersHandler(
   // TODO: get database name from env
   const ddb = setUpDdb('test-ddb');
   const userRepo = makeUserRepository(ddb);
-  const users = await userRepo.getAllUsers();
+  const userItems = await userRepo.getAllUsers();
+  const users = userItemsToUsers(userItems);
 
   res.status(200).json(users);
 }

@@ -9,7 +9,14 @@ import {
   tableSortKey,
 } from 'ddb/schema';
 
-jest.mock('ddb/users');
+jest.mock('ddb/users', () => {
+  const original = jest.requireActual('ddb/users');
+  return {
+    ...original,
+    makeUserRepository: jest.fn(),
+  };
+});
+
 const usersRepo = jest.mocked(makeUserRepository);
 
 describe('/api/v1/users API endpoint', () => {
@@ -47,7 +54,15 @@ describe('/api/v1/users API endpoint', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.getHeaders()).toEqual({ 'content-type': 'application/json' });
-    expect(res._getJSONData()).toEqual([testUserItem]);
+
+    const expected = {
+      username: 'testUser',
+      name: 'Test User',
+      id: 'test-user',
+    };
+    const result = res._getJSONData();
+    expect(result).toHaveLength(1);
+    expect(result).toContainEqual(expected);
   });
 
   it('returns an error when called with a non-GET method', async () => {

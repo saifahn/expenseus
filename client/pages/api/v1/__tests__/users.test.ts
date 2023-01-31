@@ -28,13 +28,13 @@ describe('/api/v1/users API endpoint', () => {
     const testUserItem = {
       [tablePartitionKey]: 'user#test-user',
       [tableSortKey]: 'user#test-user',
-      EntityType: 'user' as const,
+      EntityType: 'user',
       ID: 'test-user',
       Username: 'testUser',
       Name: 'Test User',
-      [gsi1PartitionKey]: 'users' as const,
+      [gsi1PartitionKey]: 'users',
       [gsi1SortKey]: 'user#test-user',
-    };
+    } as const;
     usersRepo.mockImplementationOnce(() => {
       return {
         createUser: jest.fn(),
@@ -48,5 +48,12 @@ describe('/api/v1/users API endpoint', () => {
     expect(res.statusCode).toBe(200);
     expect(res.getHeaders()).toEqual({ 'content-type': 'application/json' });
     expect(res._getJSONData()).toEqual([testUserItem]);
+  });
+
+  it('returns an error when called with a non-GET method', async () => {
+    const { req, res } = mockReqRes('POST');
+    await usersHandler(req, res);
+
+    expect(res.statusCode).toBe(405);
   });
 });

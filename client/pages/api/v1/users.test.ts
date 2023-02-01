@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createMocks, RequestMethod } from 'node-mocks-http';
-import usersHandler from '../users';
+import usersHandler from './users';
 import { makeUserRepository } from 'ddb/users';
 import {
   gsi1PartitionKey,

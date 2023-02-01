@@ -2,13 +2,15 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { z, ZodError } from 'zod';
 
 const createTxnPayloadSchema = z.object({
-  userId: z.string(),
-  location: z.string(),
-  amount: z.number(),
-  date: z.number(),
-  category: z.string(),
+  userId: z.string().min(1),
+  location: z.string().min(1),
+  amount: z.number().min(1),
+  date: z.number().min(1),
+  category: z.string().min(1),
   details: z.string(),
 });
+
+export type CreateTxnPayload = z.infer<typeof createTxnPayloadSchema>;
 
 export default async function createTxnHandler(
   req: NextApiRequest,

@@ -4,7 +4,7 @@ import createTxnHandler, { CreateTxnPayload } from './transactions';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
-const mockedRepoReturn: ReturnType<typeof makeTxnRepository> = {
+export const txnRepoFnsMock: ReturnType<typeof makeTxnRepository> = {
   createTxn: jest.fn(),
   getTxn: jest.fn(),
   updateTxn: jest.fn(),
@@ -46,7 +46,7 @@ describe('/api/v1/transactions POST endpoint', () => {
       details: '',
     };
     req._setBody(payload);
-    txnsRepo.mockImplementationOnce(() => mockedRepoReturn);
+    txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
     await createTxnHandler(req, res);
 
     expect(res.statusCode).toBe(200);
@@ -65,7 +65,7 @@ describe('/api/v1/transactions POST endpoint', () => {
     };
     req._setBody(payload);
     txnsRepo.mockImplementationOnce(() => ({
-      ...mockedRepoReturn,
+      ...txnRepoFnsMock,
       createTxn: jest.fn(() => {
         throw new Error();
       }),

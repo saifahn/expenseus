@@ -108,4 +108,27 @@ describe('byTxnIdHandler', () => {
       expect(txnRepoFnsMock.updateTxn).toHaveBeenCalledWith(updatedTxn);
     });
   });
+
+  test('a 400 is returned if the input is incorrect', async () => {
+    const { req, res } = mockReqRes('PUT');
+    req.query.txnId = 'test-txn';
+    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
+      return {
+        user: {
+          email: 'test-user',
+        },
+      };
+    });
+    const updatedTxn = {
+      id: 'test-txn',
+      something: 'is',
+      totally: 'up',
+      with: 'this',
+    };
+    req._setBody(updatedTxn);
+    txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
+    await byTxnIdHandler(req, res);
+
+    expect(res.statusCode).toBe(400);
+  });
 });

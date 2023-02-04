@@ -1,8 +1,21 @@
+import { SubcategoryKeys } from 'data/categories';
 import { txnItemToTxn } from 'ddb/itemToModel';
 import { setUpDdb } from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { z, ZodError } from 'zod';
+
+const updateTxnPayloadSchema = z.object({
+  id: z.string().min(1),
+  userId: z.string().min(1),
+  location: z.string().min(1),
+  amount: z.number().min(1),
+  date: z.number().min(1),
+  category: SubcategoryKeys,
+  details: z.string(),
+});
+type UpdateTxnPayload = z.infer<typeof updateTxnPayloadSchema>;
 
 export default async function byTxnIdHandler(
   req: NextApiRequest,
@@ -29,7 +42,18 @@ export default async function byTxnIdHandler(
   }
 
   if (req.method === 'PUT') {
-    await txnRepo.updateTxn(req.body);
+    let parsed: UpdateTxnPayload;
+    try {
+      parsed = updateTxnPayloadSchema.parse(req.body);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res
+          .status(400)
+          .json({ error: 'incorrect schema for updating a transaction' });
+        return;
+      }
+    }
+    await txnRepo.updateTxn(parsed);
     res.status(202);
     return;
   }

@@ -1,3 +1,5 @@
+import { setUpDdb } from 'ddb/schema';
+import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { z, ZodError } from 'zod';
 
@@ -21,12 +23,26 @@ export default async function createTxnHandler(
     return;
   }
 
+  let parsedInput: CreateTxnPayload;
   try {
-    createTxnPayloadSchema.parse(req.body);
+    parsedInput = createTxnPayloadSchema.parse(req.body);
   } catch (err) {
     if (err instanceof ZodError) {
       res.status(400).json({ error: 'invalid payload' });
       return;
     }
+  }
+
+  // TODO: use real ddb
+  const ddb = setUpDdb('test');
+  const txnRepo = makeTxnRepository(ddb);
+
+  try {
+    await txnRepo.createTxn(parsedInput);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: 'something went wrong in creating the transaction ' });
+    return;
   }
 }

@@ -1,6 +1,10 @@
+import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { RequestMethod, createMocks } from 'node-mocks-http';
 import createTxnHandler, { CreateTxnPayload } from './transactions';
+
+jest.mock('ddb/txns');
+const txnsRepo = jest.mocked(makeTxnRepository);
 
 describe('/api/v1/transactions POST endpoint', () => {
   function mockReqRes(method: RequestMethod = 'POST') {
@@ -42,10 +46,47 @@ describe('/api/v1/transactions POST endpoint', () => {
       details: '',
     };
     req._setBody(payload);
+    txnsRepo.mockImplementationOnce(() => {
+      return {
+        createTxn: jest.fn(),
+        getTxn: jest.fn(),
+        updateTxn: jest.fn(),
+        deleteTxn: jest.fn(),
+        getTxnsByUserId: jest.fn(),
+        getBetweenDates: jest.fn(),
+      };
+    });
     await createTxnHandler(req, res);
 
     expect(res.statusCode).toBe(200);
   });
 
-  test.todo('handle an error from the ddb repo');
+  test('should return a 500 if something goes wrong with ddb', async () => {
+    const { req, res } = mockReqRes();
+
+    const payload: CreateTxnPayload = {
+      userId: 'test-user',
+      location: 'test-location',
+      amount: 12345,
+      date: 1000 * 1000,
+      category: 'unspecified.unspecified',
+      details: '',
+    };
+    req._setBody(payload);
+    txnsRepo.mockImplementationOnce(() => {
+      return {
+        createTxn: jest.fn(() => {
+          throw new Error();
+        }),
+        getTxn: jest.fn(),
+        updateTxn: jest.fn(),
+        deleteTxn: jest.fn(),
+        getTxnsByUserId: jest.fn(),
+        getBetweenDates: jest.fn(),
+      };
+    });
+    await createTxnHandler(req, res);
+
+    expect(res.statusCode).toBe(500);
+  });
 });

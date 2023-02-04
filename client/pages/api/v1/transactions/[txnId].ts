@@ -4,6 +4,7 @@ import { setUpDdb } from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
 const updateTxnPayloadSchema = z.object({
@@ -42,18 +43,16 @@ export default async function byTxnIdHandler(
   }
 
   if (req.method === 'PUT') {
-    let parsed: UpdateTxnPayload;
-    try {
-      parsed = updateTxnPayloadSchema.parse(req.body);
-    } catch (err) {
-      if (err instanceof ZodError) {
-        res
-          .status(400)
-          .json({ error: 'incorrect schema for updating a transaction' });
-        return;
-      }
+    const [parsed, err] = withTryCatch(() =>
+      updateTxnPayloadSchema.parse(req.body),
+    );
+    if (err instanceof ZodError) {
+      res
+        .status(400)
+        .json({ error: 'incorrect schema for updating a transaction' });
+      return;
     }
-    await txnRepo.updateTxn(parsed);
+    await txnRepo.updateTxn(parsed!);
     res.status(202);
     return;
   }

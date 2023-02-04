@@ -34,7 +34,7 @@ describe('/api/v1/transactions POST endpoint', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  test('should return a 200 if the payload is OK', async () => {
+  test('should return a 202 if the payload is OK', async () => {
     const { req, res } = mockReqRes('POST');
 
     const payload: CreateTxnPayload = {
@@ -49,7 +49,7 @@ describe('/api/v1/transactions POST endpoint', () => {
     txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
     await createTxnHandler(req, res);
 
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(202);
   });
 
   test('should return a 500 if something goes wrong with ddb', async () => {
@@ -66,7 +66,7 @@ describe('/api/v1/transactions POST endpoint', () => {
     req._setBody(payload);
     txnsRepo.mockImplementationOnce(() => ({
       ...txnRepoFnsMock,
-      createTxn: jest.fn(() => {
+      createTxn: jest.fn(async () => {
         throw new Error();
       }),
     }));

@@ -5,6 +5,7 @@ import { SubcategoryKeys } from 'data/categories';
 import { setUpDdb } from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
 const createTxnPayloadSchema = z.object({
@@ -27,27 +28,24 @@ export default async function createTxnHandler(
     return;
   }
 
-  let parsedInput: CreateTxnPayload;
-  try {
-    parsedInput = createTxnPayloadSchema.parse(req.body);
-  } catch (err) {
-    if (err instanceof ZodError) {
-      res.status(400).json({ error: 'invalid payload' });
-      return;
-    }
+  let [parsed, err] = withTryCatch(() =>
+    createTxnPayloadSchema.parse(req.body),
+  );
+  if (err instanceof ZodError) {
+    res.status(400).json({ error: 'invalid payload' });
+    return;
   }
 
   // TODO: use real ddb
   const ddb = setUpDdb('test');
   const txnRepo = makeTxnRepository(ddb);
 
-  // TODO: that try/catch thing from fireship
-  try {
-    await txnRepo.createTxn(parsedInput);
-  } catch (err) {
+  [, err] = await withAsyncTryCatch(txnRepo.createTxn(parsed!));
+  if (err) {
     res
       .status(500)
       .json({ error: 'something went wrong in creating the transaction' });
     return;
   }
+  res.status(202);
 }

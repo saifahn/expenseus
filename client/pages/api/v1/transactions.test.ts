@@ -5,6 +5,14 @@ import createTxnHandler, { CreateTxnPayload } from './transactions';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
+const mockedRepoReturn: ReturnType<typeof makeTxnRepository> = {
+  createTxn: jest.fn(),
+  getTxn: jest.fn(),
+  updateTxn: jest.fn(),
+  deleteTxn: jest.fn(),
+  getTxnsByUserId: jest.fn(),
+  getBetweenDates: jest.fn(),
+};
 
 describe('/api/v1/transactions POST endpoint', () => {
   function mockReqRes(method: RequestMethod = 'POST') {
@@ -46,16 +54,7 @@ describe('/api/v1/transactions POST endpoint', () => {
       details: '',
     };
     req._setBody(payload);
-    txnsRepo.mockImplementationOnce(() => {
-      return {
-        createTxn: jest.fn(),
-        getTxn: jest.fn(),
-        updateTxn: jest.fn(),
-        deleteTxn: jest.fn(),
-        getTxnsByUserId: jest.fn(),
-        getBetweenDates: jest.fn(),
-      };
-    });
+    txnsRepo.mockImplementationOnce(() => mockedRepoReturn);
     await createTxnHandler(req, res);
 
     expect(res.statusCode).toBe(200);
@@ -73,18 +72,12 @@ describe('/api/v1/transactions POST endpoint', () => {
       details: '',
     };
     req._setBody(payload);
-    txnsRepo.mockImplementationOnce(() => {
-      return {
-        createTxn: jest.fn(() => {
-          throw new Error();
-        }),
-        getTxn: jest.fn(),
-        updateTxn: jest.fn(),
-        deleteTxn: jest.fn(),
-        getTxnsByUserId: jest.fn(),
-        getBetweenDates: jest.fn(),
-      };
-    });
+    txnsRepo.mockImplementationOnce(() => ({
+      ...mockedRepoReturn,
+      createTxn: jest.fn(() => {
+        throw new Error();
+      }),
+    }));
     await createTxnHandler(req, res);
 
     expect(res.statusCode).toBe(500);

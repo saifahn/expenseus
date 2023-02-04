@@ -43,11 +43,13 @@ describe('byTxnIdHandler', () => {
     test('a txn is successfully retrieved for a valid ID', async () => {
       const { req, res } = mockReqRes('GET');
       req.query.txnId = 'test-txn';
-      nextAuthMocked.getServerSession.mockImplementationOnce(async () => ({
-        user: {
-          email: 'test-user',
-        },
-      }));
+      nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
+        return {
+          user: {
+            email: 'test-user',
+          },
+        };
+      });
       const mockTxnItem = {
         [tablePartitionKey]: 'user#test-user',
         [tableSortKey]: 'txn#test-txn',
@@ -75,6 +77,35 @@ describe('byTxnIdHandler', () => {
         userId: 'test-user',
       });
       assertEqualDetails(res._getJSONData(), mockTxnItem);
+    });
+  });
+
+  describe('PUT - update txn', () => {
+    test('a txn can be updated correctly', async () => {
+      const { req, res } = mockReqRes('PUT');
+      req.query.txnId = 'test-txn';
+      nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
+        return {
+          user: {
+            email: 'test-user',
+          },
+        };
+      });
+      const updatedTxn: Transaction = {
+        id: 'test-txn',
+        userId: 'test-user',
+        date: 12345678,
+        amount: 5000,
+        location: 'hair cut',
+        category: 'beauty.cosmetics',
+        details: '',
+      };
+      req._setBody(updatedTxn);
+      txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
+      await byTxnIdHandler(req, res);
+
+      expect(res.statusCode).toBe(202);
+      expect(txnRepoFnsMock.updateTxn).toHaveBeenCalledWith(updatedTxn);
     });
   });
 });

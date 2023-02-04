@@ -13,16 +13,24 @@ export default async function byTxnIdHandler(
     res.status(401).json({ error: 'no valid session found' });
     return;
   }
-
   const { txnId } = req.query;
   // TODO: get ddb name from env
   const ddb = setUpDdb('test-ddb');
   const txnRepo = makeTxnRepository(ddb);
-  const txnItem = await txnRepo.getTxn({
-    userId: session.user.email!,
-    txnId: txnId as string,
-  });
-  const item = txnItemToTxn(txnItem);
 
-  res.status(200).json(item);
+  if (req.method === 'GET') {
+    const txnItem = await txnRepo.getTxn({
+      userId: session.user.email!,
+      txnId: txnId as string,
+    });
+    const item = txnItemToTxn(txnItem);
+    res.status(200).json(item);
+    return;
+  }
+
+  if (req.method === 'PUT') {
+    await txnRepo.updateTxn(req.body);
+    res.status(202);
+    return;
+  }
 }

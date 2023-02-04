@@ -1,6 +1,7 @@
 /**
  * This is the file for the CreateTxnHandler
  */
+import { SubcategoryKeys } from 'data/categories';
 import { setUpDdb } from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
@@ -11,7 +12,7 @@ const createTxnPayloadSchema = z.object({
   location: z.string().min(1),
   amount: z.number().min(1),
   date: z.number().min(1),
-  category: z.string().min(1),
+  category: SubcategoryKeys,
   details: z.string(),
 });
 
@@ -40,12 +41,13 @@ export default async function createTxnHandler(
   const ddb = setUpDdb('test');
   const txnRepo = makeTxnRepository(ddb);
 
+  // TODO: that try/catch thing from fireship
   try {
     await txnRepo.createTxn(parsedInput);
   } catch (err) {
     res
       .status(500)
-      .json({ error: 'something went wrong in creating the transaction ' });
+      .json({ error: 'something went wrong in creating the transaction' });
     return;
   }
 }

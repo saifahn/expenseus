@@ -1,5 +1,3 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { createMocks, RequestMethod } from 'node-mocks-http';
 import usersHandler from './users';
 import { makeUserRepository } from 'ddb/users';
 import {
@@ -8,6 +6,7 @@ import {
   tablePartitionKey,
   tableSortKey,
 } from 'ddb/schema';
+import { mockReqRes } from 'tests/api/common';
 
 jest.mock('ddb/users', () => {
   const original = jest.requireActual('ddb/users');
@@ -20,13 +19,6 @@ jest.mock('ddb/users', () => {
 const usersRepo = jest.mocked(makeUserRepository);
 
 describe('/api/v1/users API endpoint', () => {
-  function mockReqRes(method: RequestMethod = 'GET') {
-    const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
-      method,
-    });
-    return { req, res };
-  }
-
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -50,7 +42,7 @@ describe('/api/v1/users API endpoint', () => {
       };
     });
 
-    const { req, res } = mockReqRes();
+    const { req, res } = mockReqRes('GET');
     await usersHandler(req, res);
 
     expect(res.statusCode).toBe(200);

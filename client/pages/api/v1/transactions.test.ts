@@ -1,6 +1,5 @@
 import { makeTxnRepository } from 'ddb/txns';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { RequestMethod, createMocks } from 'node-mocks-http';
+import { mockReqRes } from 'tests/api/common';
 import createTxnHandler, { CreateTxnPayload } from './transactions';
 
 jest.mock('ddb/txns');
@@ -15,13 +14,6 @@ const mockedRepoReturn: ReturnType<typeof makeTxnRepository> = {
 };
 
 describe('/api/v1/transactions POST endpoint', () => {
-  function mockReqRes(method: RequestMethod = 'POST') {
-    const { req, res } = createMocks<NextApiRequest, NextApiResponse>({
-      method,
-    });
-    return { req, res };
-  }
-
   test('should return a 405 error if the method is not POST', async () => {
     const { req, res } = mockReqRes('GET');
 
@@ -31,7 +23,7 @@ describe('/api/v1/transactions POST endpoint', () => {
   });
 
   test('should return a 400 error if the payload is invalid', async () => {
-    const { req, res } = mockReqRes();
+    const { req, res } = mockReqRes('POST');
 
     req._setBody({
       invalid: 'property',
@@ -43,7 +35,7 @@ describe('/api/v1/transactions POST endpoint', () => {
   });
 
   test('should return a 200 if the payload is OK', async () => {
-    const { req, res } = mockReqRes();
+    const { req, res } = mockReqRes('POST');
 
     const payload: CreateTxnPayload = {
       userId: 'test-user',
@@ -61,7 +53,7 @@ describe('/api/v1/transactions POST endpoint', () => {
   });
 
   test('should return a 500 if something goes wrong with ddb', async () => {
-    const { req, res } = mockReqRes();
+    const { req, res } = mockReqRes('POST');
 
     const payload: CreateTxnPayload = {
       userId: 'test-user',

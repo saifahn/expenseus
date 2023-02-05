@@ -7,8 +7,6 @@ import getTxnsByUserIdBetweenDatesHandler from './range';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
-
-jest.mock('next-auth');
 const nextAuthMock = jest.mocked(nextAuth);
 
 describe('getTxnsByUserIdBetweenDates handler', () => {

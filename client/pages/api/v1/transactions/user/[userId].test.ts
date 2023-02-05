@@ -7,9 +7,7 @@ import getTxnsByUserIdHandler from './[userId]';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
-
-jest.mock('next-auth');
-const nextAuthMocked = jest.mocked(nextAuth);
+const nextAuthMock = jest.mocked(nextAuth);
 
 describe('txnByUserId handler', () => {
   test('it returns a 405 for a non-GET method', async () => {
@@ -21,12 +19,10 @@ describe('txnByUserId handler', () => {
 
   test('it returns a list of transactions for the user', async () => {
     const { req, res } = mockReqRes('GET');
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-      return {
-        user: {
-          email: 'test-user',
-        },
-      };
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
+      user: {
+        email: 'test-user',
+      },
     });
     req.query.userId = 'test-user';
     txnsRepo.mockImplementationOnce(() => ({
@@ -43,12 +39,10 @@ describe('txnByUserId handler', () => {
 
   test("it returns a 403 when a user attempts to retrieve another user's txns", async () => {
     const { req, res } = mockReqRes('GET');
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-      return {
-        user: {
-          email: 'a-different-user',
-        },
-      };
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
+      user: {
+        email: 'a-different-user',
+      },
     });
     req.query.userId = 'test-user';
     await getTxnsByUserIdHandler(req, res);
@@ -58,7 +52,7 @@ describe('txnByUserId handler', () => {
 
   test('it returns a 401 when there is no valid session', async () => {
     const { req, res } = mockReqRes('GET');
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => null);
+    nextAuthMock.getServerSession.mockResolvedValueOnce(null);
     await getTxnsByUserIdHandler(req, res);
 
     expect(res.statusCode).toBe(401);

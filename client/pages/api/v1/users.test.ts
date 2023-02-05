@@ -18,8 +18,7 @@ jest.mock('ddb/users', () => {
 });
 const usersRepo = jest.mocked(makeUserRepository);
 
-jest.mock('next-auth');
-const nextAuthMocked = jest.mocked(nextAuth);
+const nextAuthMock = jest.mocked(nextAuth);
 const blankValidSession = {};
 
 describe('/api/v1/users API endpoint', () => {
@@ -46,9 +45,7 @@ describe('/api/v1/users API endpoint', () => {
       };
     });
 
-    nextAuthMocked.getServerSession.mockImplementationOnce(
-      async () => blankValidSession,
-    );
+    nextAuthMock.getServerSession.mockResolvedValueOnce(blankValidSession);
     const { req, res } = mockReqRes('GET');
     await usersHandler(req, res);
 
@@ -67,9 +64,7 @@ describe('/api/v1/users API endpoint', () => {
 
   it('returns a 405 error when called with a non-GET method', async () => {
     const { req, res } = mockReqRes('POST');
-    nextAuthMocked.getServerSession.mockImplementationOnce(
-      async () => blankValidSession,
-    );
+    nextAuthMock.getServerSession.mockResolvedValueOnce(blankValidSession);
     await usersHandler(req, res);
 
     expect(res.statusCode).toBe(405);
@@ -78,7 +73,7 @@ describe('/api/v1/users API endpoint', () => {
   it('returns a 401 error when there is no valid session', async () => {
     // mock the session to return invalid
     const { req, res } = mockReqRes('GET');
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => null);
+    nextAuthMock.getServerSession.mockResolvedValueOnce(null);
     await usersHandler(req, res);
 
     expect(res.statusCode).toBe(401);

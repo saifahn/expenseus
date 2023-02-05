@@ -4,9 +4,7 @@ import { mockReqRes } from 'tests/api/common';
 import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
 import settleTxnsHandler from './settle';
 
-jest.mock('next-auth');
-const nextAuthMocked = jest.mocked(nextAuth);
-
+const nextAuthMock = jest.mocked(nextAuth);
 jest.mock('ddb/sharedTxns');
 const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
 
@@ -29,7 +27,7 @@ describe('settleTxnsHandler', () => {
   test('returns a 401 if there is no valid session', async () => {
     const { req, res } = mockReqRes('POST');
     req._setBody([]);
-    nextAuthMocked.getServerSession.mockResolvedValueOnce(null);
+    nextAuthMock.getServerSession.mockResolvedValueOnce(null);
     await settleTxnsHandler(req, res);
 
     expect(res.statusCode).toBe(401);
@@ -44,7 +42,7 @@ describe('settleTxnsHandler', () => {
         participants: ['test-user', 'test-user-2'],
       },
     ]);
-    nextAuthMocked.getServerSession.mockResolvedValueOnce({
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
       user: { email: 'different-user' },
     });
     await settleTxnsHandler(req, res);
@@ -62,7 +60,7 @@ describe('settleTxnsHandler', () => {
       },
     ];
     req._setBody(testSettleInput);
-    nextAuthMocked.getServerSession.mockResolvedValueOnce({
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
       user: { email: 'test-user' },
     });
     sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);

@@ -8,14 +8,12 @@ import { mockTxnItem } from 'tests/api/doubles';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
-
-jest.mock('next-auth');
-const nextAuthMocked = jest.mocked(nextAuth);
+const nextAuthMock = jest.mocked(nextAuth);
 
 describe('byTxnIdHandler', () => {
   test('a request with no valid session returns a 401', async () => {
     const { req, res } = mockReqRes('GET');
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => null);
+    nextAuthMock.getServerSession.mockResolvedValueOnce(null);
     await byTxnIdHandler(req, res);
     expect(res.statusCode).toBe(401);
   });
@@ -24,12 +22,10 @@ describe('byTxnIdHandler', () => {
     test('a txn is successfully retrieved for a valid ID', async () => {
       const { req, res } = mockReqRes('GET');
       req.query.txnId = 'test-txn';
-      nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-        return {
-          user: {
-            email: 'test-user',
-          },
-        };
+      nextAuthMock.getServerSession.mockResolvedValueOnce({
+        user: {
+          email: 'test-user',
+        },
       });
       const getTxnMock = jest.fn(async () => mockTxnItem);
       txnsRepo.mockImplementationOnce(() => ({
@@ -51,12 +47,10 @@ describe('byTxnIdHandler', () => {
     test('a txn can be updated correctly', async () => {
       const { req, res } = mockReqRes('PUT');
       req.query.txnId = 'test-txn';
-      nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-        return {
-          user: {
-            email: 'test-user',
-          },
-        };
+      nextAuthMock.getServerSession.mockResolvedValueOnce({
+        user: {
+          email: 'test-user',
+        },
       });
       const updatedTxn: Transaction = {
         id: 'test-txn',
@@ -79,12 +73,10 @@ describe('byTxnIdHandler', () => {
   test('a 400 is returned if the input is incorrect', async () => {
     const { req, res } = mockReqRes('PUT');
     req.query.txnId = 'test-txn';
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-      return {
-        user: {
-          email: 'test-user',
-        },
-      };
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
+      user: {
+        email: 'test-user',
+      },
     });
     const updatedTxn = {
       id: 'test-txn',
@@ -102,12 +94,10 @@ describe('byTxnIdHandler', () => {
   test("a 403 is returned if a user tries to update a txn they're not part of", async () => {
     const { req, res } = mockReqRes('PUT');
     req.query.txnId = 'test-txn';
-    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-      return {
-        user: {
-          email: 'different-user',
-        },
-      };
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
+      user: {
+        email: 'different-user',
+      },
     });
     const updatedTxn: Transaction = {
       id: 'test-txn',
@@ -129,12 +119,10 @@ describe('byTxnIdHandler', () => {
     test('a txn can be deleted correctly', async () => {
       const { req, res } = mockReqRes('DELETE');
       req.query.txnId = 'test-txn';
-      nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
-        return {
-          user: {
-            email: 'test-user',
-          },
-        };
+      nextAuthMock.getServerSession.mockResolvedValueOnce({
+        user: {
+          email: 'test-user',
+        },
       });
       txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
       await byTxnIdHandler(req, res);

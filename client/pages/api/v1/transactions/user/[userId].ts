@@ -11,10 +11,14 @@ export default async function txnByUserIdHandler(
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'invalid method' });
   }
-  const session = await getServerSession();
-  const sessionUser = session?.user?.email;
-  const userId = req.query.userId as string;
 
+  const session = await getServerSession();
+  if (!session) {
+    return res.status(401).json({ error: 'no valid session found' });
+  }
+
+  const sessionUser = session!.user?.email;
+  const userId = req.query.userId as string;
   if (sessionUser !== userId) {
     return res
       .status(403)

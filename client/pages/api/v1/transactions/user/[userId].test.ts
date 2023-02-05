@@ -74,4 +74,12 @@ describe('txnByUserId handler', () => {
 
     expect(res.statusCode).toBe(403);
   });
+
+  test('it returns a 401 when there is no valid session', async () => {
+    const { req, res } = mockReqRes('GET');
+    nextAuthMocked.getServerSession.mockImplementationOnce(async () => null);
+    await txnByUserIdHandler(req, res);
+
+    expect(res.statusCode).toBe(401);
+  });
 });

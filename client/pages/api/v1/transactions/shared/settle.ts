@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
 import { withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
@@ -21,5 +22,10 @@ export default async function settleTxnsHandler(
   const [parsed, err] = withTryCatch(() => payloadSchema.parse(req.body));
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'invalid input' });
+  }
+
+  const session = await getServerSession();
+  if (!session) {
+    return res.status(401).json({ error: 'no valid session found' });
   }
 }

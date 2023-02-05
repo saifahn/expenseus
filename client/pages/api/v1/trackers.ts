@@ -1,4 +1,4 @@
-import { setUpSharedTxnRepo, setUpTrackerRepo } from 'ddb/setUpRepos';
+import { setUpTrackerRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';

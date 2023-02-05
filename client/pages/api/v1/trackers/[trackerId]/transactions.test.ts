@@ -99,9 +99,46 @@ describe('txnsByTrackerHandler', () => {
 
       expect(res.statusCode).toBe(400);
     });
-    test.todo(
-      'it returns a 403 when trying to create a shared txn without the session user as a participant',
-    );
-    test.todo('it successfully creates a shared txn');
+    test('it returns a 403 when trying to create a shared txn without the session user as a participant', async () => {
+      const { req, res } = mockReqRes('POST');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'different-user' } });
+      const createSharedTxnInput: CreateSharedTxnPayload = {
+        date: 12345678,
+        amount: 2473,
+        location: 'LIFE',
+        category: 'food.groceries',
+        tracker: 'test-tracker',
+        participants: ['test-user', 'test-user-2'],
+        payer: 'test-user',
+        details: '',
+      };
+      req._setBody(createSharedTxnInput);
+      await txnsByTrackerHandler(req, res);
+
+      expect(res.statusCode).toBe(403);
+    });
+
+    test('it successfully creates a shared txn', async () => {
+      const { req, res } = mockReqRes('POST');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      const createSharedTxnInput: CreateSharedTxnPayload = {
+        date: 12345678,
+        amount: 2473,
+        location: 'LIFE',
+        category: 'food.groceries',
+        tracker: 'test-tracker',
+        participants: ['test-user', 'test-user-2'],
+        payer: 'test-user',
+        details: '',
+      };
+      req._setBody(createSharedTxnInput);
+      sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
+      await txnsByTrackerHandler(req, res);
+
+      expect(res.statusCode).toBe(202);
+      expect(sharedTxnRepoFnsMock.createSharedTxn).toHaveBeenCalledWith(
+        createSharedTxnInput,
+      );
+    });
   });
 });

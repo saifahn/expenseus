@@ -50,11 +50,26 @@ export default async function txnsByTrackerHandler(
   }
 
   if (req.method === 'POST') {
-    const [parsed, err] = withTryCatch(() =>
+    let [parsed, err] = withTryCatch(() =>
       createSharedTxnPayloadSchema.parse(req.body),
     );
     if (err instanceof ZodError) {
       return res.status(400).json({ error: 'invalid input' });
     }
+
+    const sessionUser = session.user?.email!;
+    if (!parsed?.participants.includes(sessionUser)) {
+      return res.status(403).json({
+        error: 'you cannot create a shared txn without being a participant',
+      });
+    }
+
+    [, err] = await withAsyncTryCatch(sharedTxnRepo.createSharedTxn(parsed));
+    if (err) {
+      return res
+        .status(500)
+        .json({ error: 'something went wrong while creating shared txn' });
+    }
+    return res.status(202);
   }
 }

@@ -1,6 +1,5 @@
+import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { txnItemToTxn } from 'ddb/itemToModel';
-import { setUpDdb } from 'ddb/schema';
-import { makeTxnRepository } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withAsyncTryCatch } from 'utils/withTryCatch';
 
@@ -13,8 +12,7 @@ export default async function txnByUserIdHandler(
   }
 
   const userId = req.query.userId as string;
-  const ddb = setUpDdb('test');
-  const txnRepo = makeTxnRepository(ddb);
+  const txnRepo = setUpTxnRepo();
   const [items, err] = await withAsyncTryCatch(txnRepo.getTxnsByUserId(userId));
   if (err) {
     return res.status(500).json({

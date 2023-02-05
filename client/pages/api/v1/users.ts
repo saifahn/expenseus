@@ -1,5 +1,5 @@
-import { setUpDdb } from 'ddb/schema';
-import { makeUserRepository, userItemsToUsers } from 'ddb/users';
+import { setUpUserRepo } from 'ddb/setUpRepos';
+import { userItemsToUsers } from 'ddb/users';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 
@@ -18,9 +18,7 @@ export default async function usersHandler(
     res.status(405).json({ error: 'method not allowed' });
     return;
   }
-  // TODO: get database name from env
-  const ddb = setUpDdb('test-ddb');
-  const userRepo = makeUserRepository(ddb);
+  const userRepo = setUpUserRepo();
   const userItems = await userRepo.getAllUsers();
   const users = userItemsToUsers(userItems);
 

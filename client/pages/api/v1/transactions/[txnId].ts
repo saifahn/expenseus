@@ -1,7 +1,6 @@
 import { SubcategoryKeys } from 'data/categories';
 import { txnItemToTxn } from 'ddb/itemToModel';
-import { setUpDdb } from 'ddb/schema';
-import { makeTxnRepository } from 'ddb/txns';
+import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
@@ -32,9 +31,7 @@ export default async function byTxnIdHandler(
   }
   const txnId = req.query.txnId as string;
   const sessionUser = session.user.email!;
-  // TODO: get ddb name from env
-  const ddb = setUpDdb('test-ddb');
-  const txnRepo = makeTxnRepository(ddb);
+  const txnRepo = setUpTxnRepo();
 
   // get transaction
   if (req.method === 'GET') {

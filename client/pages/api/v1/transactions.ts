@@ -2,8 +2,7 @@
  * This is the file for the CreateTxnHandler
  */
 import { SubcategoryKeys } from 'data/categories';
-import { setUpDdb } from 'ddb/schema';
-import { makeTxnRepository } from 'ddb/txns';
+import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
@@ -36,9 +35,7 @@ export default async function createTxnHandler(
     return;
   }
 
-  // TODO: use real ddb
-  const ddb = setUpDdb('test');
-  const txnRepo = makeTxnRepository(ddb);
+  const txnRepo = setUpTxnRepo();
 
   [, err] = await withAsyncTryCatch(txnRepo.createTxn(parsed!));
   if (err) {

@@ -51,6 +51,19 @@ export type SharedTxnItem = {
   Unsettled?: typeof unsettledFlagTrue;
 };
 
+export type SharedTxn = {
+  id: string;
+  date: number;
+  amount: number;
+  location: string;
+  tracker: string;
+  category: SubcategoryKey;
+  participants: string[];
+  payer: string;
+  details: string;
+  unsettled?: boolean;
+};
+
 const ulid = monotonicFactory();
 
 export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {

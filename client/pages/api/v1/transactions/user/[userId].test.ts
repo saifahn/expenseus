@@ -1,12 +1,7 @@
-import {
-  tablePartitionKey,
-  tableSortKey,
-  gsi1PartitionKey,
-  gsi1SortKey,
-} from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import * as nextAuth from 'next-auth';
 import { assertEqualTxnDetails, mockReqRes } from 'tests/api/common';
+import { mockTxnItem } from 'tests/api/doubles';
 import { txnRepoFnsMock } from '../../transactions.test';
 import getTxnsByUserIdHandler from './[userId]';
 
@@ -34,20 +29,6 @@ describe('txnByUserId handler', () => {
       };
     });
     req.query.userId = 'test-user';
-    const mockTxnItem = {
-      [tablePartitionKey]: 'user#test-user',
-      [tableSortKey]: 'txn#test-txn',
-      [gsi1PartitionKey]: 'user#test-user',
-      [gsi1SortKey]: 'txn#12345678#test-txn',
-      EntityType: 'transaction' as const,
-      ID: 'test-txn',
-      UserID: 'test-user',
-      Date: 12345678,
-      Amount: 9275,
-      Location: 'somewhere',
-      Category: 'unspecified.unspecified' as const,
-      Details: '',
-    };
     txnsRepo.mockImplementationOnce(() => ({
       ...txnRepoFnsMock,
       getTxnsByUserId: jest.fn(async () => [mockTxnItem]),

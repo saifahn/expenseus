@@ -1,15 +1,10 @@
-import {
-  gsi1PartitionKey,
-  gsi1SortKey,
-  tablePartitionKey,
-  tableSortKey,
-} from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import { assertEqualTxnDetails, mockReqRes } from 'tests/api/common';
 import { Transaction } from 'types/Transaction';
 import { txnRepoFnsMock } from '../transactions.test';
 import byTxnIdHandler from './[txnId]';
 import * as nextAuth from 'next-auth';
+import { mockTxnItem } from 'tests/api/doubles';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
@@ -36,20 +31,6 @@ describe('byTxnIdHandler', () => {
           },
         };
       });
-      const mockTxnItem = {
-        [tablePartitionKey]: 'user#test-user',
-        [tableSortKey]: 'txn#test-txn',
-        [gsi1PartitionKey]: 'user#test-user',
-        [gsi1SortKey]: 'txn#12345678#test-txn',
-        EntityType: 'transaction' as const,
-        ID: 'test-txn',
-        UserID: 'test-user',
-        Date: 12345678,
-        Amount: 9275,
-        Location: 'somewhere',
-        Category: 'unspecified.unspecified' as const,
-        Details: '',
-      };
       const getTxnMock = jest.fn(async () => mockTxnItem);
       txnsRepo.mockImplementationOnce(() => ({
         ...txnRepoFnsMock,

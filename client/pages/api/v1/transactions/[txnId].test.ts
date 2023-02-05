@@ -131,4 +131,30 @@ describe('byTxnIdHandler', () => {
 
     expect(res.statusCode).toBe(400);
   });
+
+  test("a 403 is returned if a user tries to update a txn they're not part of", async () => {
+    const { req, res } = mockReqRes('PUT');
+    req.query.txnId = 'test-txn';
+    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
+      return {
+        user: {
+          email: 'different-user',
+        },
+      };
+    });
+    const updatedTxn: Transaction = {
+      id: 'test-txn',
+      userId: 'test-user',
+      date: 12345678,
+      amount: 5000,
+      location: 'hair cut',
+      category: 'beauty.cosmetics',
+      details: '',
+    };
+    req._setBody(updatedTxn);
+    txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
+    await byTxnIdHandler(req, res);
+
+    expect(res.statusCode).toBe(403);
+  });
 });

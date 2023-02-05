@@ -28,13 +28,15 @@ export default async function byTxnIdHandler(
     return;
   }
   const { txnId } = req.query;
+  const sessionUser = session.user.email!;
   // TODO: get ddb name from env
   const ddb = setUpDdb('test-ddb');
   const txnRepo = makeTxnRepository(ddb);
 
+  // get transaction
   if (req.method === 'GET') {
     const txnItem = await txnRepo.getTxn({
-      userId: session.user.email!,
+      userId: sessionUser,
       txnId: txnId as string,
     });
     const item = txnItemToTxn(txnItem);
@@ -42,6 +44,7 @@ export default async function byTxnIdHandler(
     return;
   }
 
+  // update transaction
   if (req.method === 'PUT') {
     let [parsed, err] = withTryCatch(() =>
       updateTxnPayloadSchema.parse(req.body),
@@ -50,6 +53,13 @@ export default async function byTxnIdHandler(
       res
         .status(400)
         .json({ error: 'incorrect schema for updating a transaction' });
+      return;
+    }
+
+    if (parsed?.userId !== sessionUser) {
+      res.status(403).json({
+        error: "you don't have permissions to update this transaction ",
+      });
       return;
     }
 

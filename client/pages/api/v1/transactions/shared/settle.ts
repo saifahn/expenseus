@@ -1,6 +1,7 @@
+import { setUpSharedTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { withTryCatch } from 'utils/withTryCatch';
+import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
 const payloadSchema = z.array(
@@ -19,7 +20,7 @@ export default async function settleTxnsHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  const [parsed, err] = withTryCatch(() => payloadSchema.parse(req.body));
+  let [parsed, err] = withTryCatch(() => payloadSchema.parse(req.body));
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'invalid input' });
   }
@@ -32,11 +33,18 @@ export default async function settleTxnsHandler(
 
   for (const txn of parsed!) {
     if (!txn.participants.includes(sessionUser)) {
-      return res
-        .status(403)
-        .json({
-          error: 'you cannot settle a transaction you do not belong to',
-        });
+      return res.status(403).json({
+        error: 'you cannot settle a transaction you do not belong to',
+      });
     }
   }
+
+  const sharedTxnRepo = setUpSharedTxnRepo();
+  [err] = await withAsyncTryCatch(sharedTxnRepo.settleTxns(parsed!));
+  if (err) {
+    return res
+      .status(500)
+      .json({ error: 'something went wrong while settling transactions' });
+  }
+  return res.status(202);
 }

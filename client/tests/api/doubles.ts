@@ -4,6 +4,7 @@ import {
   tablePartitionKey,
   tableSortKey,
 } from 'ddb/schema';
+import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 
 export const mockTxnItem = {
   [tablePartitionKey]: 'user#test-user',
@@ -19,3 +20,15 @@ export const mockTxnItem = {
   Category: 'unspecified.unspecified' as const,
   Details: '',
 };
+
+export const sharedTxnRepoFnsMock: ReturnType<typeof makeSharedTxnRepository> =
+  {
+    createSharedTxn: jest.fn(),
+    updateSharedTxn: jest.fn(),
+    deleteSharedTxn: jest.fn(),
+    getTxnsByTracker: jest.fn(),
+    getTxnsByTrackerBetweenDates: jest.fn(),
+    getSharedTxnsByUserBetweenDates: jest.fn(),
+    getUnsettledTxnsByTracker: jest.fn(),
+    settleTxns: jest.fn(),
+  };

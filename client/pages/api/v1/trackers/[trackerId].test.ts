@@ -1,4 +1,10 @@
-import { makeTrackerRepository } from 'ddb/trackers';
+import {
+  gsi1PartitionKey,
+  gsi1SortKey,
+  tablePartitionKey,
+  tableSortKey,
+} from 'ddb/schema';
+import { makeTrackerRepository, TrackerItem } from 'ddb/trackers';
 import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import { trackerRepoFnsMock } from 'tests/api/doubles';
@@ -33,7 +39,34 @@ describe('getTrackerByIdHandler', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  test.todo(
-    'it successfully returns a tracker when one is returned from the store',
-  );
+  test('it successfully returns a tracker when one is returned from the store', async () => {
+    const { req, res } = mockReqRes('GET');
+    req.query.trackerId = 'test-tracker';
+    serverSessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+    const mockTrackerItem: TrackerItem = {
+      [tablePartitionKey]: 'tracker#test-tracker',
+      [tableSortKey]: 'tracker#test-tracker',
+      EntityType: 'tracker',
+      ID: 'test-tracker',
+      Name: 'Test Tracker',
+      Users: ['test-user', 'test-user-2'],
+      [gsi1PartitionKey]: 'trackers',
+      [gsi1SortKey]: 'tracker#test-tracker',
+    };
+    const getTrackerMock = jest.fn().mockResolvedValueOnce(mockTrackerItem);
+    trackerRepoMock.mockReturnValueOnce({
+      ...trackerRepoFnsMock,
+      getTracker: getTrackerMock,
+    });
+    await getTrackerByIdHandler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res._getJSONData()).toEqual(
+      expect.objectContaining({
+        id: mockTrackerItem.ID,
+        name: mockTrackerItem.Name,
+        users: mockTrackerItem.Users,
+      }),
+    );
+  });
 });

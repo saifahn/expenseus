@@ -16,6 +16,17 @@ const trackerKeyPrefix = 'tracker',
 
 export const makeTrackerIdKey = (id: string) => `${trackerKeyPrefix}#${id}`;
 
+export type TrackerItem = {
+  [tablePartitionKey]: string;
+  [tableSortKey]: string;
+  EntityType: typeof trackerEntityType;
+  ID: string;
+  Name: string;
+  Users: string[];
+  [gsi1PartitionKey]: typeof allTrackersKey;
+  [gsi1SortKey]: string;
+};
+
 export function makeTrackerRepository({ ddb, tableName }: DDBWithConfig) {
   async function createTracker({ users, name }: CreateTrackerInput) {
     const id = ulid();
@@ -70,7 +81,7 @@ export function makeTrackerRepository({ ddb, tableName }: DDBWithConfig) {
       }),
     );
 
-    return result.Item;
+    return result.Item as TrackerItem;
   }
 
   async function getTrackersByUser(userId: string) {
@@ -93,7 +104,7 @@ export function makeTrackerRepository({ ddb, tableName }: DDBWithConfig) {
       }),
     );
 
-    return result.Items;
+    return (result.Items as TrackerItem[]) ?? [];
   }
 
   return {

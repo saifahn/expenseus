@@ -28,4 +28,10 @@ export default async function getTrackerByIdHandler(
   if (!item) {
     return res.status(404).json({ error: 'no tracker with that ID was found' });
   }
+  const tracker = {
+    id: item.ID,
+    name: item.Name,
+    users: item.Users,
+  };
+  return res.status(200).json(tracker);
 }

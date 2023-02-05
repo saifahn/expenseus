@@ -22,10 +22,13 @@ export default async function byTxnIdHandler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  if (!['GET', 'PUT', 'DELETE'].includes(req.method ?? '')) {
+    return res.status(405).json({ error: 'method not allowed' });
+  }
+
   const session = await getServerSession();
   if (!session?.user) {
-    res.status(401).json({ error: 'no valid session found' });
-    return;
+    return res.status(401).json({ error: 'no valid session found' });
   }
   const txnId = req.query.txnId as string;
   const sessionUser = session.user.email!;
@@ -40,8 +43,7 @@ export default async function byTxnIdHandler(
       txnId,
     });
     const item = txnItemToTxn(txnItem);
-    res.status(200).json(item);
-    return;
+    return res.status(200).json(item);
   }
 
   // update transaction
@@ -50,29 +52,25 @@ export default async function byTxnIdHandler(
       updateTxnPayloadSchema.parse(req.body),
     );
     if (err instanceof ZodError) {
-      res
+      return res
         .status(400)
         .json({ error: 'incorrect schema for updating a transaction' });
-      return;
     }
 
     if (parsed?.userId !== sessionUser) {
-      res.status(403).json({
+      return res.status(403).json({
         error: "you don't have permissions to update this transaction ",
       });
-      return;
     }
 
     [, err] = await withAsyncTryCatch(txnRepo.updateTxn(parsed!));
     if (err) {
-      res
+      return res
         .status(500)
         .json({ error: 'something went wrong while updating the transaction' });
-      return;
     }
 
-    res.status(202);
-    return;
+    return res.status(202);
   }
 
   // delete transaction
@@ -84,13 +82,11 @@ export default async function byTxnIdHandler(
       }),
     );
     if (err) {
-      res
+      return res
         .status(500)
         .json({ error: 'something went wrong while deleting the transaction' });
-      return;
     }
 
-    res.status(202);
-    return;
+    return res.status(202);
   }
 }

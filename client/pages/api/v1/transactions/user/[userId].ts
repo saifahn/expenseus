@@ -2,6 +2,7 @@ import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { txnItemToTxn } from 'ddb/itemToModel';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { withAsyncTryCatch } from 'utils/withTryCatch';
+import { getServerSession } from 'next-auth';
 
 export default async function txnByUserIdHandler(
   req: NextApiRequest,
@@ -10,8 +11,16 @@ export default async function txnByUserIdHandler(
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'invalid method' });
   }
-
+  const session = await getServerSession();
+  const sessionUser = session?.user?.email;
   const userId = req.query.userId as string;
+
+  if (sessionUser !== userId) {
+    return res
+      .status(403)
+      .json({ error: "you cannot retrieve other users' transactions" });
+  }
+
   const txnRepo = setUpTxnRepo();
   const [items, err] = await withAsyncTryCatch(txnRepo.getTxnsByUserId(userId));
   if (err) {

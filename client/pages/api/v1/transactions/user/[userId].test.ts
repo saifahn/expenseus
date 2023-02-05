@@ -59,4 +59,19 @@ describe('txnByUserId handler', () => {
     expect(result).toHaveLength(1);
     assertEqualTxnDetails(result[0], mockTxnItem);
   });
+
+  test("it returns a 403 when a user attempts to retrieve another user's txns", async () => {
+    const { req, res } = mockReqRes('GET');
+    nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
+      return {
+        user: {
+          email: 'a-different-user',
+        },
+      };
+    });
+    req.query.userId = 'test-user';
+    await txnByUserIdHandler(req, res);
+
+    expect(res.statusCode).toBe(403);
+  });
 });

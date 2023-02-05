@@ -1,4 +1,5 @@
 import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { CreateTrackerInput } from 'pages/api/v1/trackers';
 import { ulid } from 'ulid';
 import {
   DDBWithConfig,
@@ -16,13 +17,7 @@ const trackerKeyPrefix = 'tracker',
 export const makeTrackerIdKey = (id: string) => `${trackerKeyPrefix}#${id}`;
 
 export function makeTrackerRepository({ ddb, tableName }: DDBWithConfig) {
-  async function createTracker({
-    users,
-    name,
-  }: {
-    users: string[];
-    name: string;
-  }) {
+  async function createTracker({ users, name }: CreateTrackerInput) {
     const id = ulid();
     const trackerIdKey = makeTrackerIdKey(id);
     for (const user of users) {

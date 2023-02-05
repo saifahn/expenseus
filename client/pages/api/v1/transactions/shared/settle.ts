@@ -28,4 +28,15 @@ export default async function settleTxnsHandler(
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }
+  const sessionUser = session.user?.email!;
+
+  for (const txn of parsed!) {
+    if (!txn.participants.includes(sessionUser)) {
+      return res
+        .status(403)
+        .json({
+          error: 'you cannot settle a transaction you do not belong to',
+        });
+    }
+  }
 }

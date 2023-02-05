@@ -29,4 +29,21 @@ describe('settleTxnsHandler', () => {
 
     expect(res.statusCode).toBe(401);
   });
+
+  test('returns a 403 if there are any txns that the user does not belong to', async () => {
+    const { req, res } = mockReqRes('POST');
+    req._setBody([
+      {
+        id: 'test-txn',
+        trackerId: 'test-tracker',
+        participants: ['test-user', 'test-user-2'],
+      },
+    ]);
+    nextAuthMocked.getServerSession.mockResolvedValueOnce({
+      user: { email: 'different-user' },
+    });
+    await settleTxnsHandler(req, res);
+
+    expect(res.statusCode).toBe(403);
+  });
 });

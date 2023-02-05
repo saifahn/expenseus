@@ -16,7 +16,7 @@ const updateTxnPayloadSchema = z.object({
   category: SubcategoryKeys,
   details: z.string(),
 });
-type UpdateTxnPayload = z.infer<typeof updateTxnPayloadSchema>;
+export type UpdateTxnPayload = z.infer<typeof updateTxnPayloadSchema>;
 
 export default async function byTxnIdHandler(
   req: NextApiRequest,

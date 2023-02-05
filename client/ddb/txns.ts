@@ -18,6 +18,8 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { ItemDoesNotExistError } from './errors';
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
+import { CreateTxnPayload } from 'pages/api/v1/transactions';
+import { UpdateTxnPayload } from 'pages/api/v1/transactions/[txnId]';
 
 const txnKeyPrefix = 'txn',
   txnEntityType = 'transaction',
@@ -67,9 +69,12 @@ function txnToTxnItem(txn: Transaction): TxnItem {
 const ulid = monotonicFactory();
 
 export function makeTxnRepository({ ddb, tableName }: DDBWithConfig) {
-  async function createTxn(txn: Transaction) {
-    const txnId = ulid(txn.date);
-    txn.id = txnId;
+  async function createTxn(payload: CreateTxnPayload) {
+    const txnId = ulid(payload.date);
+    const txn = {
+      ...payload,
+      id: txnId,
+    };
     const txnItem = txnToTxnItem(txn);
 
     await ddb.send(
@@ -100,7 +105,7 @@ export function makeTxnRepository({ ddb, tableName }: DDBWithConfig) {
     return results.Item as TxnItem;
   }
 
-  async function updateTxn(txn: Transaction) {
+  async function updateTxn(txn: UpdateTxnPayload) {
     const txnItem = txnToTxnItem(txn);
 
     try {

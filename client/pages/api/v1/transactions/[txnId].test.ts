@@ -4,8 +4,8 @@ import {
   tablePartitionKey,
   tableSortKey,
 } from 'ddb/schema';
-import { makeTxnRepository, TxnItem } from 'ddb/txns';
-import { mockReqRes } from 'tests/api/common';
+import { makeTxnRepository } from 'ddb/txns';
+import { assertEqualTxnDetails, mockReqRes } from 'tests/api/common';
 import { Transaction } from 'types/Transaction';
 import { txnRepoFnsMock } from '../transactions.test';
 import byTxnIdHandler from './[txnId]';
@@ -16,22 +16,6 @@ const txnsRepo = jest.mocked(makeTxnRepository);
 
 jest.mock('next-auth');
 const nextAuthMocked = jest.mocked(nextAuth);
-
-/**
- * helper function to assert details from a txn match txn item
- */
-export function assertEqualTxnDetails(txn: Transaction, txnItem: TxnItem) {
-  expect(txn).toEqual(
-    expect.objectContaining({
-      userId: txnItem.UserID,
-      location: txnItem.Location,
-      amount: txnItem.Amount,
-      date: txnItem.Date,
-      category: txnItem.Category,
-      details: txnItem.Details,
-    }),
-  );
-}
 
 describe('byTxnIdHandler', () => {
   test('a request with no valid session returns a 401', async () => {

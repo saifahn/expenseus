@@ -6,9 +6,8 @@ import {
 } from 'ddb/schema';
 import { makeTxnRepository } from 'ddb/txns';
 import * as nextAuth from 'next-auth';
-import { mockReqRes } from 'tests/api/common';
+import { assertEqualTxnDetails, mockReqRes } from 'tests/api/common';
 import { txnRepoFnsMock } from '../../transactions.test';
-import { assertEqualTxnDetails } from '../[txnId].test';
 import txnByUserIdHandler from './[userId]';
 
 jest.mock('ddb/txns');

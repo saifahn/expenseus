@@ -17,8 +17,10 @@ const txnsRepo = jest.mocked(makeTxnRepository);
 jest.mock('next-auth');
 const nextAuthMocked = jest.mocked(nextAuth);
 
-// helper function to assert details from a txn match txn item
-function assertEqualDetails(txn: Transaction, txnItem: TxnItem) {
+/**
+ * helper function to assert details from a txn match txn item
+ */
+export function assertEqualTxnDetails(txn: Transaction, txnItem: TxnItem) {
   expect(txn).toEqual(
     expect.objectContaining({
       userId: txnItem.UserID,
@@ -76,7 +78,7 @@ describe('byTxnIdHandler', () => {
         txnId: 'test-txn',
         userId: 'test-user',
       });
-      assertEqualDetails(res._getJSONData(), mockTxnItem);
+      assertEqualTxnDetails(res._getJSONData(), mockTxnItem);
     });
   });
 

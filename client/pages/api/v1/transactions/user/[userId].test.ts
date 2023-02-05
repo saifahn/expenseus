@@ -8,7 +8,7 @@ import { makeTxnRepository } from 'ddb/txns';
 import * as nextAuth from 'next-auth';
 import { assertEqualTxnDetails, mockReqRes } from 'tests/api/common';
 import { txnRepoFnsMock } from '../../transactions.test';
-import txnByUserIdHandler from './[userId]';
+import getTxnsByUserIdHandler from './[userId]';
 
 jest.mock('ddb/txns');
 const txnsRepo = jest.mocked(makeTxnRepository);
@@ -19,7 +19,7 @@ const nextAuthMocked = jest.mocked(nextAuth);
 describe('txnByUserId handler', () => {
   test('it returns a 405 for a non-GET method', async () => {
     const { req, res } = mockReqRes('POST');
-    await txnByUserIdHandler(req, res);
+    await getTxnsByUserIdHandler(req, res);
 
     expect(res.statusCode).toBe(405);
   });
@@ -52,7 +52,7 @@ describe('txnByUserId handler', () => {
       ...txnRepoFnsMock,
       getTxnsByUserId: jest.fn(async () => [mockTxnItem]),
     }));
-    await txnByUserIdHandler(req, res);
+    await getTxnsByUserIdHandler(req, res);
 
     expect(res.statusCode).toBe(200);
     const result = res._getJSONData();
@@ -70,7 +70,7 @@ describe('txnByUserId handler', () => {
       };
     });
     req.query.userId = 'test-user';
-    await txnByUserIdHandler(req, res);
+    await getTxnsByUserIdHandler(req, res);
 
     expect(res.statusCode).toBe(403);
   });
@@ -78,7 +78,7 @@ describe('txnByUserId handler', () => {
   test('it returns a 401 when there is no valid session', async () => {
     const { req, res } = mockReqRes('GET');
     nextAuthMocked.getServerSession.mockImplementationOnce(async () => null);
-    await txnByUserIdHandler(req, res);
+    await getTxnsByUserIdHandler(req, res);
 
     expect(res.statusCode).toBe(401);
   });

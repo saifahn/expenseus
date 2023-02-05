@@ -4,7 +4,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { withAsyncTryCatch } from 'utils/withTryCatch';
 import { getServerSession } from 'next-auth';
 
-export default async function txnByUserIdHandler(
+export default async function getTxnsByUserIdHandler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {

@@ -157,4 +157,26 @@ describe('byTxnIdHandler', () => {
 
     expect(res.statusCode).toBe(403);
   });
+
+  describe('DELETE - delete txn', () => {
+    test('a txn can be deleted correctly', async () => {
+      const { req, res } = mockReqRes('DELETE');
+      req.query.txnId = 'test-txn';
+      nextAuthMocked.getServerSession.mockImplementationOnce(async () => {
+        return {
+          user: {
+            email: 'test-user',
+          },
+        };
+      });
+      txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
+      await byTxnIdHandler(req, res);
+
+      expect(txnRepoFnsMock.deleteTxn).toHaveBeenCalledWith({
+        txnId: 'test-txn',
+        userId: 'test-user',
+      });
+      expect(res.statusCode).toBe(202);
+    });
+  });
 });

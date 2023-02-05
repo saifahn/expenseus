@@ -27,7 +27,7 @@ export default async function byTxnIdHandler(
     res.status(401).json({ error: 'no valid session found' });
     return;
   }
-  const { txnId } = req.query;
+  const txnId = req.query.txnId as string;
   const sessionUser = session.user.email!;
   // TODO: get ddb name from env
   const ddb = setUpDdb('test-ddb');
@@ -37,7 +37,7 @@ export default async function byTxnIdHandler(
   if (req.method === 'GET') {
     const txnItem = await txnRepo.getTxn({
       userId: sessionUser,
-      txnId: txnId as string,
+      txnId,
     });
     const item = txnItemToTxn(txnItem);
     res.status(200).json(item);
@@ -68,6 +68,26 @@ export default async function byTxnIdHandler(
       res
         .status(500)
         .json({ error: 'something went wrong while updating the transaction' });
+      return;
+    }
+
+    res.status(202);
+    return;
+  }
+
+  // delete transaction
+  if (req.method === 'DELETE') {
+    const [, err] = await withAsyncTryCatch(
+      txnRepo.deleteTxn({
+        txnId,
+        userId: sessionUser,
+      }),
+    );
+    if (err) {
+      res
+        .status(500)
+        .json({ error: 'something went wrong while deleting the transaction' });
+      return;
     }
 
     res.status(202);

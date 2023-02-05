@@ -1,8 +1,25 @@
+import { SubcategoryKeys } from 'data/categories';
 import { sharedTxnItemToModel } from 'ddb/itemToModel';
 import { setUpSharedTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { withAsyncTryCatch } from 'utils/withTryCatch';
+import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
+import { z, ZodError } from 'zod';
+
+const createSharedTxnPayloadSchema = z.object({
+  date: z.number(),
+  amount: z.number(),
+  location: z.string(),
+  category: SubcategoryKeys,
+  tracker: z.string(),
+  participants: z.array(z.string()).min(2),
+  payer: z.string(),
+  details: z.string(),
+  unsettled: z.boolean().optional(),
+});
+export type CreateSharedTxnPayload = z.infer<
+  typeof createSharedTxnPayloadSchema
+>;
 
 export default async function txnsByTrackerHandler(
   req: NextApiRequest,
@@ -18,16 +35,26 @@ export default async function txnsByTrackerHandler(
   }
 
   const sharedTxnRepo = setUpSharedTxnRepo();
-  const [items, err] = await withAsyncTryCatch(
-    sharedTxnRepo.getTxnsByTracker(req.query.trackerId as string),
-  );
-  if (err) {
-    return res
-      .status(500)
-      .json({
+
+  if (req.method === 'GET') {
+    const [items, err] = await withAsyncTryCatch(
+      sharedTxnRepo.getTxnsByTracker(req.query.trackerId as string),
+    );
+    if (err) {
+      return res.status(500).json({
         error: 'something went wrong while getting transactions from tracker',
       });
+    }
+    const txns = items?.map(sharedTxnItemToModel);
+    return res.status(200).json(txns);
   }
-  const txns = items?.map(sharedTxnItemToModel);
-  return res.status(200).json(txns);
+
+  if (req.method === 'POST') {
+    const [parsed, err] = withTryCatch(() =>
+      createSharedTxnPayloadSchema.parse(req.body),
+    );
+    if (err instanceof ZodError) {
+      return res.status(400).json({ error: 'invalid input' });
+    }
+  }
 }

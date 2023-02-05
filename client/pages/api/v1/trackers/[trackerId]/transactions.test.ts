@@ -12,7 +12,7 @@ import {
 import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
-import txnsByTrackerHandler from './transactions';
+import txnsByTrackerHandler, { CreateSharedTxnPayload } from './transactions';
 
 jest.mock('ddb/sharedTxns');
 const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
@@ -50,7 +50,7 @@ describe('txnsByTrackerHandler', () => {
     expect(res.statusCode).toBe(401);
   });
 
-  describe('GET all', () => {
+  describe('GET - get all txns from tracker', () => {
     test('it return all txns returned from the store for the tracker', async () => {
       const { req, res } = mockReqRes('GET');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
@@ -84,5 +84,24 @@ describe('txnsByTrackerHandler', () => {
     });
 
     test.todo('it returns a 404 if the tracker does not exist');
+  });
+
+  describe('POST - create shared txn', () => {
+    test('it returns a 400 with an invalid input', async () => {
+      const { req, res } = mockReqRes('POST');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      // mock the input
+      const createSharedTxnInput = {
+        invalid: 'input',
+      };
+      req._setBody(createSharedTxnInput);
+      await txnsByTrackerHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+    });
+    test.todo(
+      'it returns a 403 when trying to create a shared txn without the session user as a participant',
+    );
+    test.todo('it successfully creates a shared txn');
   });
 });

@@ -1,6 +1,7 @@
+import { setUpSharedTxnRepo, setUpTrackerRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { withTryCatch } from 'utils/withTryCatch';
+import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
 const payloadSchema = z.object({
@@ -17,7 +18,7 @@ export default async function createTrackerHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  const [parsedInput, err] = withTryCatch(() => payloadSchema.parse(req.body));
+  let [parsedInput, err] = withTryCatch(() => payloadSchema.parse(req.body));
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'invalid input' });
   }
@@ -32,4 +33,13 @@ export default async function createTrackerHandler(
       .status(403)
       .json({ error: 'cannot create a tracker you are not a part of' });
   }
+
+  const trackerRepo = setUpTrackerRepo();
+  [err] = await withAsyncTryCatch(trackerRepo.createTracker(parsedInput!));
+  if (err) {
+    return res
+      .status(500)
+      .json({ error: 'something went wrong while creating a tracker' });
+  }
+  return res.status(202);
 }

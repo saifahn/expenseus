@@ -41,4 +41,17 @@ describe('createTrackerHandler', () => {
 
     expect(res.statusCode).toBe(403);
   });
+
+  it('can successfully create a tracker', async () => {
+    const { req, res } = mockReqRes('POST');
+    req._setBody({ users: ['test-user', 'test-user-2'], name: 'test-tracker' });
+    nextAuthMock.getServerSession.mockResolvedValueOnce({
+      user: {
+        email: 'test-user',
+      },
+    });
+    await createTrackerHandler(req, res);
+
+    expect(res.statusCode).toBe(202);
+  });
 });

@@ -26,4 +26,10 @@ export default async function createTrackerHandler(
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }
+  const sessionUser = session.user?.email!;
+  if (!parsedInput!.users.includes(sessionUser)) {
+    return res
+      .status(403)
+      .json({ error: 'cannot create a tracker you are not a part of' });
+  }
 }

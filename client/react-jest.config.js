@@ -1,6 +1,6 @@
 // this file contains the config for testing the React components
 module.exports = {
-  setupFilesAfterEnv: ['./jest-setup.ts'],
+  setupFilesAfterEnv: ['./react-jest-setup.ts'],
   moduleNameMapper: {
     '\\.(css)$': 'identity-obj-proxy',
   },

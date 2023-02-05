@@ -1,5 +1,8 @@
+import * as nextAuth from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import createTrackerHandler from './trackers';
+
+const nextAuthMock = jest.mocked(nextAuth);
 
 describe('createTrackerHandler', () => {
   test('returns a 405 with a non-POST request', async () => {
@@ -15,5 +18,14 @@ describe('createTrackerHandler', () => {
     await createTrackerHandler(req, res);
 
     expect(res.statusCode).toBe(400);
+  });
+
+  test('returns a 401 with no valid session', async () => {
+    const { req, res } = mockReqRes('POST');
+    req._setBody({ users: ['test-user', 'test-user-2'], name: 'test-tracker' });
+    nextAuthMock.getServerSession.mockResolvedValueOnce(null);
+    await createTrackerHandler(req, res);
+
+    expect(res.statusCode).toBe(401);
   });
 });

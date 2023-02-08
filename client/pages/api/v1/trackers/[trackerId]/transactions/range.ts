@@ -1,11 +1,14 @@
+import { sharedTxnItemToModel } from 'ddb/itemToModel';
+import { setUpSharedTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { withTryCatch } from 'utils/withTryCatch';
+import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
 const queryStringSchema = z.object({
   from: z.coerce.number(),
   to: z.coerce.number(),
+  tracker: z.string(),
 });
 
 export default async function getTxnsByTrackerBetweenDatesHandler(
@@ -25,4 +28,23 @@ export default async function getTxnsByTrackerBetweenDatesHandler(
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }
+
+  const sharedTxnRepo = setUpSharedTxnRepo();
+  var [items, err] = await withAsyncTryCatch(
+    sharedTxnRepo.getTxnsByTrackerBetweenDates({
+      tracker: parsed!.tracker,
+      from: parsed!.from,
+      to: parsed!.to,
+    }),
+  );
+  if (err) {
+    return res
+      .status(500)
+      .json({
+        error:
+          'something went wrong while getting shared transactions between dates',
+      });
+  }
+  const txns = items?.map(sharedTxnItemToModel);
+  return res.status(200).json(txns);
 }

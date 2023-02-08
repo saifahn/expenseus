@@ -1,3 +1,4 @@
+import { SharedTxn, SharedTxnItem } from 'ddb/sharedTxns';
 import { TxnItem } from 'ddb/txns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { RequestMethod, createMocks } from 'node-mocks-http';
@@ -22,6 +23,26 @@ export function assertEqualTxnDetails(txn: Transaction, txnItem: TxnItem) {
       date: txnItem.Date,
       category: txnItem.Category,
       details: txnItem.Details,
+    }),
+  );
+}
+
+export function assertEqualSharedTxnDetails(
+  txn: SharedTxn,
+  item: SharedTxnItem,
+) {
+  expect(txn).toEqual(
+    expect.objectContaining({
+      id: item.ID,
+      tracker: item.Tracker,
+      date: item.Date,
+      amount: item.Amount,
+      participants: item.Participants,
+      location: item.Location,
+      category: item.Category,
+      payer: item.Payer,
+      details: item.Details,
+      ...(item.Unsettled && { unsettled: true }),
     }),
   );
 }

@@ -4,7 +4,7 @@ import {
   tablePartitionKey,
   tableSortKey,
 } from 'ddb/schema';
-import { makeSharedTxnRepository } from 'ddb/sharedTxns';
+import { makeSharedTxnRepository, SharedTxnItem } from 'ddb/sharedTxns';
 import { makeTrackerRepository } from 'ddb/trackers';
 
 export const mockTxnItem = {
@@ -19,6 +19,23 @@ export const mockTxnItem = {
   Amount: 9275,
   Location: 'somewhere',
   Category: 'unspecified.unspecified' as const,
+  Details: '',
+};
+
+export const mockSharedTxnItem: SharedTxnItem = {
+  [tablePartitionKey]: 'tracker#test-tracker',
+  [tableSortKey]: 'txn.shared#test-shared-txn',
+  [gsi1PartitionKey]: 'tracker#test-tracker',
+  [gsi1SortKey]: 'txn.shared#12345678#test-shared-txn',
+  EntityType: 'sharedTransaction',
+  ID: 'test-shared-txn',
+  Tracker: 'test-tracker',
+  Date: 12345678,
+  Amount: 2473,
+  Participants: ['test-user', 'test-user-2'],
+  Location: 'LIFE',
+  Category: 'food.groceries',
+  Payer: 'test-user',
   Details: '',
 };
 

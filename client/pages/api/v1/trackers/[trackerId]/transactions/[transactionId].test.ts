@@ -8,4 +8,11 @@ describe('bySharedTxnIdHandler', () => {
 
     expect(res.statusCode).toBe(405);
   });
+
+  test('it returns a 401 if called with no valid session', async () => {
+    const { req, res } = mockReqRes('PUT');
+    await bySharedTxnIdHandler(req, res);
+
+    expect(res.statusCode).toBe(401);
+  });
 });

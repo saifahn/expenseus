@@ -6,7 +6,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { SubcategoryKey } from 'data/categories';
-import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
+import { CreateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions';
 import { monotonicFactory } from 'ulid';
 import { ItemDoesNotExistError } from './errors';
 import {
@@ -30,8 +30,8 @@ const sharedTxnKeyPrefix = 'txn.shared',
 const makeSharedTxnIdKey = (id: string) => `${sharedTxnKeyPrefix}#${id}`;
 const makeSharedTxnDateKey = (date: number) =>
   `${sharedTxnKeyPrefix}#${date.toString()}`;
-const makeSharedTxnDateIdKey = (txn: SharedTxn) =>
-  `${sharedTxnKeyPrefix}#${txn.date}#${txn.id}`;
+const makeSharedTxnDateIdKey = ({ date, id }: { date: number; id: string }) =>
+  `${sharedTxnKeyPrefix}#${date}#${id}`;
 
 export type SharedTxnItem = {
   [tablePartitionKey]: string;
@@ -70,11 +70,10 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
   /**
    * Creates a shared transaction based on the given input.
    */
-  async function createSharedTxn(txn: SharedTxn) {
-    // TODO: update the 2nd arg type so that it has to be without an ID
+  async function createSharedTxn(txn: CreateSharedTxnPayload) {
     const txnId = ulid(txn.date);
     const txnIdKey = makeSharedTxnIdKey(txnId);
-    const txnDateIdKey = makeSharedTxnDateIdKey(txn);
+    const txnDateIdKey = makeSharedTxnDateIdKey({ id: txnId, date: txn.date });
 
     // TODO: add type for this as well?
     const item = {

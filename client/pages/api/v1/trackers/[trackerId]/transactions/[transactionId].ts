@@ -1,7 +1,8 @@
 import { SubcategoryKeys } from 'data/categories';
+import { setUpSharedTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { withTryCatch } from 'utils/withTryCatch';
+import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
 const updateSharedTxnPayloadSchema = z.object({
@@ -16,6 +17,9 @@ const updateSharedTxnPayloadSchema = z.object({
   details: z.string(),
   unsettled: z.boolean().optional(),
 });
+export type UpdateSharedTxnPayload = z.infer<
+  typeof updateSharedTxnPayloadSchema
+>;
 
 export default async function bySharedTxnIdHandler(
   req: NextApiRequest,
@@ -30,10 +34,23 @@ export default async function bySharedTxnIdHandler(
     return res.status(401).json({ error: 'no valid session found' });
   }
 
+  const txn = {
+    ...req.body,
+    tracker: req.query.trackerId,
+    id: req.query.transactionId,
+  };
   let [parsed, err] = withTryCatch(() =>
-    updateSharedTxnPayloadSchema.parse(req.body),
+    updateSharedTxnPayloadSchema.parse(txn),
   );
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'invalid input' });
   }
+  const sharedTxnRepo = setUpSharedTxnRepo();
+  [, err] = await withAsyncTryCatch(sharedTxnRepo.updateSharedTxn(parsed!));
+  if (err) {
+    return res
+      .status(500)
+      .json({ error: 'something went wrong while updating shared txn' });
+  }
+  return res.status(202);
 }

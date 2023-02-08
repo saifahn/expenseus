@@ -1,7 +1,13 @@
+import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
-import bySharedTxnIdHandler from './[transactionId]';
+import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
+import bySharedTxnIdHandler, {
+  UpdateSharedTxnPayload,
+} from './[transactionId]';
 
+jest.mock('ddb/sharedTxns');
+const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
 const sessionMock = jest.mocked(getServerSession);
 
 describe('bySharedTxnIdHandler', () => {
@@ -31,5 +37,37 @@ describe('bySharedTxnIdHandler', () => {
 
       expect(res.statusCode).toBe(400);
     });
+
+    test('it successfully updates a shared txn', async () => {
+      const { req, res } = mockReqRes('PUT');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      const updateSharedTxnInput = {
+        date: 123456790,
+        amount: 3646,
+        location: 'maruetsu',
+        category: 'food.groceries',
+        participants: ['test-user', 'test-user-2'],
+        payer: 'test-user',
+        details: 'something up',
+      };
+      req.query = {
+        transactionId: 'test-shared-txn',
+        trackerId: 'test-tracker',
+      };
+      req._setBody(updateSharedTxnInput);
+      sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
+      await bySharedTxnIdHandler(req, res);
+
+      expect(res.statusCode).toBe(202);
+      expect(sharedTxnRepoFnsMock.updateSharedTxn).toHaveBeenCalledWith({
+        ...updateSharedTxnInput,
+        id: 'test-shared-txn',
+        tracker: 'test-tracker',
+      });
+    });
+
+    test.todo(
+      'it returns a 403 when trying to update a shared txn without the session user as a participant',
+    );
   });
 });

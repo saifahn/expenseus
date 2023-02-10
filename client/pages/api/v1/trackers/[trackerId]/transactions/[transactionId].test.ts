@@ -2,9 +2,7 @@ import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
-import bySharedTxnIdHandler, {
-  UpdateSharedTxnPayload,
-} from './[transactionId]';
+import bySharedTxnIdHandler from './[transactionId]';
 
 jest.mock('ddb/sharedTxns');
 const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
@@ -68,6 +66,48 @@ describe('bySharedTxnIdHandler', () => {
 
     test.todo(
       'it returns a 403 when trying to update a shared txn without the session user as a participant',
+    );
+  });
+
+  describe('DELETE - delete shared txn', () => {
+    test('it returns a 400 when given an incorrect input', async () => {
+      const { req, res } = mockReqRes('DELETE');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      req.query = {
+        transactionId: 'test-shared-txn',
+        trackerId: 'test-tracker',
+      };
+      await bySharedTxnIdHandler(req, res);
+
+      expect(res.statusCode).toBe(400);
+    });
+
+    test('it successfully deletes a shared txn', async () => {
+      const { req, res } = mockReqRes('DELETE');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      req.query = {
+        transactionId: 'test-shared-txn',
+        trackerId: 'test-tracker',
+      };
+      const participants = ['test-user', 'test-user-2'];
+      req._setBody({ participants });
+      sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
+      await bySharedTxnIdHandler(req, res);
+
+      expect(res.statusCode).toBe(202);
+      expect(sharedTxnRepoFnsMock.deleteSharedTxn).toHaveBeenCalledWith({
+        participants,
+        txnId: 'test-shared-txn',
+        tracker: 'test-tracker',
+      });
+    });
+
+    test.todo(
+      "it returns a 404 when trying to delete a txn that doesn't exist",
+    );
+
+    test.todo(
+      'it returns 403 when trying to delete a txn without the session user as a participant',
     );
   });
 });

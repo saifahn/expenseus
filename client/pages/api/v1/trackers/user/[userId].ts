@@ -1,5 +1,7 @@
+import { setUpTrackerRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { withAsyncTryCatch } from 'utils/withTryCatch';
 
 export default async function getTrackersByUserHandler(
   req: NextApiRequest,
@@ -18,4 +20,20 @@ export default async function getTrackersByUserHandler(
       .status(403)
       .json({ error: "you cannot view another user's trackers" });
   }
+
+  const trackerRepo = setUpTrackerRepo();
+  const [items, err] = await withAsyncTryCatch(
+    trackerRepo.getTrackersByUser(session.user?.email!),
+  );
+  if (err) {
+    return res
+      .status(500)
+      .json({ error: 'something went wrong while retrieving trackers' });
+  }
+  const trackers = items?.map((t) => ({
+    id: t.ID,
+    name: t.Name,
+    users: t.Users,
+  }));
+  return res.status(200).json(trackers);
 }

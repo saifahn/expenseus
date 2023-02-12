@@ -1,6 +1,16 @@
+import { User } from 'components/UserList';
 import { Transaction } from 'types/Transaction';
 import { SharedTxn, SharedTxnItem } from './sharedTxns';
 import { TxnItem } from './txns';
+import { UserItem } from './users';
+
+export function userItemToUser(i: UserItem): User {
+  return {
+    id: i.ID,
+    username: i.Username,
+    name: i.Name,
+  };
+}
 
 export function txnItemToTxn(item: TxnItem): Transaction {
   return {

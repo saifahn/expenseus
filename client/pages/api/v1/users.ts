@@ -1,5 +1,5 @@
+import { userItemToUser } from 'ddb/itemToModel';
 import { setUpUserRepo } from 'ddb/setUpRepos';
-import { userItemsToUsers } from 'ddb/users';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 
@@ -20,7 +20,7 @@ export default async function usersHandler(
   }
   const userRepo = setUpUserRepo();
   const userItems = await userRepo.getAllUsers();
-  const users = userItemsToUsers(userItems);
+  const users = userItems.map(userItemToUser);
 
   res.status(200).json(users);
 }

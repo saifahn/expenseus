@@ -7,19 +7,12 @@ import {
   tableSortKey,
 } from 'ddb/schema';
 import { mockReqRes } from 'tests/api/common';
-import * as nextAuth from 'next-auth';
+import { userRepoFnsMock } from 'tests/api/doubles';
+import { getServerSession } from 'next-auth';
 
-jest.mock('ddb/users', () => {
-  const original = jest.requireActual('ddb/users');
-  return {
-    ...original,
-    makeUserRepository: jest.fn(),
-  };
-});
+jest.mock('ddb/users');
 const usersRepo = jest.mocked(makeUserRepository);
-
-const nextAuthMock = jest.mocked(nextAuth);
-const blankValidSession = {};
+const serverSessionMock = jest.mocked(getServerSession);
 
 describe('/api/v1/users API endpoint', () => {
   beforeEach(() => {
@@ -30,22 +23,19 @@ describe('/api/v1/users API endpoint', () => {
     const testUserItem = {
       [tablePartitionKey]: 'user#test-user',
       [tableSortKey]: 'user#test-user',
-      EntityType: 'user',
+      EntityType: 'user' as const,
       ID: 'test-user',
       Username: 'testUser',
       Name: 'Test User',
-      [gsi1PartitionKey]: 'users',
+      [gsi1PartitionKey]: 'users' as const,
       [gsi1SortKey]: 'user#test-user',
-    } as const;
-    usersRepo.mockImplementationOnce(() => {
-      return {
-        createUser: jest.fn(),
-        getUser: jest.fn(),
-        getAllUsers: jest.fn(async () => [testUserItem]),
-      };
+    };
+    usersRepo.mockReturnValueOnce({
+      ...userRepoFnsMock,
+      getAllUsers: jest.fn(async () => [testUserItem]),
     });
 
-    nextAuthMock.getServerSession.mockResolvedValueOnce(blankValidSession);
+    serverSessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
     const { req, res } = mockReqRes('GET');
     await usersHandler(req, res);
 
@@ -64,7 +54,7 @@ describe('/api/v1/users API endpoint', () => {
 
   it('returns a 405 error when called with a non-GET method', async () => {
     const { req, res } = mockReqRes('POST');
-    nextAuthMock.getServerSession.mockResolvedValueOnce(blankValidSession);
+    serverSessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
     await usersHandler(req, res);
 
     expect(res.statusCode).toBe(405);
@@ -73,7 +63,7 @@ describe('/api/v1/users API endpoint', () => {
   it('returns a 401 error when there is no valid session', async () => {
     // mock the session to return invalid
     const { req, res } = mockReqRes('GET');
-    nextAuthMock.getServerSession.mockResolvedValueOnce(null);
+    serverSessionMock.mockResolvedValueOnce(null);
     await usersHandler(req, res);
 
     expect(res.statusCode).toBe(401);

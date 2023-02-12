@@ -6,6 +6,7 @@ import {
 } from 'ddb/schema';
 import { makeSharedTxnRepository, SharedTxnItem } from 'ddb/sharedTxns';
 import { makeTrackerRepository } from 'ddb/trackers';
+import { makeUserRepository } from 'ddb/users';
 
 export const mockTxnItem = {
   [tablePartitionKey]: 'user#test-user',
@@ -55,4 +56,10 @@ export const trackerRepoFnsMock: ReturnType<typeof makeTrackerRepository> = {
   createTracker: jest.fn(),
   getTracker: jest.fn(),
   getTrackersByUser: jest.fn(),
+};
+
+export const userRepoFnsMock: ReturnType<typeof makeUserRepository> = {
+  createUser: jest.fn(),
+  getAllUsers: jest.fn(),
+  getUser: jest.fn(),
 };

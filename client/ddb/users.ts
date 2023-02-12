@@ -28,14 +28,6 @@ export type UserItem = {
   [gsi1SortKey]: string;
 };
 
-export function userItemsToUsers(items: UserItem[]): User[] {
-  return items.map((i) => ({
-    id: i.ID,
-    username: i.Username,
-    name: i.Name,
-  }));
-}
-
 export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
   async function createUser(user: User) {
     const userIdKey = makeUserIdKey(user.id);
@@ -78,7 +70,7 @@ export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
           },
         }),
       );
-      return result.Item;
+      return result.Item as UserItem;
     } catch (err) {
       console.error(err);
       throw err;

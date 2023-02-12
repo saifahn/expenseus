@@ -6,7 +6,7 @@ import {
 } from 'ddb/schema';
 import { makeSharedTxnRepository, SharedTxnItem } from 'ddb/sharedTxns';
 import { makeTrackerRepository } from 'ddb/trackers';
-import { makeUserRepository } from 'ddb/users';
+import { makeUserRepository, UserItem } from 'ddb/users';
 
 export const mockTxnItem = {
   [tablePartitionKey]: 'user#test-user',
@@ -38,6 +38,17 @@ export const mockSharedTxnItem: SharedTxnItem = {
   Category: 'food.groceries',
   Payer: 'test-user',
   Details: '',
+};
+
+export const testUserItem: UserItem = {
+  [tablePartitionKey]: 'user#test-user',
+  [tableSortKey]: 'user#test-user',
+  EntityType: 'user',
+  ID: 'test-user',
+  Username: 'testUser',
+  Name: 'Test User',
+  [gsi1PartitionKey]: 'users',
+  [gsi1SortKey]: 'user#test-user',
 };
 
 export const sharedTxnRepoFnsMock: ReturnType<typeof makeSharedTxnRepository> =

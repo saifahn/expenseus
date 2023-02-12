@@ -1,13 +1,7 @@
 import usersHandler from './users';
 import { makeUserRepository } from 'ddb/users';
-import {
-  gsi1PartitionKey,
-  gsi1SortKey,
-  tablePartitionKey,
-  tableSortKey,
-} from 'ddb/schema';
 import { mockReqRes } from 'tests/api/common';
-import { userRepoFnsMock } from 'tests/api/doubles';
+import { testUserItem, userRepoFnsMock } from 'tests/api/doubles';
 import { getServerSession } from 'next-auth';
 
 jest.mock('ddb/users');
@@ -20,16 +14,6 @@ describe('/api/v1/users API endpoint', () => {
   });
 
   it('should return a list of users when they are returned from the store', async () => {
-    const testUserItem = {
-      [tablePartitionKey]: 'user#test-user',
-      [tableSortKey]: 'user#test-user',
-      EntityType: 'user' as const,
-      ID: 'test-user',
-      Username: 'testUser',
-      Name: 'Test User',
-      [gsi1PartitionKey]: 'users' as const,
-      [gsi1SortKey]: 'user#test-user',
-    };
     usersRepo.mockReturnValueOnce({
       ...userRepoFnsMock,
       getAllUsers: jest.fn(async () => [testUserItem]),

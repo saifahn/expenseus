@@ -153,6 +153,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
       Payer: txn.payer,
       Details: txn.details,
       ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
+      ...(txn.split && { SplitJSON: JSON.stringify(txn.split) }),
     };
 
     for (const user of txn.participants) {

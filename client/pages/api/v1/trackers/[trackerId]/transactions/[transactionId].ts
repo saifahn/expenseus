@@ -16,6 +16,7 @@ const updateSharedTxnPayloadSchema = z.object({
   payer: z.string(),
   details: z.string(),
   unsettled: z.boolean().optional(),
+  split: z.record(z.string(), z.number()).optional(),
 });
 export type UpdateSharedTxnPayload = z.infer<
   typeof updateSharedTxnPayloadSchema

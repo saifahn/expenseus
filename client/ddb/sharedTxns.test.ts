@@ -98,11 +98,11 @@ describe('Shared Transactions', () => {
   });
 
   test('a shared txn can be updated successfully', async () => {
-    const initialTxnDetails: SharedTxn = {
+    const initialTxnDetails = {
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -117,6 +117,36 @@ describe('Shared Transactions', () => {
       id: createdTxn.ID,
       location: 'somewhere-else',
       amount: 99999,
+    };
+    await updateSharedTxn(updatedTxnDetails);
+    txns = await getTxnsByTracker('test-tracker');
+    assertContainsTxnWithEqualDetails(txns, updatedTxnDetails);
+  });
+
+  test('a shared txn can be updated with a split successfully', async () => {
+    const initialTxnDetails = {
+      date: 1000 * 1000,
+      location: 'somewhere',
+      amount: 12345,
+      category: 'unspecified.unspecified' as const,
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+    };
+    await createSharedTxn(initialTxnDetails);
+    let txns = await getTxnsByTracker('test-tracker');
+    const createdTxn = txns[0];
+
+    const updatedTxnDetails = {
+      ...initialTxnDetails,
+      id: createdTxn.ID,
+      location: 'somewhere-else',
+      amount: 99999,
+      split: {
+        'user-01': 0.6,
+        'user-02': 0.4,
+      },
     };
     await updateSharedTxn(updatedTxnDetails);
     txns = await getTxnsByTracker('test-tracker');

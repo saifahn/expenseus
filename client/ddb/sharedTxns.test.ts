@@ -39,6 +39,8 @@ function assertContainsTxnWithEqualDetails(
       Participants: txn.participants,
       Tracker: txn.tracker,
       Details: txn.details,
+      ...(txn.unsettled && { Unsettled: 'X' }),
+      ...(txn.split && { SplitJSON: JSON.stringify(txn.split) }),
     }),
   );
 }
@@ -56,11 +58,11 @@ describe('Shared Transactions', () => {
     let txns = await getTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(0);
 
-    const initialTxnDetails: SharedTxn = {
+    const initialTxnDetails = {
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -69,6 +71,28 @@ describe('Shared Transactions', () => {
     await createSharedTxn(initialTxnDetails);
 
     txns = await getTxnsByTracker('test-tracker');
+    expect(txns).toHaveLength(1);
+    assertContainsTxnWithEqualDetails(txns, initialTxnDetails);
+  });
+
+  test('a shared txn with a custom split can be retrieved correctly', async () => {
+    const initialTxnDetails = {
+      date: 1000 * 1000,
+      location: 'somewhere',
+      amount: 12345,
+      category: 'unspecified.unspecified' as const,
+      payer: 'user-01',
+      participants: ['user-01', 'user-02'],
+      tracker: 'test-tracker',
+      details: '',
+      split: {
+        'user-01': 0.6,
+        'user-02': 0.4,
+      },
+    };
+    await createSharedTxn(initialTxnDetails);
+
+    const txns = await getTxnsByTracker('test-tracker');
     expect(txns).toHaveLength(1);
     assertContainsTxnWithEqualDetails(txns, initialTxnDetails);
   });
@@ -100,12 +124,12 @@ describe('Shared Transactions', () => {
   });
 
   test('an error will be thrown when trying to update a non-existent shared txn', async () => {
-    const txnDetails: SharedTxn = {
+    const txnDetails = {
       id: 'non-existent',
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -170,11 +194,11 @@ describe('Shared Transactions', () => {
   });
 
   test('a shared txn can be updated to be marked as settled successfully', async () => {
-    const initialTxn: SharedTxn = {
+    const initialTxn = {
       date: 1000 * 1000,
       location: '',
       amount: 34567,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -185,7 +209,7 @@ describe('Shared Transactions', () => {
     expect(txns).toHaveLength(0);
     txns = await getTxnsByTracker('test-tracker');
 
-    let updatedTxn: SharedTxn = {
+    let updatedTxn = {
       ...initialTxn,
       id: txns[0].ID,
       unsettled: true,
@@ -298,21 +322,21 @@ describe('Shared Transactions', () => {
   });
 
   test('txns are retrieved correctly by user between dates', async () => {
-    const first: SharedTxn = {
+    const first = {
       date: 1000 * 1000,
       location: '',
       amount: 34567,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
       details: '',
     };
-    const second: SharedTxn = {
+    const second = {
       date: 2000 * 1000,
       location: '',
       amount: 99999,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-03'],
       tracker: 'a-different-tracker',

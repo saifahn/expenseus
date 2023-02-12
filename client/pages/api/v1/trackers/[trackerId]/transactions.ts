@@ -16,6 +16,7 @@ const createSharedTxnPayloadSchema = z.object({
   payer: z.string(),
   details: z.string(),
   unsettled: z.boolean().optional(),
+  split: z.record(z.string(), z.number()).optional(),
 });
 export type CreateSharedTxnPayload = z.infer<
   typeof createSharedTxnPayloadSchema

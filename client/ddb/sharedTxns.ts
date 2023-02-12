@@ -7,6 +7,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { SubcategoryKey } from 'data/categories';
 import { CreateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions';
+import { UpdateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions/[transactionId]';
 import { monotonicFactory } from 'ulid';
 import { ItemDoesNotExistError } from './errors';
 import {
@@ -49,6 +50,7 @@ export type SharedTxnItem = {
   Payer: string;
   Details: string;
   Unsettled?: typeof unsettledFlagTrue;
+  SplitJSON?: string;
 };
 
 export type SharedTxn = {
@@ -62,6 +64,9 @@ export type SharedTxn = {
   payer: string;
   details: string;
   unsettled?: boolean;
+  split?: {
+    [k: string]: number;
+  };
 };
 
 const ulid = monotonicFactory();
@@ -90,6 +95,9 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
       Payer: txn.payer,
       Details: txn.details,
       ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
+      // storing a JS object using the ddb Map type would be better, but the original
+      // implementation used a string so this is kept for compatibility
+      ...(txn.split && { SplitJSON: JSON.stringify(txn.split) }),
     };
 
     // store the representation of the tracker under each user so trackers can
@@ -126,7 +134,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
   /**
    * Updates a shared transaction based on the given input.
    */
-  async function updateSharedTxn(txn: SharedTxn) {
+  async function updateSharedTxn(txn: UpdateSharedTxnPayload) {
     // TODO: update the 2nd arg type so it has to have an ID
     const txnIdKey = makeSharedTxnIdKey(txn.id);
     const txnDateIdKey = makeSharedTxnDateIdKey(txn);

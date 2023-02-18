@@ -3,8 +3,9 @@ import Layout from 'components/Layout';
 import { UserProvider } from 'context/user';
 import { SWRConfig } from 'swr';
 import { fetcher } from 'config/fetcher';
+import { AppProps } from 'next/app';
 
-function MyApp({ Component, pageProps }) {
+function MyApp({ Component, pageProps }: AppProps) {
   return (
     <SWRConfig value={{ fetcher }}>
       <UserProvider>

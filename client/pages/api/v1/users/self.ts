@@ -3,6 +3,7 @@ import { setUpUserRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { withAsyncTryCatch } from 'utils/withTryCatch';
+import { authOptions } from '../../auth/[...nextauth]';
 
 export default async function getSelfHandler(
   req: NextApiRequest,
@@ -12,7 +13,7 @@ export default async function getSelfHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }

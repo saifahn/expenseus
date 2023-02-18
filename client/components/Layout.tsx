@@ -2,8 +2,9 @@ import { useUserContext } from 'context/user';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { PropsWithChildren } from 'react';
 
-export default function Layout({ children }) {
+export default function Layout({ children }: PropsWithChildren<{}>) {
   const router = useRouter();
   const path = router.asPath;
   const basePath = path.split('/')[1];

@@ -23,7 +23,7 @@ export function totalsForBarChart(txns: Transaction[] | SharedTxn[]) {
     const mainCategory = subcategories[txn.category].mainCategory;
     if (!totals[month]) totals[month] = {};
     if (!totals[month][mainCategory]) totals[month][mainCategory] = 0;
-    totals[month][mainCategory] += txn.amount;
+    totals[month][mainCategory]! += txn.amount;
   }
   return totals;
 }

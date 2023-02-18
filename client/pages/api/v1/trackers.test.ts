@@ -14,7 +14,7 @@ describe('createTrackerHandler', () => {
 
   test('returns a 400 with an invalid input', async () => {
     const { req, res } = mockReqRes('POST');
-    req._setBody({ invalid: 'input' });
+    req.body = JSON.stringify({ invalid: 'input' });
     await createTrackerHandler(req, res);
 
     expect(res.statusCode).toBe(400);
@@ -22,7 +22,10 @@ describe('createTrackerHandler', () => {
 
   test('returns a 401 with no valid session', async () => {
     const { req, res } = mockReqRes('POST');
-    req._setBody({ users: ['test-user', 'test-user-2'], name: 'test-tracker' });
+    req.body = JSON.stringify({
+      users: ['test-user', 'test-user-2'],
+      name: 'test-tracker',
+    });
     nextAuthMock.getServerSession.mockResolvedValueOnce(null);
     await createTrackerHandler(req, res);
 
@@ -31,7 +34,10 @@ describe('createTrackerHandler', () => {
 
   it("returns a 403 error when a user attempts to create a tracker that doesn't include them", async () => {
     const { req, res } = mockReqRes('POST');
-    req._setBody({ users: ['test-user', 'test-user-2'], name: 'test-tracker' });
+    req.body = JSON.stringify({
+      users: ['test-user', 'test-user-2'],
+      name: 'test-tracker',
+    });
     nextAuthMock.getServerSession.mockResolvedValueOnce({
       user: {
         email: 'different-user',
@@ -44,7 +50,10 @@ describe('createTrackerHandler', () => {
 
   it('can successfully create a tracker', async () => {
     const { req, res } = mockReqRes('POST');
-    req._setBody({ users: ['test-user', 'test-user-2'], name: 'test-tracker' });
+    req.body = JSON.stringify({
+      users: ['test-user', 'test-user-2'],
+      name: 'test-tracker',
+    });
     nextAuthMock.getServerSession.mockResolvedValueOnce({
       user: {
         email: 'test-user',

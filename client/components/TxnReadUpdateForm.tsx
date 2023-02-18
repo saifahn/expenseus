@@ -2,10 +2,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { Transaction } from 'types/Transaction';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
-import TxnFormBase, {
-  makeCreateTxnPayload,
-  TxnFormInputs,
-} from './TxnFormBase';
+import TxnFormBase, { makeTxnPayload, TxnFormInputs } from './TxnFormBase';
 import { epochSecToISOString } from 'utils/dates';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {
@@ -15,7 +12,7 @@ async function updateTransaction(data: TxnFormInputs, txnID: string) {
       Accept: 'application/json',
     },
     credentials: 'include',
-    body: JSON.stringify(makeCreateTxnPayload(data)),
+    body: JSON.stringify(makeTxnPayload(data)),
   });
 }
 

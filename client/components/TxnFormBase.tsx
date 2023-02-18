@@ -18,7 +18,7 @@ export type TxnFormInputs = {
   details: string;
 };
 
-export function makeCreateTxnPayload(
+export function makeTxnPayload(
   data: TxnFormInputs,
 ): Omit<CreateTxnPayload, 'userId'> {
   return {
@@ -28,18 +28,6 @@ export function makeCreateTxnPayload(
     category: data.category,
     date: plainDateStringToEpochSec(data.date),
   };
-}
-
-export function createTxnFormData(data: TxnFormInputs) {
-  const formData = new FormData();
-  formData.append('location', data.location);
-  formData.append('details', data.details);
-  formData.append('amount', data.amount.toString());
-  formData.append('category', data.category);
-
-  const unixSeconds = plainDateStringToEpochSec(data.date);
-  formData.append('date', unixSeconds.toString());
-  return formData;
 }
 
 type Props = {

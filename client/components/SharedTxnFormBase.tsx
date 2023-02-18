@@ -3,7 +3,6 @@ import {
   SubcategoryKey,
   mainCategories,
   mainCategoryKeys,
-  subcategories,
   categoryNameFromKeyEN,
 } from 'data/categories';
 import { Tracker } from 'pages/shared/trackers';
@@ -35,7 +34,7 @@ export function createSharedTxnFormData(data: SharedTxnFormInputs) {
 
   const unixDate = plainDateStringToEpochSec(data.date);
   formData.append('date', unixDate.toString());
-  formData.append('split', data.split);
+  if (data.split) formData.append('split', data.split);
   return formData;
 }
 

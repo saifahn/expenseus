@@ -53,7 +53,7 @@ describe('txnsByTrackerHandler', () => {
       const createSharedTxnInput = {
         invalid: 'input',
       };
-      req._setBody(createSharedTxnInput);
+      req.body = JSON.stringify(createSharedTxnInput);
       await txnsByTrackerHandler(req, res);
 
       expect(res.statusCode).toBe(400);
@@ -61,17 +61,17 @@ describe('txnsByTrackerHandler', () => {
     test('it returns a 403 when trying to create a shared txn without the session user as a participant', async () => {
       const { req, res } = mockReqRes('POST');
       sessionMock.mockResolvedValueOnce({ user: { email: 'different-user' } });
-      const createSharedTxnInput: CreateSharedTxnPayload = {
+      const createSharedTxnInput = {
         date: 12345678,
         amount: 2473,
         location: 'LIFE',
         category: 'food.groceries',
-        tracker: 'test-tracker',
         participants: ['test-user', 'test-user-2'],
         payer: 'test-user',
         details: '',
       };
-      req._setBody(createSharedTxnInput);
+      req.query.trackerId = 'test-tracker';
+      req.body = JSON.stringify(createSharedTxnInput);
       await txnsByTrackerHandler(req, res);
 
       expect(res.statusCode).toBe(403);
@@ -80,24 +80,25 @@ describe('txnsByTrackerHandler', () => {
     test('it successfully creates a shared txn', async () => {
       const { req, res } = mockReqRes('POST');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
-      const createSharedTxnInput: CreateSharedTxnPayload = {
+      const createSharedTxnInput = {
         date: 12345678,
         amount: 2473,
         location: 'LIFE',
         category: 'food.groceries',
-        tracker: 'test-tracker',
         participants: ['test-user', 'test-user-2'],
         payer: 'test-user',
         details: '',
       };
-      req._setBody(createSharedTxnInput);
+      req.query.trackerId = 'test-tracker';
+      req.body = JSON.stringify(createSharedTxnInput);
       sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
       await txnsByTrackerHandler(req, res);
 
       expect(res.statusCode).toBe(202);
-      expect(sharedTxnRepoFnsMock.createSharedTxn).toHaveBeenCalledWith(
-        createSharedTxnInput,
-      );
+      expect(sharedTxnRepoFnsMock.createSharedTxn).toHaveBeenCalledWith({
+        ...createSharedTxnInput,
+        tracker: 'test-tracker',
+      });
     });
   });
 });

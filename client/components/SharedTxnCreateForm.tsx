@@ -5,13 +5,13 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 import { plainDateISONowString } from 'utils/dates';
 import SharedTxnFormBase, {
-  createSharedTxnFormData,
+  makeSharedTxnPayload,
   SharedTxnFormInputs,
 } from './SharedTxnFormBase';
 
 async function createSharedTxn(data: SharedTxnFormInputs, tracker: Tracker) {
-  const formData = createSharedTxnFormData(data);
-  formData.append('participants', tracker.users.join(','));
+  const participants = tracker.users.join(',');
+  const payload = makeSharedTxnPayload({ ...data, participants });
 
   await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${tracker.id}/transactions`,
@@ -21,7 +21,7 @@ async function createSharedTxn(data: SharedTxnFormInputs, tracker: Tracker) {
         Accept: 'application/json',
       },
       credentials: 'include',
-      body: formData,
+      body: JSON.stringify(payload),
     },
   );
 }

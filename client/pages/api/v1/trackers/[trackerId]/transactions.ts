@@ -36,11 +36,12 @@ export default async function txnsByTrackerHandler(
     return res.status(401).json({ error: 'no valid session found' });
   }
 
+  const tracker = req.query.trackerId as string;
   const sharedTxnRepo = setUpSharedTxnRepo();
 
   if (req.method === 'GET') {
     const [items, err] = await withAsyncTryCatch(
-      sharedTxnRepo.getTxnsByTracker(req.query.trackerId as string),
+      sharedTxnRepo.getTxnsByTracker(tracker),
     );
     if (err) {
       return res.status(500).json({
@@ -52,10 +53,15 @@ export default async function txnsByTrackerHandler(
   }
 
   if (req.method === 'POST') {
-    let [parsed, err] = withTryCatch(() =>
-      createSharedTxnPayloadSchema.parse(req.body),
+    var [jsonParsed, err] = withTryCatch(() => JSON.parse(req.body));
+    if (err) {
+      return res.status(400).json({ error: 'error in JSON parsing request' });
+    }
+    var [parsed, err] = withTryCatch(() =>
+      createSharedTxnPayloadSchema.parse({ ...jsonParsed, tracker }),
     );
     if (err instanceof ZodError) {
+      console.error(err);
       return res.status(400).json({ error: 'invalid input' });
     }
 
@@ -72,6 +78,6 @@ export default async function txnsByTrackerHandler(
         .status(500)
         .json({ error: 'something went wrong while creating shared txn' });
     }
-    return res.status(202);
+    return res.status(202).json({});
   }
 }

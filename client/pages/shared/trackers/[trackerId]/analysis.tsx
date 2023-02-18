@@ -33,7 +33,7 @@ export default function TrackerAnalysis() {
 
   const { data: txns, error } = useSWR<SharedTxn[]>(
     `${trackerId}.analysis`,
-    () => {
+    async () => {
       if (!trackerId) return null;
       const { from, to } = getValues();
       const fromEpochSec = plainDateStringToEpochSec(from);
@@ -59,7 +59,7 @@ export default function TrackerAnalysis() {
         {error && <div>Failed to load details</div>}
         {txns === null && <div>Loading</div>}
         {txns?.length === 0 && <div>No transactions for that time period</div>}
-        {txns?.length > 0 && (
+        {txns && txns.length > 0 && (
           <div>
             <div className="h-screen">{BarChart(txns)}</div>
             <div className="mt-4">

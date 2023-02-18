@@ -65,8 +65,10 @@ export default function SharedTxnReadUpdateForm({
   const { mutate } = useSWRConfig();
 
   let userSplits = [];
-  for (const userSplit of Object.entries(txn.split)) {
-    userSplits.push(`${userSplit[0]}:${userSplit[1]}`);
+  if (txn.split) {
+    for (const userSplit of Object.entries(txn.split)) {
+      userSplits.push(`${userSplit[0]}:${userSplit[1]}`);
+    }
   }
 
   const { register, handleSubmit, formState } = useForm<SharedTxnFormInputs>({

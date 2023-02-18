@@ -1,5 +1,5 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
-import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { User } from 'components/UserList';
 import {
   DDBWithConfig,
@@ -16,6 +16,17 @@ const userKeyPrefix = 'user',
   allUsersKey = 'users';
 
 export const makeUserIdKey = (id: string) => `${userKeyPrefix}#${id}`;
+
+export type UserItem = {
+  [tablePartitionKey]: string;
+  [tableSortKey]: string;
+  EntityType: typeof userEntityType;
+  ID: string;
+  Username: string;
+  Name: string;
+  [gsi1PartitionKey]: typeof allUsersKey;
+  [gsi1SortKey]: string;
+};
 
 export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
   async function createUser(user: User) {
@@ -47,6 +58,25 @@ export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
     }
   }
 
+  async function getUser(id: string) {
+    const userIdKey = makeUserIdKey(id);
+    try {
+      const result = await ddb.send(
+        new GetCommand({
+          TableName: tableName,
+          Key: {
+            [tablePartitionKey]: userIdKey,
+            [tableSortKey]: userIdKey,
+          },
+        }),
+      );
+      return result.Item as UserItem;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }
+
   async function getAllUsers() {
     const res = await ddb.send(
       new QueryCommand({
@@ -61,8 +91,8 @@ export function makeUserRepository({ ddb, tableName }: DDBWithConfig) {
         KeyConditionExpression: '#GSI1PK = :usersKey',
       }),
     );
-    return res.Items!;
+    return (res.Items! as UserItem[]) || [];
   }
 
-  return { createUser, getAllUsers };
+  return { createUser, getUser, getAllUsers };
 }

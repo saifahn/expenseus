@@ -1,6 +1,6 @@
-import Link from 'next/link';
+import { PropsWithChildren } from 'react';
 
-export default function SharedLayout({ children }) {
+export default function SharedLayout({ children }: PropsWithChildren<{}>) {
   return (
     <>
       {/* <nav className="mt-4">

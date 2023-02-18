@@ -37,10 +37,10 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
     shouldUseNativeValidation: true,
     defaultValues: {
       location: '',
-      amount: null,
+      amount: 0,
       date: plainDateISONowString(),
       settled: false,
-      payer: user.id,
+      payer: user!.id,
       participants: '',
       category: 'unspecified.unspecified',
       details: '',
@@ -55,7 +55,7 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       createSharedTxn(data, tracker),
     );
     setValue('location', '');
-    setValue('amount', null);
+    setValue('amount', 0);
     setValue('settled', false);
     setValue('participants', '');
     setValue('category', 'unspecified.unspecified');

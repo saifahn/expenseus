@@ -49,6 +49,10 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   });
 
   const submitCallback: SubmitHandler<TxnFormInputs> = (data) => {
+    if (!user) {
+      console.error('user not loaded');
+      return;
+    }
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
       updateTransaction(data, txn.id),
@@ -57,6 +61,10 @@ export default function TxnReadUpdateForm({ txn, onApply, onCancel }: Props) {
   };
 
   function handleDelete(e: React.MouseEvent) {
+    if (!user) {
+      console.error('user not loaded');
+      return;
+    }
     e.stopPropagation();
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 export const mainCategories = {
   unspecified: {
     en_US: 'Unspecified',
@@ -101,15 +103,68 @@ export const mainCategoryKeys = Object.keys(
   mainCategories,
 ) as MainCategoryKey[];
 
-// use when satisfies is supported?
-// type SubCategories = {
-//   [k: string]: {
-//     mainCategory: MainCategoryKey;
-//     en_US: string;
-//   };
-// };
+const subcategoryKeys = [
+  'unspecified.unspecified',
+  'food.food',
+  'food.groceries',
+  'food.eating-out',
+  'food.delivery',
+  'daily.daily',
+  'daily.consumables',
+  'daily.children',
+  'transport.transport',
+  'transport.train',
+  'transport.bus',
+  'transport.taxi',
+  'utilities.utilities',
+  'utilities.electricity',
+  'utilities.gas',
+  'utilities.water',
+  'utilities.internet',
+  'utilities.phone',
+  'entertainment.entertainment',
+  'entertainment.books',
+  'entertainment.leisure',
+  'entertainment.hobbies',
+  'entertainment.music',
+  'entertainment.film-video',
+  'entertainment.subscriptions',
+  'clothing.clothing',
+  'clothing.footwear',
+  'beauty.beauty',
+  'beauty.cosmetics',
+  'beauty.hair',
+  'travel.travel',
+  'travel.transport',
+  'travel.accommodation',
+  'home.home',
+  'home.electronics',
+  'home.furniture',
+  'home.kitchen',
+  'medical.medical',
+  'other.other',
+  'social.social',
+  'social.gifts',
+  'education.education',
+  'education.lessons',
+  'housing.housing',
+  'housing.rent',
+  'housing.mortgage',
+  'car.car',
+  'insurance.insurance',
+] as const;
+export const SubcategoryKeys = z.enum(subcategoryKeys);
+export type SubcategoryKey = z.infer<typeof SubcategoryKeys>;
 
-export const subcategories = {
+// use when satisfies is supported?
+type SubCategories = {
+  [k in SubcategoryKey]: {
+    mainCategory: MainCategoryKey;
+    en_US: string;
+  };
+};
+
+export const subcategories: SubCategories = {
   'unspecified.unspecified': {
     mainCategory: 'unspecified',
     en_US: 'Unspecified',
@@ -304,9 +359,7 @@ export const subcategories = {
   },
 };
 
-export type SubcategoryKey = keyof typeof subcategories;
-
-const categoryKeys = Object.keys(subcategories) as SubcategoryKey[];
+export const categoryKeys = Object.keys(subcategories) as SubcategoryKey[];
 
 type AllCategories = {
   [mainCat in MainCategoryKey]: Array<SubcategoryKey>;

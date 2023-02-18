@@ -1,6 +1,7 @@
 import Link from 'next/link';
+import { PropsWithChildren } from 'react';
 
-export default function PersonalLayout({ children }) {
+export default function PersonalLayout({ children }: PropsWithChildren<{}>) {
   return (
     <>
       <nav className="mt-4">

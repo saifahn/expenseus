@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { Tracker } from 'pages/shared/trackers';
+import { PropsWithChildren } from 'react';
 import useSWR from 'swr';
 import SharedLayout from './LayoutShared';
 
-export default function TrackerLayout({ children }) {
+export default function TrackerLayout({ children }: PropsWithChildren<{}>) {
   const router = useRouter();
   const { trackerId } = router.query;
   const { data: tracker, error } = useSWR<Tracker>(

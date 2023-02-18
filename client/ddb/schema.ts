@@ -8,9 +8,10 @@ import {
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 // TODO: load from env variable
-const endpoint = 'http://localhost:8000';
-const accessKeyId = 'dummy-id';
-const secretAccessKey = 'dummy-secret';
+const endpoint = process.env.DDB_ENDPOINT;
+const accessKeyId = process.env.DDB_ACCESS_KEY_ID ?? '';
+const secretAccessKey = process.env.DDB_SECRET_ACCESS_KEY ?? '';
+export const tableName = process.env.DDB_TABLE ?? 'expenseus-default';
 
 export type DDBWithConfig = {
   ddb: DynamoDBDocumentClient;

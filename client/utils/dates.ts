@@ -15,7 +15,7 @@ const monthNameMapEN = {
   12: 'December',
 } as const;
 
-export type MonthEN = typeof monthNameMapEN[keyof typeof monthNameMapEN];
+export type MonthEN = (typeof monthNameMapEN)[keyof typeof monthNameMapEN];
 
 /**
  * Takes a date in epoch seconds format and returns its year in the UTC
@@ -31,7 +31,8 @@ export function epochSecToUTCYear(date: number) {
  */
 export function epochSecToUTCMonthEN(date: number): MonthEN {
   return monthNameMapEN[
-    Temporal.Instant.fromEpochSeconds(date).toZonedDateTimeISO('UTC').month
+    Temporal.Instant.fromEpochSeconds(date).toZonedDateTimeISO('UTC')
+      .month as keyof typeof monthNameMapEN
   ];
 }
 

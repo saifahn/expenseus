@@ -1,7 +1,7 @@
 import { SubcategoryKey } from 'data/categories';
 
 export interface Transaction {
-  id?: string;
+  id: string;
   userId: string;
   location: string;
   amount: number;

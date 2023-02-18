@@ -26,20 +26,24 @@ export default function TxnCreateForm() {
     defaultValues: {
       location: '',
       details: '',
-      amount: null,
+      amount: 0,
       date: plainDateISONowString(),
       category: 'unspecified.unspecified',
     },
   });
 
   const submitCallback: SubmitHandler<TxnFormInputs> = (data) => {
+    if (!user) {
+      console.error('user not loaded');
+      return;
+    }
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
       createTransaction(data),
     );
     setValue('location', '');
     setValue('details', '');
-    setValue('amount', null);
+    setValue('amount', 0);
     setValue('category', 'unspecified.unspecified');
   };
 

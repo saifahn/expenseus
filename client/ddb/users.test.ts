@@ -8,7 +8,7 @@ import { UserAlreadyExistsError } from 'ddb/errors';
 
 const userTestTable = 'user-test-table';
 const d = setUpDdb(userTestTable);
-const { createUser, getAllUsers } = makeUserRepository(d);
+const { createUser, getUser, getAllUsers } = makeUserRepository(d);
 
 describe('Users', () => {
   beforeEach(async () => {
@@ -63,5 +63,32 @@ describe('Users', () => {
         name: 'Someone Different?',
       }),
     ).rejects.toThrowError(UserAlreadyExistsError);
+  });
+
+  test('a user can be retrieved by ID', async () => {
+    const testUser = {
+      id: 'test-user',
+      username: 'TestUser',
+      name: 'Test User',
+    };
+    await createUser(testUser);
+
+    const user = await getUser('test-user');
+    const expected = {
+      EntityType: 'user',
+      GSI1PK: 'users',
+      Username: 'TestUser',
+      GSI1SK: 'user#test-user',
+      SK: 'user#test-user',
+      PK: 'user#test-user',
+      ID: 'test-user',
+      Name: 'Test User',
+    };
+    expect(user).toEqual(expected);
+  });
+
+  test('it returns undefined when a non-existent user is attempted to be retrieved', async () => {
+    const user = await getUser('non-existent-user');
+    expect(user).toBeUndefined();
   });
 });

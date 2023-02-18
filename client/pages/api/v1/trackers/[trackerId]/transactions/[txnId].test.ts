@@ -2,7 +2,7 @@ import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
-import bySharedTxnIdHandler from './[transactionId]';
+import bySharedTxnIdHandler from './[txnId]';
 
 jest.mock('ddb/sharedTxns');
 const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
@@ -30,7 +30,7 @@ describe('bySharedTxnIdHandler', () => {
       const updateSharedTxnInput = {
         invalid: 'input',
       };
-      req._setBody(updateSharedTxnInput);
+      req.body = JSON.stringify(updateSharedTxnInput);
       await bySharedTxnIdHandler(req, res);
 
       expect(res.statusCode).toBe(400);
@@ -49,10 +49,10 @@ describe('bySharedTxnIdHandler', () => {
         details: 'something up',
       };
       req.query = {
-        transactionId: 'test-shared-txn',
+        txnId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
-      req._setBody(updateSharedTxnInput);
+      req.body = JSON.stringify(updateSharedTxnInput);
       sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
       await bySharedTxnIdHandler(req, res);
 
@@ -74,7 +74,7 @@ describe('bySharedTxnIdHandler', () => {
       const { req, res } = mockReqRes('DELETE');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
       req.query = {
-        transactionId: 'test-shared-txn',
+        txnId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
       await bySharedTxnIdHandler(req, res);
@@ -86,11 +86,11 @@ describe('bySharedTxnIdHandler', () => {
       const { req, res } = mockReqRes('DELETE');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
       req.query = {
-        transactionId: 'test-shared-txn',
+        txnId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
       const participants = ['test-user', 'test-user-2'];
-      req._setBody({ participants });
+      req.body = JSON.stringify({ participants });
       sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
       await bySharedTxnIdHandler(req, res);
 

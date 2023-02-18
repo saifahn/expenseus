@@ -46,8 +46,16 @@ export default async function byTxnIdHandler(
 
   // update transaction
   if (req.method === 'PUT') {
-    let [parsed, err] = withTryCatch(() =>
-      updateTxnPayloadSchema.parse(req.body),
+    var [jsonParsed, err] = withTryCatch(() => JSON.parse(req.body));
+    if (err) {
+      return res.status(400).json({ error: 'error parsing payload' });
+    }
+    var [parsed, err] = withTryCatch(() =>
+      updateTxnPayloadSchema.parse({
+        id: txnId,
+        userId: sessionUser,
+        ...jsonParsed,
+      }),
     );
     if (err instanceof ZodError) {
       return res
@@ -68,7 +76,7 @@ export default async function byTxnIdHandler(
         .json({ error: 'something went wrong while updating the transaction' });
     }
 
-    return res.status(202);
+    return res.status(202).json({});
   }
 
   // delete transaction
@@ -85,6 +93,6 @@ export default async function byTxnIdHandler(
         .json({ error: 'something went wrong while deleting the transaction' });
     }
 
-    return res.status(202);
+    return res.status(202).json({});
   }
 }

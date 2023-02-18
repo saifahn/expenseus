@@ -19,8 +19,10 @@ export default async function createTrackerHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  let [parsedInput, err] = withTryCatch(() => payloadSchema.parse(req.body));
-  if (err instanceof ZodError) {
+  let [parsedInput, err] = withTryCatch(() =>
+    payloadSchema.parse(JSON.parse(req.body)),
+  );
+  if (err) {
     return res.status(400).json({ error: 'invalid input' });
   }
 
@@ -42,5 +44,5 @@ export default async function createTrackerHandler(
       .status(500)
       .json({ error: 'something went wrong while creating a tracker' });
   }
-  return res.status(202);
+  return res.status(202).json({});
 }

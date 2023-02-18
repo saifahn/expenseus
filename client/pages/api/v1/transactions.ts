@@ -4,8 +4,10 @@
 import { SubcategoryKeys } from 'data/categories';
 import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
-import { z, ZodError } from 'zod';
+import { z } from 'zod';
+import { authOptions } from '../auth/[...nextauth]';
 
 const createTxnPayloadSchema = z.object({
   userId: z.string().min(1),
@@ -23,26 +25,35 @@ export default async function createTxnHandler(
   res: NextApiResponse,
 ) {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'invalid method' });
-    return;
+    return res.status(405).json({ error: 'invalid method' });
   }
 
-  let [parsed, err] = withTryCatch(() =>
-    createTxnPayloadSchema.parse(req.body),
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ error: 'no valid session found' });
+  }
+
+  var [jsonParsed, err] = withTryCatch(() => JSON.parse(req.body));
+  if (err) {
+    return res.status(400).json({ error: 'error parsing payload ' });
+  }
+  var [parsed, err] = withTryCatch(() =>
+    createTxnPayloadSchema.parse({
+      userId: session.user?.email,
+      ...jsonParsed,
+    }),
   );
-  if (err instanceof ZodError) {
-    res.status(400).json({ error: 'invalid payload' });
-    return;
+  if (err) {
+    return res.status(400).json({ error: 'invalid payload' });
   }
 
   const txnRepo = setUpTxnRepo();
 
   [, err] = await withAsyncTryCatch(txnRepo.createTxn(parsed!));
   if (err) {
-    res
+    return res
       .status(500)
       .json({ error: 'something went wrong in creating the transaction' });
-    return;
   }
-  res.status(202);
+  return res.status(202).json({});
 }

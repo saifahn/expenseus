@@ -2,19 +2,17 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { Transaction } from 'types/Transaction';
 import { useSWRConfig } from 'swr';
 import { useUserContext } from '../context/user';
-import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
+import TxnFormBase, { makeTxnPayload, TxnFormInputs } from './TxnFormBase';
 import { epochSecToISOString } from 'utils/dates';
 
 async function updateTransaction(data: TxnFormInputs, txnID: string) {
-  const formData = createTxnFormData(data);
-
   await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/${txnID}`, {
     method: 'PUT',
     headers: {
       Accept: 'application/json',
     },
     credentials: 'include',
-    body: formData,
+    body: JSON.stringify(makeTxnPayload(data)),
   });
 }
 

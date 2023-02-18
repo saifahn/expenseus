@@ -5,6 +5,7 @@ import {
   mainCategoryKeys,
   categoryNameFromKeyEN,
 } from 'data/categories';
+import { CreateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions';
 import { Tracker } from 'pages/shared/trackers';
 import React, { useState } from 'react';
 import { UseFormRegister } from 'react-hook-form';
@@ -22,20 +23,33 @@ export type SharedTxnFormInputs = {
   split?: string;
 };
 
-export function createSharedTxnFormData(data: SharedTxnFormInputs) {
-  const formData = new FormData();
+export function makeSharedTxnPayload(
+  data: SharedTxnFormInputs,
+): Omit<CreateSharedTxnPayload, 'tracker'> {
+  const participants = data.participants.split(',');
 
-  formData.append('location', data.location);
-  formData.append('amount', data.amount.toString());
-  if (!data.settled) formData.append('unsettled', 'true');
-  formData.append('category', data.category);
-  formData.append('payer', data.payer);
-  formData.append('details', data.details);
+  let split;
+  if (data.split) {
+    // the format is `userid:split,userid:split` originally, which can be split
+    const [first, second] = data.split.split(',');
+    const [firstUser, firstSplit] = first.split(':');
+    const [secondUser, secondSplit] = second.split(':');
+    split = {
+      [firstUser]: Number(firstSplit),
+      [secondUser]: Number(secondSplit),
+    };
+  }
 
-  const unixDate = plainDateStringToEpochSec(data.date);
-  formData.append('date', unixDate.toString());
-  if (data.split) formData.append('split', data.split);
-  return formData;
+  const payload = {
+    ...data,
+    date: plainDateStringToEpochSec(data.date),
+    amount: Number(data.amount),
+    participants,
+    split,
+    ...(data.settled && { settled: data.settled }),
+  };
+
+  return payload;
 }
 
 type Props = {

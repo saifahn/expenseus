@@ -3,18 +3,16 @@ import Link from 'next/link';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 import { plainDateISONowString } from 'utils/dates';
-import TxnFormBase, { createTxnFormData, TxnFormInputs } from './TxnFormBase';
+import TxnFormBase, { makeTxnPayload, TxnFormInputs } from './TxnFormBase';
 
 async function createTransaction(data: TxnFormInputs) {
-  const formData = createTxnFormData(data);
-
   await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions`, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
     },
     credentials: 'include',
-    body: formData,
+    body: JSON.stringify(makeTxnPayload(data)),
   });
 }
 

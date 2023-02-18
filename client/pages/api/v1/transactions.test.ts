@@ -1,4 +1,5 @@
 import { makeTxnRepository } from 'ddb/txns';
+import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import createTxnHandler, { CreateTxnPayload } from './transactions';
 
@@ -12,6 +13,7 @@ export const txnRepoFnsMock: ReturnType<typeof makeTxnRepository> = {
   getTxnsByUserId: jest.fn(),
   getBetweenDates: jest.fn(),
 };
+const sessionMock = jest.mocked(getServerSession);
 
 describe('/api/v1/transactions POST endpoint', () => {
   test('should return a 405 error if the method is not POST', async () => {
@@ -22,10 +24,18 @@ describe('/api/v1/transactions POST endpoint', () => {
     expect(res.statusCode).toBe(405);
   });
 
-  test('should return a 400 error if the payload is invalid', async () => {
+  test('should return a 401 error if there is no valid session', async () => {
     const { req, res } = mockReqRes('POST');
 
-    req._setBody({
+    await createTxnHandler(req, res);
+
+    expect(res.statusCode).toBe(401);
+  });
+
+  test('should return a 400 error if the payload is invalid', async () => {
+    const { req, res } = mockReqRes('POST');
+    sessionMock.mockResolvedValueOnce({ user: { email: 'test-user ' } });
+    req.body = JSON.stringify({
       invalid: 'property',
       another: 'wrong-one',
     });
@@ -36,7 +46,7 @@ describe('/api/v1/transactions POST endpoint', () => {
 
   test('should return a 202 if the payload is OK', async () => {
     const { req, res } = mockReqRes('POST');
-
+    sessionMock.mockResolvedValueOnce({ user: { email: 'test-user ' } });
     const payload: CreateTxnPayload = {
       userId: 'test-user',
       location: 'test-location',
@@ -45,7 +55,7 @@ describe('/api/v1/transactions POST endpoint', () => {
       category: 'unspecified.unspecified',
       details: '',
     };
-    req._setBody(payload);
+    req.body = JSON.stringify(payload);
     txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
     await createTxnHandler(req, res);
 
@@ -54,7 +64,7 @@ describe('/api/v1/transactions POST endpoint', () => {
 
   test('should return a 500 if something goes wrong with ddb', async () => {
     const { req, res } = mockReqRes('POST');
-
+    sessionMock.mockResolvedValueOnce({ user: { email: 'test-user ' } });
     const payload: CreateTxnPayload = {
       userId: 'test-user',
       location: 'test-location',
@@ -63,7 +73,7 @@ describe('/api/v1/transactions POST endpoint', () => {
       category: 'unspecified.unspecified',
       details: '',
     };
-    req._setBody(payload);
+    req.body = JSON.stringify(payload);
     txnsRepo.mockImplementationOnce(() => ({
       ...txnRepoFnsMock,
       createTxn: jest.fn(async () => {

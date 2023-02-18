@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { PropsWithChildren } from 'react';
+import { signIn, signOut } from 'next-auth/react';
 
 export default function Layout({ children }: PropsWithChildren<{}>) {
   const router = useRouter();
@@ -62,12 +63,12 @@ export default function Layout({ children }: PropsWithChildren<{}>) {
               </li>
               {!error && user && (
                 <li className="ml-4">
-                  <a
-                    href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/logout`}
+                  <button
+                    onClick={() => signOut()}
                     className="inline-flex items-center rounded-md border px-3 py-2"
                   >
                     <span className="">Log out</span>
-                  </a>
+                  </button>
                 </li>
               )}
             </ul>
@@ -76,9 +77,9 @@ export default function Layout({ children }: PropsWithChildren<{}>) {
 
         {error && error.code === 401 && (
           <main className="mt-4 h-full border-gray-600">
-            <a
-              href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/login_google`}
+            <button
               className="mt-4 inline-flex items-center rounded-md border px-3 py-2"
+              onClick={() => signIn('google')}
             >
               <img
                 src="/images/google-g-logo.svg"
@@ -87,7 +88,7 @@ export default function Layout({ children }: PropsWithChildren<{}>) {
                 width={24}
               />
               <span className="ml-3">Sign in with Google</span>
-            </a>
+            </button>
           </main>
         )}
 

@@ -2,6 +2,7 @@ import { txnItemToTxn } from 'ddb/itemToModel';
 import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { authOptions } from 'pages/api/auth/[...nextauth]';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
@@ -23,7 +24,7 @@ export default async function getTxnsByUserIdBetweenDatesHandler(
     return res.status(400).json({ error: 'invalid query' });
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }
@@ -37,12 +38,10 @@ export default async function getTxnsByUserIdBetweenDatesHandler(
     }),
   );
   if (err) {
-    return res
-      .status(500)
-      .json({
-        error:
-          'something went wrong while getting transactions between dates for a user',
-      });
+    return res.status(500).json({
+      error:
+        'something went wrong while getting transactions between dates for a user',
+    });
   }
   const txns = items?.map(txnItemToTxn);
   return res.status(200).json(txns);

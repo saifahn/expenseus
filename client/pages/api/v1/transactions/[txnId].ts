@@ -3,6 +3,7 @@ import { txnItemToTxn } from 'ddb/itemToModel';
 import { setUpTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { authOptions } from 'pages/api/auth/[...nextauth]';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
@@ -25,7 +26,7 @@ export default async function byTxnIdHandler(
     return res.status(405).json({ error: 'method not allowed' });
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession(req, res, authOptions);
   if (!session?.user) {
     return res.status(401).json({ error: 'no valid session found' });
   }

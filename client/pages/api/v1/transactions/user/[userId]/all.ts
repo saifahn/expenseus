@@ -2,6 +2,7 @@ import { sharedTxnItemToModel, txnItemToTxn } from 'ddb/itemToModel';
 import { setUpSharedTxnRepo, setUpTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { authOptions } from 'pages/api/auth/[...nextauth]';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
@@ -23,7 +24,7 @@ export default async function getAllTxnsByUserBetweenDatesHandler(
     return res.status(400).json({ error: 'invalid query' });
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }

@@ -3,6 +3,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
+import { authOptions } from '../auth/[...nextauth]';
 
 const payloadSchema = z.object({
   users: z.array(z.string()).min(2),
@@ -23,7 +24,7 @@ export default async function createTrackerHandler(
     return res.status(400).json({ error: 'invalid input' });
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }

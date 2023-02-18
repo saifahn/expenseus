@@ -3,6 +3,7 @@ import { setUpSharedTxnRepo } from 'ddb/setUpRepos';
 import { SharedTxn } from 'ddb/sharedTxns';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { authOptions } from 'pages/api/auth/[...nextauth]';
 import { withAsyncTryCatch } from 'utils/withTryCatch';
 
 /**
@@ -50,7 +51,7 @@ export default async function getUnsettledTxnsByTrackerHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  const session = await getServerSession();
+  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }

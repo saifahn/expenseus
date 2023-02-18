@@ -5,6 +5,7 @@ import {
   mainCategoryKeys,
   categoryNameFromKeyEN,
 } from 'data/categories';
+import { CreateTxnPayload } from 'pages/api/v1/transactions';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
 import { plainDateStringToEpochSec } from 'utils/dates';
@@ -16,6 +17,18 @@ export type TxnFormInputs = {
   category: SubcategoryKey;
   details: string;
 };
+
+export function makeCreateTxnPayload(
+  data: TxnFormInputs,
+): Omit<CreateTxnPayload, 'userId'> {
+  return {
+    location: data.location,
+    details: data.details,
+    amount: Number(data.amount),
+    category: data.category,
+    date: plainDateStringToEpochSec(data.date),
+  };
+}
 
 export function createTxnFormData(data: TxnFormInputs) {
   const formData = new FormData();

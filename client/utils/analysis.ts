@@ -24,7 +24,7 @@ export function totalsByMainCategory(txns: Transaction[] | SharedTxn[]) {
   return Object.entries(totals).map(([category, total]) => ({
     category,
     total,
-  }));
+  })) as { category: MainCategoryKey; total: number }[];
 }
 
 export function totalsBySubCategory(txns: Transaction[] | SharedTxn[]) {
@@ -36,7 +36,7 @@ export function totalsBySubCategory(txns: Transaction[] | SharedTxn[]) {
   return Object.entries(totals).map(([category, total]) => ({
     category,
     total,
-  }));
+  })) as { category: SubcategoryKey; total: number }[];
 }
 
 export function calculatePersonalTotal(
@@ -45,8 +45,9 @@ export function calculatePersonalTotal(
 ) {
   let total = 0;
   for (const txn of txns) {
+    // if shared txn
     if ('split' in txn) {
-      if (txn.split[user]) {
+      if (txn.split?.[user]) {
         total += txn.amount * txn.split[user];
         continue;
       }

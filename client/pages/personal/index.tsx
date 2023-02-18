@@ -47,7 +47,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
 
 export default function Personal() {
   const { user } = useUserContext();
-  const [selectedTxn, setSelectedTxn] = useState<Transaction>(null);
+  const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
   const { data: transactions, error } = useSWR<Transaction[]>(() =>
     user
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`

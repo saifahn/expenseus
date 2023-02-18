@@ -40,7 +40,7 @@ export default function SharedTxnCreateForm({ tracker }: Props) {
       amount: 0,
       date: plainDateISONowString(),
       settled: false,
-      payer: user.id,
+      payer: user!.id,
       participants: '',
       category: 'unspecified.unspecified',
       details: '',

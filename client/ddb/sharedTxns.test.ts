@@ -3,7 +3,7 @@ import {
   createTableIfNotExists,
   TESTONLY_deleteTable,
 } from 'ddb/schema';
-import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
+import { CreateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions';
 import { ItemDoesNotExistError } from './errors';
 import { makeSharedTxnRepository, SharedTxnItem } from './sharedTxns';
 
@@ -27,7 +27,7 @@ const {
  */
 function assertContainsTxnWithEqualDetails(
   txns: SharedTxnItem[],
-  txn: SharedTxn,
+  txn: CreateSharedTxnPayload,
 ) {
   expect(txns).toContainEqual(
     expect.objectContaining({
@@ -169,11 +169,11 @@ describe('Shared Transactions', () => {
   });
 
   test('a shared txn can be deleted successfully', async () => {
-    const initialTxnDetails: SharedTxn = {
+    const initialTxnDetails = {
       date: 1000 * 1000,
       location: 'somewhere',
       amount: 12345,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -194,22 +194,22 @@ describe('Shared Transactions', () => {
   });
 
   test('it is possible to retrieve only unsettled txns', async () => {
-    const unsettledTxn: SharedTxn = {
+    const unsettledTxn = {
       date: 1000 * 1000,
       location: 'somewhere unsettling',
       amount: 12345,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
       details: '',
       unsettled: true,
     };
-    const settledTxn: SharedTxn = {
+    const settledTxn = {
       date: 1000 * 1000,
       location: 'this is the sound of already settling',
       amount: 345,
-      category: 'beauty.cosmetics',
+      category: 'beauty.cosmetics' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -260,22 +260,22 @@ describe('Shared Transactions', () => {
 
   test('all shared txns can be settled at once', async () => {
     // create two unsettled transactions
-    const first: SharedTxn = {
+    const first = {
       date: 1000 * 1000,
       location: '',
       amount: 34567,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
       details: '',
       unsettled: true,
     };
-    const second: SharedTxn = {
+    const second = {
       date: 2000 * 1000,
       location: '',
       amount: 99999,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
@@ -300,21 +300,21 @@ describe('Shared Transactions', () => {
   });
 
   test('txns are retrieved correctly by tracker between dates', async () => {
-    const first: SharedTxn = {
+    const first = {
       date: 1000 * 1000,
       location: '',
       amount: 34567,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'test-tracker',
       details: '',
     };
-    const second: SharedTxn = {
+    const second = {
       date: 2000 * 1000,
       location: '',
       amount: 99999,
-      category: 'unspecified.unspecified',
+      category: 'unspecified.unspecified' as const,
       payer: 'user-01',
       participants: ['user-01', 'user-02'],
       tracker: 'a-different-tracker',

@@ -13,7 +13,7 @@ import useSWR from 'swr';
 import { Tracker } from '..';
 
 export interface SharedTxn {
-  id?: string;
+  id: string;
   location: string;
   amount: number;
   date: number;
@@ -83,7 +83,7 @@ export function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
 export default function TrackerPage() {
   const router = useRouter();
   const { trackerId } = router.query;
-  const [selectedTxn, setSelectedTxn] = useState<SharedTxn>(null);
+  const [selectedTxn, setSelectedTxn] = useState<SharedTxn | null>(null);
   const { data: tracker, error } = useSWR<Tracker>(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${trackerId}`,
   );
@@ -138,7 +138,7 @@ export default function TrackerPage() {
             selectedTxn ? 'opacity-100' : 'opacity-0',
           ].join(' ')}
         >
-          {selectedTxn && (
+          {selectedTxn && tracker && (
             <SharedTxnReadUpdateForm
               txn={selectedTxn}
               tracker={tracker}

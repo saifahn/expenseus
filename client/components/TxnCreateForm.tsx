@@ -33,6 +33,10 @@ export default function TxnCreateForm() {
   });
 
   const submitCallback: SubmitHandler<TxnFormInputs> = (data) => {
+    if (!user) {
+      console.error('user not loaded');
+      return;
+    }
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/transactions/user/${user.id}`,
       createTransaction(data),

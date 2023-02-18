@@ -34,7 +34,8 @@ export default function UnsettledTxnPage() {
   function handleSettleUp() {
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/${trackerId}/transactions/unsettled`,
-      settleUnsettledTxns(response.transactions),
+      // will only be called when there is a response
+      settleUnsettledTxns(response!.transactions),
     );
   }
 
@@ -45,7 +46,7 @@ export default function UnsettledTxnPage() {
       {response?.transactions === null && (
         <p className="mt-4">You currently have no unsettled transactions!</p>
       )}
-      {response?.transactions?.length > 0 && (
+      {response && response.transactions?.length > 0 && (
         <>
           <p className="mt-4">
             {response.debtor} owes {response.debtee} {response.amountOwed} for{' '}

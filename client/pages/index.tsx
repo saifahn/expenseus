@@ -2,7 +2,7 @@ import { useUserContext } from 'context/user';
 import useSWR from 'swr';
 import { Transaction } from 'types/Transaction';
 import { Temporal } from 'temporal-polyfill';
-import { epochSecToLocaleString, plainDateStringToEpochSec } from 'utils/dates';
+import { plainDateStringToEpochSec } from 'utils/dates';
 import { SharedTxn } from './shared/trackers/[trackerId]';
 import { calculatePersonalTotal } from 'utils/analysis';
 import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
@@ -14,7 +14,7 @@ type AllTxnsResponse = {
 };
 
 export default function Home() {
-  const { user } = useUserContext();
+  const { user, error: userError } = useUserContext();
   const todayEpochSeconds = plainDateStringToEpochSec(
     Temporal.Now.plainDateISO().toString(),
   );
@@ -33,12 +33,16 @@ export default function Home() {
       (a, b) => b.date - a.date, // sorted descending, so the most recent dates are shown first
     );
   }
-  const total = calculatePersonalTotal(user.id, txns);
+  let total;
+  if (user) {
+    total = calculatePersonalTotal(user.id, txns);
+  }
 
   return (
     <>
       <section>
-        <p className="mt-4">Hi, {user.username}!</p>
+        {userError && <p>Failed to load user</p>}
+        {user && <p className="mt-4">Hi, {user.username}!</p>}
         {error && <p>Failed to load recent transactions</p>}
         {res === null && <p>Loading recent transactions....</p>}
         {res && txns.length === 0 && <p>No transactions to show</p>}

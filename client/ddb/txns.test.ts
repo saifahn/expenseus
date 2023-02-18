@@ -5,7 +5,7 @@ import {
   TESTONLY_deleteTable,
 } from 'ddb/schema';
 import { makeTxnRepository, TxnItem } from 'ddb/txns';
-import { Transaction } from 'types/Transaction';
+import { CreateTxnPayload } from 'pages/api/v1/transactions';
 
 const txnTestTable = 'txn-test-table';
 const d = setUpDdb(txnTestTable);
@@ -19,7 +19,7 @@ const {
 } = makeTxnRepository(d);
 
 // helper function to assert details from txnItem match an original txn
-function assertEqualDetails(txnItem: TxnItem, txn: Transaction) {
+function assertEqualDetails(txnItem: TxnItem, txn: CreateTxnPayload) {
   expect(txnItem).toEqual(
     expect.objectContaining({
       UserID: txn.userId,

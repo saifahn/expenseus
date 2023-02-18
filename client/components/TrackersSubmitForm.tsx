@@ -36,6 +36,10 @@ export default function TrackersSubmitForm() {
   });
 
   const submitCallback: SubmitHandler<Inputs> = (data) => {
+    if (!user) {
+      console.error('user is not loaded');
+      return;
+    }
     data.userId = user.id;
     mutate(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/trackers/user/${user.id}`,
@@ -48,7 +52,7 @@ export default function TrackersSubmitForm() {
     <div>
       {error && <div>Failed to load</div>}
       {!error && !allUsers && <div>Loading all users information...</div>}
-      {allUsers && (
+      {allUsers && user && (
         <form onSubmit={handleSubmit(submitCallback)} className="bg-white">
           <h3 className="text-lg font-semibold lowercase">Create Tracker</h3>
           <div className="mt-4">

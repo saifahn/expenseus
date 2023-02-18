@@ -32,7 +32,7 @@ export default function PersonalAnalysis() {
 
   const { data: txns, error } = useSWR<Transaction[]>(
     'personal.analysis',
-    () => {
+    async () => {
       if (!user) return null;
       const { from, to } = getValues();
       const fromEpochSec = plainDateStringToEpochSec(from);
@@ -43,7 +43,7 @@ export default function PersonalAnalysis() {
     },
   );
 
-  const submitCallback: SubmitHandler<Inputs> = (data) => {
+  const submitCallback: SubmitHandler<Inputs> = () => {
     mutate('personal.analysis');
   };
 
@@ -58,7 +58,7 @@ export default function PersonalAnalysis() {
         {error && <div>Failed to load details</div>}
         {txns === null && <div>Loading</div>}
         {txns?.length === 0 && <div>No transactions for that time period</div>}
-        {txns?.length > 0 && (
+        {txns && txns.length > 0 && (
           <div>
             <div className="h-screen">{BarChart(txns)}</div>
             <div className="mt-4">

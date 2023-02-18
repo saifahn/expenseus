@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { SubcategoryKey } from 'data/categories';
 import { CreateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions';
-import { UpdateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions/[transactionId]';
+import { UpdateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions/[txnId]';
 import { monotonicFactory } from 'ulid';
 import { ItemDoesNotExistError } from './errors';
 import {

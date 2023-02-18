@@ -2,7 +2,7 @@ import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 import { getServerSession } from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
-import bySharedTxnIdHandler from './[transactionId]';
+import bySharedTxnIdHandler from './[txnId]';
 
 jest.mock('ddb/sharedTxns');
 const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
@@ -49,7 +49,7 @@ describe('bySharedTxnIdHandler', () => {
         details: 'something up',
       };
       req.query = {
-        transactionId: 'test-shared-txn',
+        txnId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
       req.body = JSON.stringify(updateSharedTxnInput);
@@ -74,7 +74,7 @@ describe('bySharedTxnIdHandler', () => {
       const { req, res } = mockReqRes('DELETE');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
       req.query = {
-        transactionId: 'test-shared-txn',
+        txnId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
       await bySharedTxnIdHandler(req, res);
@@ -86,7 +86,7 @@ describe('bySharedTxnIdHandler', () => {
       const { req, res } = mockReqRes('DELETE');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
       req.query = {
-        transactionId: 'test-shared-txn',
+        txnId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
       const participants = ['test-user', 'test-user-2'];

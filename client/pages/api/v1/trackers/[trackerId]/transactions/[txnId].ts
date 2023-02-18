@@ -51,7 +51,7 @@ export default async function bySharedTxnIdHandler(
       updateSharedTxnPayloadSchema.parse({
         ...jsonParsed,
         tracker: req.query.trackerId,
-        id: req.query.transactionId,
+        id: req.query.txnId,
       }),
     );
     if (err instanceof ZodError) {
@@ -76,7 +76,7 @@ export default async function bySharedTxnIdHandler(
       deleteSharedTxnPayloadSchema.parse({
         ...jsonParsed,
         tracker: req.query.trackerId,
-        txnId: req.query.transactionId,
+        txnId: req.query.txnId,
       }),
     );
     if (err instanceof ZodError) {

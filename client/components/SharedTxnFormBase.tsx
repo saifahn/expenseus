@@ -52,22 +52,6 @@ export function makeSharedTxnPayload(
   return payload;
 }
 
-export function createSharedTxnFormData(data: SharedTxnFormInputs) {
-  const formData = new FormData();
-
-  formData.append('location', data.location);
-  formData.append('amount', data.amount.toString());
-  if (!data.settled) formData.append('unsettled', 'true');
-  formData.append('category', data.category);
-  formData.append('payer', data.payer);
-  formData.append('details', data.details);
-
-  const unixDate = plainDateStringToEpochSec(data.date);
-  formData.append('date', unixDate.toString());
-  if (data.split) formData.append('split', data.split);
-  return formData;
-}
-
 type Props = {
   title?: string;
   tracker: Tracker;

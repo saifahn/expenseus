@@ -25,7 +25,7 @@ describe('/api/v1/transactions POST endpoint', () => {
   test('should return a 400 error if the payload is invalid', async () => {
     const { req, res } = mockReqRes('POST');
 
-    req._setBody({
+    req.body = JSON.stringify({
       invalid: 'property',
       another: 'wrong-one',
     });
@@ -45,7 +45,7 @@ describe('/api/v1/transactions POST endpoint', () => {
       category: 'unspecified.unspecified',
       details: '',
     };
-    req._setBody(payload);
+    req.body = JSON.stringify(payload);
     txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
     await createTxnHandler(req, res);
 
@@ -63,7 +63,7 @@ describe('/api/v1/transactions POST endpoint', () => {
       category: 'unspecified.unspecified',
       details: '',
     };
-    req._setBody(payload);
+    req.body = JSON.stringify(payload);
     txnsRepo.mockImplementationOnce(() => ({
       ...txnRepoFnsMock,
       createTxn: jest.fn(async () => {

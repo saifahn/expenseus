@@ -23,26 +23,23 @@ export default async function createTxnHandler(
   res: NextApiResponse,
 ) {
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'invalid method' });
-    return;
+    return res.status(405).json({ error: 'invalid method' });
   }
 
   let [parsed, err] = withTryCatch(() =>
-    createTxnPayloadSchema.parse(req.body),
+    createTxnPayloadSchema.parse(JSON.parse(req.body)),
   );
-  if (err instanceof ZodError) {
-    res.status(400).json({ error: 'invalid payload' });
-    return;
+  if (err) {
+    return res.status(400).json({ error: 'invalid payload' });
   }
 
   const txnRepo = setUpTxnRepo();
 
   [, err] = await withAsyncTryCatch(txnRepo.createTxn(parsed!));
   if (err) {
-    res
+    return res
       .status(500)
       .json({ error: 'something went wrong in creating the transaction' });
-    return;
   }
-  res.status(202);
+  return res.status(202).json({});
 }

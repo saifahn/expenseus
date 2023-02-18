@@ -23,10 +23,7 @@ export default async function createTrackerHandler(
     payloadSchema.parse(JSON.parse(req.body)),
   );
   if (err) {
-    if (err instanceof ZodError) {
-      return res.status(400).json({ error: 'invalid input' });
-    }
-    console.error(err);
+    return res.status(400).json({ error: 'invalid input' });
   }
 
   const session = await getServerSession(req, res, authOptions);

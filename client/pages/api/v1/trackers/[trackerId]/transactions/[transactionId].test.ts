@@ -30,7 +30,7 @@ describe('bySharedTxnIdHandler', () => {
       const updateSharedTxnInput = {
         invalid: 'input',
       };
-      req._setBody(updateSharedTxnInput);
+      req.body = JSON.stringify(updateSharedTxnInput);
       await bySharedTxnIdHandler(req, res);
 
       expect(res.statusCode).toBe(400);
@@ -52,7 +52,7 @@ describe('bySharedTxnIdHandler', () => {
         transactionId: 'test-shared-txn',
         trackerId: 'test-tracker',
       };
-      req._setBody(updateSharedTxnInput);
+      req.body = JSON.stringify(updateSharedTxnInput);
       sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
       await bySharedTxnIdHandler(req, res);
 
@@ -90,7 +90,7 @@ describe('bySharedTxnIdHandler', () => {
         trackerId: 'test-tracker',
       };
       const participants = ['test-user', 'test-user-2'];
-      req._setBody({ participants });
+      req.body = JSON.stringify({ participants });
       sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
       await bySharedTxnIdHandler(req, res);
 

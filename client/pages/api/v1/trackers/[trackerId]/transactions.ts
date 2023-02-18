@@ -61,7 +61,6 @@ export default async function txnsByTrackerHandler(
       createSharedTxnPayloadSchema.parse({ ...jsonParsed, tracker }),
     );
     if (err instanceof ZodError) {
-      console.error(err);
       return res.status(400).json({ error: 'invalid input' });
     }
 

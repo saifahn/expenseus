@@ -2,6 +2,7 @@ import { SubcategoryKeys } from 'data/categories';
 import { setUpSharedTxnRepo } from 'ddb/setUpRepos';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
+import { authOptions } from 'pages/api/auth/[...nextauth]';
 import { withAsyncTryCatch, withTryCatch } from 'utils/withTryCatch';
 import { z, ZodError } from 'zod';
 
@@ -36,19 +37,22 @@ export default async function bySharedTxnIdHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  const session = getServerSession();
+  const session = getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ error: 'no valid session found' });
   }
 
   if (req.method === 'PUT') {
-    const txn = {
-      ...req.body,
-      tracker: req.query.trackerId,
-      id: req.query.transactionId,
-    };
-    let [parsed, err] = withTryCatch(() =>
-      updateSharedTxnPayloadSchema.parse(txn),
+    var [jsonParsed, err] = withTryCatch(() => JSON.parse(req.body));
+    if (err) {
+      return res.status(400).json({ error: 'error parsing payload' });
+    }
+    var [parsed, err] = withTryCatch(() =>
+      updateSharedTxnPayloadSchema.parse({
+        ...jsonParsed,
+        tracker: req.query.trackerId,
+        id: req.query.transactionId,
+      }),
     );
     if (err instanceof ZodError) {
       return res.status(400).json({ error: 'invalid input' });
@@ -60,28 +64,33 @@ export default async function bySharedTxnIdHandler(
         .status(500)
         .json({ error: 'something went wrong while updating shared txn' });
     }
-    return res.status(202);
+    return res.status(202).json({});
   }
 
   if (req.method === 'DELETE') {
-    const input = {
-      ...req.body,
-      tracker: req.query.trackerId,
-      txnId: req.query.transactionId,
-    };
-    let [parsed, err] = withTryCatch(() =>
-      deleteSharedTxnPayloadSchema.parse(input),
+    var [jsonParsed, err] = withTryCatch(() => JSON.parse(req.body));
+    if (err) {
+      return res.status(400).json({ error: 'error parsing payload' });
+    }
+    var [delParsed, err] = withTryCatch(() =>
+      deleteSharedTxnPayloadSchema.parse({
+        ...jsonParsed,
+        tracker: req.query.trackerId,
+        txnId: req.query.transactionId,
+      }),
     );
     if (err instanceof ZodError) {
       return res.status(400).json({ error: 'invalid input' });
     }
     const sharedTxnRepo = setUpSharedTxnRepo();
-    [, err] = await withAsyncTryCatch(sharedTxnRepo.deleteSharedTxn(parsed!));
+    [, err] = await withAsyncTryCatch(
+      sharedTxnRepo.deleteSharedTxn(delParsed!),
+    );
     if (err) {
       return res
         .status(500)
         .json({ error: 'something went wrong while deleting shared txn' });
     }
-    return res.status(202);
+    return res.status(202).json({});
   }
 }

@@ -61,7 +61,7 @@ describe('byTxnIdHandler', () => {
         category: 'beauty.cosmetics',
         details: '',
       };
-      req._setBody(updatedTxn);
+      req.body = JSON.stringify(updatedTxn);
       txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
       await byTxnIdHandler(req, res);
 
@@ -84,7 +84,7 @@ describe('byTxnIdHandler', () => {
       totally: 'up',
       with: 'this',
     };
-    req._setBody(updatedTxn);
+    req.body = JSON.stringify(updatedTxn);
     txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
     await byTxnIdHandler(req, res);
 
@@ -108,7 +108,7 @@ describe('byTxnIdHandler', () => {
       category: 'beauty.cosmetics',
       details: '',
     };
-    req._setBody(updatedTxn);
+    req.body = JSON.stringify(updatedTxn);
     txnsRepo.mockImplementationOnce(() => txnRepoFnsMock);
     await byTxnIdHandler(req, res);
 

@@ -12,6 +12,8 @@ const endpoint = process.env.DDB_ENDPOINT ?? 'http://localhost:8000';
 const accessKeyId = process.env.DDB_ACCESS_KEY_ID ?? '';
 const secretAccessKey = process.env.DDB_SECRET_ACCESS_KEY ?? '';
 export const tableName = process.env.DDB_TABLE ?? 'expenseus-default';
+const isProduction =
+  process.env.VERCEL_ENV === 'production' || process.env.MODE === 'production';
 
 export type DDBWithConfig = {
   ddb: DynamoDBDocumentClient;
@@ -20,7 +22,7 @@ export type DDBWithConfig = {
 
 export function setUpDdb(tableName: string) {
   const ddbClient = new DynamoDBClient({
-    endpoint,
+    ...(!isProduction && { endpoint }),
     credentials: {
       accessKeyId,
       secretAccessKey,

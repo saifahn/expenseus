@@ -42,7 +42,7 @@ describe('getTxnsByTrackerBetweenDatesHandler', () => {
     req.query = {
       from: '12345678',
       to: '23456789',
-      tracker: 'test-tracker',
+      trackerId: 'test-tracker',
     };
     sessionMock.mockResolvedValueOnce(null);
     await getTxnsByTrackerBetweenDatesHandler(req, res);
@@ -55,7 +55,7 @@ describe('getTxnsByTrackerBetweenDatesHandler', () => {
     req.query = {
       from: '12345678',
       to: '23456789',
-      tracker: 'test-tracker',
+      trackerId: 'test-tracker',
     };
     sessionMock.mockResolvedValueOnce({
       user: {

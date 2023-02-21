@@ -183,7 +183,7 @@ export function makeTxnRepository({ ddb, tableName }: DDBWithConfig) {
   }) {
     const userIdKey = makeUserIdKey(userId);
     const txnDateFromKey = makeTxnDateKey(from);
-    const txnDateToKey = makeTxnDateKey(to);
+    const txnDateToKey = makeTxnDateKey(to + 1); // to include top part of range
 
     const result = await ddb.send(
       new QueryCommand({

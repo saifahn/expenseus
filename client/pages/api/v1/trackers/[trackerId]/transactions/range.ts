@@ -9,7 +9,7 @@ import { z, ZodError } from 'zod';
 const queryStringSchema = z.object({
   from: z.coerce.number(),
   to: z.coerce.number(),
-  tracker: z.string(),
+  trackerId: z.string(),
 });
 
 export default async function getTxnsByTrackerBetweenDatesHandler(
@@ -33,7 +33,7 @@ export default async function getTxnsByTrackerBetweenDatesHandler(
   const sharedTxnRepo = setUpSharedTxnRepo();
   var [items, err] = await withAsyncTryCatch(
     sharedTxnRepo.getTxnsByTrackerBetweenDates({
-      tracker: parsed!.tracker,
+      tracker: parsed!.trackerId,
       from: parsed!.from,
       to: parsed!.to,
     }),

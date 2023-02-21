@@ -143,7 +143,7 @@ describe('Transactions', () => {
       userId: 'test-user',
       location: 'test-location',
       amount: 12345,
-      date: 1000 * 1000,
+      date: 2000 * 1000,
       category: 'unspecified.unspecified',
       details: '',
     } as const;
@@ -151,8 +151,17 @@ describe('Transactions', () => {
 
     let txns = await getBetweenDates({
       userId: testTxn.userId,
-      from: 1000 * 1000,
-      to: 1000 * 1500,
+      from: 2000 * 1000,
+      to: 2500 * 1000,
+    });
+    expect(txns).toHaveLength(1);
+    assertEqualDetails(txns[0], testTxn);
+
+    // is inclusive of the top end of the date range
+    txns = await getBetweenDates({
+      userId: testTxn.userId,
+      from: 1500 * 1000,
+      to: 2000 * 1000,
     });
     expect(txns).toHaveLength(1);
     assertEqualDetails(txns[0], testTxn);
@@ -160,8 +169,8 @@ describe('Transactions', () => {
     // a date range outside returns none
     txns = await getBetweenDates({
       userId: testTxn.userId,
-      from: 2000 * 1000,
-      to: 2000 * 1500,
+      from: 3000 * 1000,
+      to: 3000 * 1500,
     });
     expect(txns).toHaveLength(0);
   });

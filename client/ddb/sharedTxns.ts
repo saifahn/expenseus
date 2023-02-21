@@ -287,7 +287,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
   }: ByTrackerBetweenDatesInput) {
     const trackerIdKey = makeTrackerIdKey(tracker);
     const txnDateFromKey = makeSharedTxnDateKey(from);
-    const txnDateToKey = makeSharedTxnDateKey(to);
+    const txnDateToKey = makeSharedTxnDateKey(to + 1); // to be inclusive for the date
 
     const results = await ddb.send(
       new QueryCommand({

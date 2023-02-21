@@ -2,7 +2,7 @@ import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 import { getServerSession } from 'next-auth';
 import { assertEqualSharedTxnDetails, mockReqRes } from 'tests/api/common';
 import { mockSharedTxnItem, sharedTxnRepoFnsMock } from 'tests/api/doubles';
-import txnsByTrackerHandler, { CreateSharedTxnPayload } from './transactions';
+import txnsByTrackerHandler from './transactions';
 
 jest.mock('ddb/sharedTxns');
 const sharedTxnRepo = jest.mocked(makeSharedTxnRepository);
@@ -40,6 +40,37 @@ describe('txnsByTrackerHandler', () => {
       const result = res._getJSONData();
       expect(result).toHaveLength(1);
       assertEqualSharedTxnDetails(result[0], mockSharedTxnItem);
+    });
+
+    test('it returns txns with split values correctly', async () => {
+      const { req, res } = mockReqRes('GET');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      const getSharedTxnMock = jest
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            ...mockSharedTxnItem,
+            SplitJSON: '{"test-user":0.6, "test-user-2":0.4}',
+          },
+        ]);
+      sharedTxnRepo.mockReturnValueOnce({
+        ...sharedTxnRepoFnsMock,
+        getTxnsByTracker: getSharedTxnMock,
+      });
+      await txnsByTrackerHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      const result = res._getJSONData();
+      expect(result).toHaveLength(1);
+      assertEqualSharedTxnDetails(result[0], mockSharedTxnItem);
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          split: {
+            'test-user': 0.6,
+            'test-user-2': 0.4,
+          },
+        }),
+      );
     });
 
     test.todo('it returns a 404 if the tracker does not exist');
@@ -98,6 +129,38 @@ describe('txnsByTrackerHandler', () => {
       expect(sharedTxnRepoFnsMock.createSharedTxn).toHaveBeenCalledWith({
         ...createSharedTxnInput,
         tracker: 'test-tracker',
+      });
+    });
+
+    test('it successfully creates a shared txn with a split', async () => {
+      const { req, res } = mockReqRes('POST');
+      sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
+      const createSharedTxnInput = {
+        date: 12345678,
+        amount: 2473,
+        location: 'LIFE',
+        category: 'food.groceries',
+        participants: ['test-user', 'test-user-2'],
+        payer: 'test-user',
+        details: '',
+        split: {
+          'test-user': 0.4,
+          'test-user-2': 0.6,
+        },
+      };
+      req.query.trackerId = 'test-tracker';
+      req.body = JSON.stringify(createSharedTxnInput);
+      sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
+      await txnsByTrackerHandler(req, res);
+
+      expect(res.statusCode).toBe(202);
+      expect(sharedTxnRepoFnsMock.createSharedTxn).toHaveBeenCalledWith({
+        ...createSharedTxnInput,
+        tracker: 'test-tracker',
+        split: {
+          'test-user': 0.4,
+          'test-user-2': 0.6,
+        },
       });
     });
   });

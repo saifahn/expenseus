@@ -341,6 +341,16 @@ describe('Shared Transactions', () => {
     txns = await getTxnsByTrackerBetweenDates(input);
     expect(txns).toHaveLength(0);
 
+    // second tracker, to is same as txn's create date for testing inclusive
+    // on to
+    input = {
+      tracker: second.tracker,
+      from: 1000 * 1000,
+      to: 2000 * 1000,
+    };
+    txns = await getTxnsByTrackerBetweenDates(input);
+    expect(txns).toHaveLength(1);
+
     // different tracker, no results in date range
     input = {
       tracker: 'no-results-tracker',

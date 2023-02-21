@@ -36,5 +36,6 @@ export function sharedTxnItemToModel(item: SharedTxnItem): SharedTxn {
     participants: item.Participants,
     payer: item.Payer,
     ...(item.Unsettled && { unsettled: true }),
+    ...(item.SplitJSON && { split: JSON.parse(item.SplitJSON) }),
   };
 }

@@ -2,6 +2,7 @@ import { makeSharedTxnRepository } from 'ddb/sharedTxns';
 import * as nextAuth from 'next-auth';
 import { mockReqRes } from 'tests/api/common';
 import { sharedTxnRepoFnsMock } from 'tests/api/doubles';
+import { stringify } from 'uuid';
 import settleTxnsHandler from './settle';
 
 const nextAuthMock = jest.mocked(nextAuth);
@@ -26,7 +27,7 @@ describe('settleTxnsHandler', () => {
 
   test('returns a 401 if there is no valid session', async () => {
     const { req, res } = mockReqRes('POST');
-    req._setBody([]);
+    req.body = JSON.stringify([]);
     nextAuthMock.getServerSession.mockResolvedValueOnce(null);
     await settleTxnsHandler(req, res);
 
@@ -35,10 +36,10 @@ describe('settleTxnsHandler', () => {
 
   test('returns a 403 if there are any txns that the user does not belong to', async () => {
     const { req, res } = mockReqRes('POST');
-    req._setBody([
+    req.body = JSON.stringify([
       {
         id: 'test-txn',
-        trackerId: 'test-tracker',
+        tracker: 'test-tracker',
         participants: ['test-user', 'test-user-2'],
       },
     ]);
@@ -55,11 +56,11 @@ describe('settleTxnsHandler', () => {
     const testSettleInput = [
       {
         id: 'test-txn',
-        trackerId: 'test-tracker',
+        tracker: 'test-tracker',
         participants: ['test-user', 'test-user-2'],
       },
     ];
-    req._setBody(testSettleInput);
+    req.body = JSON.stringify(testSettleInput);
     nextAuthMock.getServerSession.mockResolvedValueOnce({
       user: { email: 'test-user' },
     });

@@ -8,7 +8,7 @@ import { z, ZodError } from 'zod';
 const payloadSchema = z.array(
   z.object({
     id: z.string(),
-    trackerId: z.string(),
+    tracker: z.string(),
     participants: z.array(z.string()),
   }),
 );
@@ -21,7 +21,11 @@ export default async function settleTxnsHandler(
     return res.status(405).json({ error: 'invalid method' });
   }
 
-  let [parsed, err] = withTryCatch(() => payloadSchema.parse(req.body));
+  var [jsonParsed, err] = withTryCatch(() => JSON.parse(req.body));
+  if (err) {
+    return res.status(400).json({ error: 'error in JSON parsing request' });
+  }
+  var [parsed, err] = withTryCatch(() => payloadSchema.parse(jsonParsed));
   if (err instanceof ZodError) {
     return res.status(400).json({ error: 'invalid input' });
   }
@@ -47,5 +51,5 @@ export default async function settleTxnsHandler(
       .status(500)
       .json({ error: 'something went wrong while settling transactions' });
   }
-  return res.status(202);
+  return res.status(202).json({});
 }

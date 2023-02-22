@@ -290,7 +290,7 @@ describe('Shared Transactions', () => {
     // trigger the settling
     const settleInput = txns.map((txn) => ({
       id: txn.ID,
-      trackerId: txn.Tracker,
+      tracker: txn.Tracker,
       participants: txn.Participants,
     }));
     await settleTxns(settleInput);

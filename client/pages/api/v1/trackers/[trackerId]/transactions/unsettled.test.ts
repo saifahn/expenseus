@@ -52,7 +52,7 @@ describe('getUnsettledTxnsByTrackerHandler', () => {
     const result = res._getJSONData();
     expect(result).toEqual(
       expect.objectContaining({
-        txns: expect.arrayContaining([
+        transactions: expect.arrayContaining([
           expect.objectContaining({
             tracker: mockSharedTxnItem.Tracker,
             date: mockSharedTxnItem.Date,

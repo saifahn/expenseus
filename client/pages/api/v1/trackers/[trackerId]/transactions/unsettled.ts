@@ -36,7 +36,7 @@ function calculateDebts(currentUser: string, txns: SharedTxn[]) {
   }
 
   return {
-    txns,
+    transactions: txns,
     debtor: otherUser,
     debtee: currentUser,
     amountOwed,

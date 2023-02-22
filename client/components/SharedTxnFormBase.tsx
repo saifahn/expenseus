@@ -46,7 +46,7 @@ export function makeSharedTxnPayload(
     amount: Number(data.amount),
     participants,
     split,
-    ...(data.settled && { settled: true }),
+    ...(!data.settled && { unsettled: true }),
   };
 
   return payload;

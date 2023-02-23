@@ -45,14 +45,12 @@ describe('txnsByTrackerHandler', () => {
     test('it returns txns with split values correctly', async () => {
       const { req, res } = mockReqRes('GET');
       sessionMock.mockResolvedValueOnce({ user: { email: 'test-user' } });
-      const getSharedTxnMock = jest
-        .fn()
-        .mockResolvedValueOnce([
-          {
-            ...mockSharedTxnItem,
-            SplitJSON: '{"test-user":0.6, "test-user-2":0.4}',
-          },
-        ]);
+      const getSharedTxnMock = jest.fn().mockResolvedValueOnce([
+        {
+          ...mockSharedTxnItem,
+          Split: '{"test-user":0.6, "test-user-2":0.4}',
+        },
+      ]);
       sharedTxnRepo.mockReturnValueOnce({
         ...sharedTxnRepoFnsMock,
         getTxnsByTracker: getSharedTxnMock,

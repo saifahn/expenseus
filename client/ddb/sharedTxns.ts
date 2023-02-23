@@ -50,7 +50,7 @@ export type SharedTxnItem = {
   Payer: string;
   Details: string;
   Unsettled?: typeof unsettledFlagTrue;
-  SplitJSON?: string;
+  Split?: string;
 };
 
 export type SharedTxn = {

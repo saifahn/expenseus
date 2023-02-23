@@ -375,7 +375,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
 
   type SettleTxnInput = {
     id: string;
-    trackerId: string;
+    tracker: string;
     participants: string[];
   };
   /**
@@ -383,7 +383,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
    */
   async function settleTxns(txns: SettleTxnInput[]) {
     for (const txn of txns) {
-      const trackerIdKey = makeTrackerIdKey(txn.trackerId);
+      const trackerIdKey = makeTrackerIdKey(txn.tracker);
       const txnIdKey = makeSharedTxnIdKey(txn.id);
       await ddb.send(
         new UpdateCommand({

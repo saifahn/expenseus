@@ -11,7 +11,7 @@ import { withAsyncTryCatch } from 'utils/withTryCatch';
  * shared transactions.
  */
 function calculateDebts(currentUser: string, txns: SharedTxn[]) {
-  if (txns.length === 0) return;
+  if (!txns || txns.length === 0) return { transactions: [] };
 
   // all of the txns come from the same tracker so should have the same participants
   // so can be set from the first txn
@@ -36,7 +36,7 @@ function calculateDebts(currentUser: string, txns: SharedTxn[]) {
   }
 
   return {
-    txns,
+    transactions: txns,
     debtor: otherUser,
     debtee: currentUser,
     amountOwed,
@@ -67,5 +67,6 @@ export default async function getUnsettledTxnsByTrackerHandler(
   }
   const txns = items?.map(sharedTxnItemToModel);
   const response = calculateDebts(session.user?.email!, txns!);
+
   res.status(200).json(response);
 }

@@ -52,7 +52,7 @@ describe('getUnsettledTxnsByTrackerHandler', () => {
     const result = res._getJSONData();
     expect(result).toEqual(
       expect.objectContaining({
-        txns: expect.arrayContaining([
+        transactions: expect.arrayContaining([
           expect.objectContaining({
             tracker: mockSharedTxnItem.Tracker,
             date: mockSharedTxnItem.Date,
@@ -100,6 +100,20 @@ describe('getUnsettledTxnsByTrackerHandler', () => {
         amountOwed: -2000,
       }),
     );
+  });
+
+  test('it returns an empty array when no txns are returned from the ddb', async () => {
+    const { req, res } = mockReqRes('GET');
+    sessionMock.mockResolvedValueOnce({ user: { email: 'test-user-2' } });
+    req.query = {
+      trackerId: 'test-tracker',
+    };
+    sharedTxnRepo.mockReturnValueOnce(sharedTxnRepoFnsMock);
+    await getUnsettledTxnsByTrackerHandler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const result = res._getJSONData();
+    expect(result.transactions).toEqual([]);
   });
 
   test.todo('it returns 403 if the user is not part of the tracker');

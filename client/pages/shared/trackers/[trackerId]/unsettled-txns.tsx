@@ -43,7 +43,7 @@ export default function UnsettledTxnPage() {
     <TrackerLayout>
       {error && <div>Error loading unsettled transactions</div>}
       {response === null && <div>Loading unsettled transactions</div>}
-      {response?.transactions === null && (
+      {response?.transactions.length === 0 && (
         <p className="mt-4">You currently have no unsettled transactions!</p>
       )}
       {response && response.transactions?.length > 0 && (

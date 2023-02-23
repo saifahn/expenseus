@@ -97,7 +97,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
       ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
       // storing a JS object using the ddb Map type would be better, but the original
       // implementation used a string so this is kept for compatibility
-      ...(txn.split && { SplitJSON: JSON.stringify(txn.split) }),
+      ...(txn.split && { Split: JSON.stringify(txn.split) }),
     };
 
     // store the representation of the tracker under each user so trackers can
@@ -153,7 +153,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
       Payer: txn.payer,
       Details: txn.details,
       ...(txn.unsettled && { Unsettled: unsettledFlagTrue }),
-      ...(txn.split && { SplitJSON: JSON.stringify(txn.split) }),
+      ...(txn.split && { Split: JSON.stringify(txn.split) }),
     };
 
     for (const user of txn.participants) {

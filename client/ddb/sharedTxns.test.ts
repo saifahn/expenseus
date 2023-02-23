@@ -40,7 +40,7 @@ function assertContainsTxnWithEqualDetails(
       Tracker: txn.tracker,
       Details: txn.details,
       ...(txn.unsettled && { Unsettled: 'X' }),
-      ...(txn.split && { SplitJSON: JSON.stringify(txn.split) }),
+      ...(txn.split && { Split: JSON.stringify(txn.split) }),
     }),
   );
 }

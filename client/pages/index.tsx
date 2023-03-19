@@ -14,6 +14,23 @@ export type AllTxnsResponse = {
   sharedTransactions: SharedTxn[];
 };
 
+export function returnSortedTxnsAndPersonalTotal(
+  allTxnsRes?: AllTxnsResponse,
+  id?: string,
+) {
+  let txns: (Transaction | SharedTxn)[] = [];
+  if (allTxnsRes) {
+    txns = [...allTxnsRes.transactions, ...allTxnsRes.sharedTransactions].sort(
+      (a, b) => b.date - a.date, // sorted descending, so the most recent dates are shown first
+    );
+  }
+  let total;
+  if (id) {
+    total = calculatePersonalTotal(id, txns);
+  }
+  return { txns, total };
+}
+
 export default function Home() {
   const { user, error: userError } = useUserContext();
   const todayEpochSeconds = plainDateStringToEpochSec(
@@ -28,16 +45,7 @@ export default function Home() {
       : null,
   );
 
-  let txns: (Transaction | SharedTxn)[] = [];
-  if (res) {
-    txns = [...res.transactions, ...res.sharedTransactions].sort(
-      (a, b) => b.date - a.date, // sorted descending, so the most recent dates are shown first
-    );
-  }
-  let total;
-  if (user) {
-    total = calculatePersonalTotal(user.id, txns);
-  }
+  const { txns, total } = returnSortedTxnsAndPersonalTotal(res, user?.id);
 
   return (
     <>

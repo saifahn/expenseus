@@ -3,18 +3,15 @@ import { BarChart } from 'components/BarChart';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { mainCategories, subcategories } from 'data/categories';
-import { AllTxnsResponse } from 'pages';
+import { AllTxnsResponse, returnSortedTxnsAndPersonalTotal } from 'pages';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { mutate } from 'swr';
-import { Transaction } from 'types/Transaction';
 import {
-  calculatePersonalTotal,
   calculateTotal,
   totalsByMainCategory,
   totalsBySubCategory,
 } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
-import { SharedTxn } from './shared/trackers/[trackerId]';
 
 type Inputs = {
   from: string;
@@ -48,16 +45,7 @@ export default function AllAnalysis() {
     },
   );
 
-  let txns: (Transaction | SharedTxn)[] = [];
-  if (allTxns) {
-    txns = [...allTxns.transactions, ...allTxns.sharedTransactions].sort(
-      (a, b) => b.date - a.date,
-    );
-  }
-  let total;
-  if (user) {
-    total = calculatePersonalTotal(user.id, txns);
-  }
+  const { txns } = returnSortedTxnsAndPersonalTotal(allTxns, user?.id);
 
   const submitCallback: SubmitHandler<Inputs> = () => {
     mutate('all.analysis');

@@ -13,7 +13,7 @@ import { epochSecToUTCMonthEN, MonthEN } from 'utils/dates';
  * Takes a list of transactions and returns totals by month and main category
  * for use in data visualization.
  */
-export function totalsForBarChart(txns: Transaction[] | SharedTxn[]) {
+export function totalsForBarChart(txns: (Transaction | SharedTxn)[]) {
   const totals = {} as Record<
     MonthEN,
     Partial<Record<MainCategoryKey, number>>
@@ -28,7 +28,7 @@ export function totalsForBarChart(txns: Transaction[] | SharedTxn[]) {
   return totals;
 }
 
-export function BarChart(txns: SharedTxn[] | Transaction[]) {
+export function BarChart(txns: (Transaction | SharedTxn)[]) {
   const totals = totalsForBarChart(txns);
   const entries = Object.entries(totals);
   const data = entries.map(([month, values]) => ({

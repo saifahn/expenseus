@@ -6,7 +6,7 @@ import {
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { Transaction } from 'types/Transaction';
 
-export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
+export function calculateTotal(txns: (Transaction | SharedTxn)[]) {
   let total = 0;
   for (const txn of txns) {
     total += txn.amount;
@@ -14,7 +14,7 @@ export function calculateTotal(txns: Transaction[] | SharedTxn[]) {
   return total;
 }
 
-export function totalsByMainCategory(txns: Transaction[] | SharedTxn[]) {
+export function totalsByMainCategory(txns: (Transaction | SharedTxn)[]) {
   const totals = {} as Record<MainCategoryKey, number>;
   for (const txn of txns) {
     const mainCategory = subcategories[txn.category].mainCategory;
@@ -27,7 +27,7 @@ export function totalsByMainCategory(txns: Transaction[] | SharedTxn[]) {
   })) as { category: MainCategoryKey; total: number }[];
 }
 
-export function totalsBySubCategory(txns: Transaction[] | SharedTxn[]) {
+export function totalsBySubCategory(txns: (Transaction | SharedTxn)[]) {
   const totals = {} as Record<SubcategoryKey, number>;
   for (const txn of txns) {
     if (!totals[txn.category]) totals[txn.category] = 0;

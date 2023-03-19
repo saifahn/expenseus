@@ -8,11 +8,11 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { formatDateForTxnCard } from 'utils/dates';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import useSWR from 'swr';
 import { Tracker } from '..';
 
-export interface SharedTxn {
+export type SharedTxn = {
   id: string;
   location: string;
   amount: number;
@@ -26,7 +26,7 @@ export interface SharedTxn {
   split?: {
     [userId: string]: number;
   };
-}
+};
 
 /**
  * SharedTxnOne displays one shared transaction to be showed in a list.

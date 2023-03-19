@@ -7,11 +7,29 @@ import { SharedTxn } from './shared/trackers/[trackerId]';
 import { calculatePersonalTotal } from 'utils/analysis';
 import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
 import { formatDateForTxnCard } from 'utils/dates';
+import Link from 'next/link';
 
-type AllTxnsResponse = {
+export type AllTxnsResponse = {
   transactions: Transaction[];
   sharedTransactions: SharedTxn[];
 };
+
+export function returnSortedTxnsAndPersonalTotal(
+  allTxnsRes?: AllTxnsResponse,
+  id?: string,
+) {
+  let txns: (Transaction | SharedTxn)[] = [];
+  if (allTxnsRes) {
+    txns = [...allTxnsRes.transactions, ...allTxnsRes.sharedTransactions].sort(
+      (a, b) => b.date - a.date, // sorted descending, so the most recent dates are shown first
+    );
+  }
+  let total;
+  if (id) {
+    total = calculatePersonalTotal(id, txns);
+  }
+  return { txns, total };
+}
 
 export default function Home() {
   const { user, error: userError } = useUserContext();
@@ -27,28 +45,30 @@ export default function Home() {
       : null,
   );
 
-  let txns: (Transaction | SharedTxn)[] = [];
-  if (res) {
-    txns = [...res.transactions, ...res.sharedTransactions].sort(
-      (a, b) => b.date - a.date, // sorted descending, so the most recent dates are shown first
-    );
-  }
-  let total;
-  if (user) {
-    total = calculatePersonalTotal(user.id, txns);
-  }
+  const { txns, total } = returnSortedTxnsAndPersonalTotal(res, user?.id);
 
   return (
     <>
+      <nav className="mt-4">
+        <ul className="flex">
+          <li className="mr-4 flex flex-1">
+            <Link href="/all-personal-analysis">
+              <a className="w-full rounded-lg bg-emerald-50 py-3 px-4 font-medium lowercase text-black hover:bg-emerald-100 active:bg-emerald-200">
+                🔎 Analyze
+              </a>
+            </Link>
+          </li>
+        </ul>
+      </nav>
       <section>
         {userError && <p>Failed to load user</p>}
         {user && <p className="mt-4">Hi, {user.username}!</p>}
         {error && <p>Failed to load recent transactions</p>}
         {res === null && <p>Loading recent transactions....</p>}
-        {res && txns.length === 0 && <p>No transactions to show</p>}
-        {txns && (
+        {res && txns.length === 0 && <p>No transactions to show.</p>}
+        {txns.length > 0 && (
           <p className="mt-2">
-            You have spent a total of{' '}
+            In the last 90 days, you have spent a total of{' '}
             <span className="font-semibold">{total}</span> over{' '}
             <span className="font-semibold">{txns.length}</span> transactions.
           </p>

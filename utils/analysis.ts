@@ -59,3 +59,32 @@ export function calculatePersonalTotal(
   }
   return total;
 }
+
+export function personalTotalsByMainCategory(
+  user: string,
+  txns: (Transaction | SharedTxn)[],
+) {
+  const totals = {} as Record<MainCategoryKey, number>;
+  for (const txn of txns) {
+    const mainCategory = subcategories[txn.category].mainCategory;
+    if (!totals[mainCategory]) totals[mainCategory] = 0;
+
+    let amount;
+    // if sharedTxn
+    if ('split' in txn) {
+      const split = txn.split?.[user];
+      amount = split
+        ? txn.amount * split
+        : txn.amount * (1 / txn.participants.length);
+    } else {
+      // if regular txn
+      amount = txn.amount;
+    }
+
+    totals[mainCategory] += amount;
+  }
+  return Object.entries(totals).map(([category, total]) => ({
+    category,
+    total,
+  })) as { category: MainCategoryKey; total: number }[];
+}

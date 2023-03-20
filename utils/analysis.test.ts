@@ -110,4 +110,50 @@ describe('personalTotalsBySubcategory', () => {
       expect.objectContaining({ category: 'clothing.clothing', total: 5400 }),
     );
   });
+
+  test('it returns the expected results for txns and shared txns', () => {
+    const testTxns: (SharedTxn | Transaction)[] = [
+      {
+        id: 'test-shared-txn',
+        date: 123456,
+        amount: 9000,
+        location: 'adidas',
+        tracker: 'test-tracker',
+        category: 'clothing.footwear',
+        participants: ['test-user', 'test-user-2'],
+        details: '',
+        payer: 'test-user',
+        split: {
+          'test-user': 0.6,
+          'test-user-2': 0.4,
+        },
+      },
+      {
+        id: 'test-txn',
+        userId: 'test-user',
+        location: 'burger king',
+        amount: 980,
+        date: 123456,
+        category: 'food.eating-out',
+        details: '',
+      },
+      {
+        id: 'test-clothing-txn',
+        userId: 'test-user',
+        location: 'BEAMS',
+        amount: 5000,
+        date: 234567,
+        category: 'clothing.clothing',
+        details: '',
+      },
+    ];
+    const totals = personalTotalsBySubcategory('test-user', testTxns);
+    expect(totals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'clothing.clothing', total: 5000 }),
+        expect.objectContaining({ category: 'clothing.footwear', total: 5400 }),
+        expect.objectContaining({ category: 'food.eating-out', total: 980 }),
+      ]),
+    );
+  });
 });

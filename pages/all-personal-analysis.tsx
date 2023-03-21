@@ -14,6 +14,7 @@ import {
   personalTotalsBySubcategory,
 } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
+import { jpyFormatter } from 'utils/jpyFormatter';
 import { SharedTxn } from './shared/trackers/[trackerId]';
 
 type Inputs = {
@@ -88,7 +89,7 @@ export default function AllAnalysis() {
                 </span>
                 , with a total cost of{' '}
                 <span className="font-semibold">
-                  {calculatePersonalTotal(user.id, txns)}
+                  {jpyFormatter.format(calculatePersonalTotal(user.id, txns))}
                 </span>
                 .
               </p>
@@ -96,7 +97,7 @@ export default function AllAnalysis() {
               <ul className="list-inside list-disc">
                 {personalTotalsByMainCategory(user.id, txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {mainCategories[total.category].en_US}
                   </li>
                 ))}
@@ -105,7 +106,7 @@ export default function AllAnalysis() {
               <ul className="list-inside list-disc">
                 {personalTotalsBySubcategory(user.id, txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {subcategories[total.category].en_US}
                   </li>
                 ))}

@@ -14,6 +14,7 @@ import {
   totalsBySubCategory,
 } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
+import { jpyFormatter } from 'utils/jpyFormatter';
 
 type Inputs = {
   from: string;
@@ -73,13 +74,16 @@ export default function PersonalAnalysis() {
                   {txns.length} transactions
                 </span>
                 , with a total cost of{' '}
-                <span className="font-semibold">{calculateTotal(txns)}</span>.
+                <span className="font-semibold">
+                  {jpyFormatter.format(calculateTotal(txns))}
+                </span>
+                .
               </p>
               <p className="mt-4 text-lg font-medium">Main categories:</p>
               <ul className="list-inside list-disc">
                 {totalsByMainCategory(txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {mainCategories[total.category].en_US}
                   </li>
                 ))}
@@ -88,7 +92,7 @@ export default function PersonalAnalysis() {
               <ul className="list-inside list-disc">
                 {totalsBySubCategory(txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {subcategories[total.category].en_US}
                   </li>
                 ))}

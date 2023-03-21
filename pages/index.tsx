@@ -14,7 +14,7 @@ export type AllTxnsResponse = {
   sharedTransactions: SharedTxn[];
 };
 
-export function returnSortedTxnsAndPersonalTotal(
+function returnSortedTxnsAndPersonalTotal(
   allTxnsRes?: AllTxnsResponse,
   id?: string,
 ) {

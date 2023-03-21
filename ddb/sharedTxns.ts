@@ -325,7 +325,7 @@ export function makeSharedTxnRepository({ ddb, tableName }: DDBWithConfig) {
   }: ByUserBetweenDatesInput) {
     const userIdKey = makeUserIdKey(user);
     const txnDateFromKey = makeSharedTxnDateKey(from);
-    const txnDateToKey = makeSharedTxnDateKey(to);
+    const txnDateToKey = makeSharedTxnDateKey(to + 1);
 
     const results = await ddb.send(
       new QueryCommand({

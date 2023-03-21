@@ -97,7 +97,7 @@ function transactionCard(txn: Transaction | SharedTxn) {
           {emoji}
         </div>
         <div className="flex flex-grow">
-          <div className="flex flex-grow flex-col">
+          <div className="flex flex-grow flex-col pr-2">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>
             <p className="mt-1 text-sm text-slate-500">{date}</p>
             <p className="mt-1 lowercase">

@@ -3,15 +3,17 @@ import { BarChart } from 'components/BarChart';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { mainCategories, subcategories } from 'data/categories';
-import { AllTxnsResponse, returnSortedTxnsAndPersonalTotal } from 'pages';
+import { AllTxnsResponse } from 'pages';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { mutate } from 'swr';
+import { Transaction } from 'types/Transaction';
 import {
-  calculateTotal,
-  totalsByMainCategory,
-  totalsBySubCategory,
+  calculatePersonalTotal,
+  personalTotalsByMainCategory,
+  personalTotalsBySubcategory,
 } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
+import { SharedTxn } from './shared/trackers/[trackerId]';
 
 type Inputs = {
   from: string;
@@ -45,7 +47,12 @@ export default function AllAnalysis() {
     },
   );
 
-  const { txns } = returnSortedTxnsAndPersonalTotal(allTxns, user?.id);
+  let txns: (Transaction | SharedTxn)[] = [];
+  if (allTxns) {
+    txns = [...allTxns.transactions, ...allTxns.sharedTransactions].sort(
+      (a, b) => a.date - b.date, // sorted ascending for the graph so it displays most recent last
+    );
+  }
 
   const submitCallback: SubmitHandler<Inputs> = () => {
     mutate('all.analysis');
@@ -65,7 +72,7 @@ export default function AllAnalysis() {
         {error && <div>Failed to load details</div>}
         {txns === null && <div>Loading</div>}
         {txns?.length === 0 && <div>No transactions for that time period</div>}
-        {txns && txns.length > 0 && (
+        {user && txns?.length > 0 && (
           <div>
             <div className="h-screen">{BarChart(txns)}</div>
             <div className="mt-4">
@@ -76,11 +83,14 @@ export default function AllAnalysis() {
                   {txns.length} transactions
                 </span>
                 , with a total cost of{' '}
-                <span className="font-semibold">{calculateTotal(txns)}</span>.
+                <span className="font-semibold">
+                  {calculatePersonalTotal(user.id, txns)}
+                </span>
+                .
               </p>
               <p className="mt-4 text-lg font-medium">Main categories:</p>
               <ul className="list-inside list-disc">
-                {totalsByMainCategory(txns).map((total) => (
+                {personalTotalsByMainCategory(user.id, txns).map((total) => (
                   <li key={total.category}>
                     You spent {total.total} on{' '}
                     {mainCategories[total.category].en_US}
@@ -89,7 +99,7 @@ export default function AllAnalysis() {
               </ul>
               <p className="mt-4 text-lg font-medium">Subcategories:</p>
               <ul className="list-inside list-disc">
-                {totalsBySubCategory(txns).map((total) => (
+                {personalTotalsBySubcategory(user.id, txns).map((total) => (
                   <li key={total.category}>
                     You spent {total.total} on{' '}
                     {subcategories[total.category].en_US}

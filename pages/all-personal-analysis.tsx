@@ -3,6 +3,7 @@ import { BarChart } from 'components/BarChart';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { mainCategories, subcategories } from 'data/categories';
+import Head from 'next/head';
 import { AllTxnsResponse } from 'pages';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { mutate } from 'swr';
@@ -60,6 +61,9 @@ export default function AllAnalysis() {
 
   return (
     <>
+      <Head>
+        <title>all personal analysis - expenseus</title>
+      </Head>
       <h1 className="mb-2 text-xl font-semibold lowercase">
         All personal spending analysis
       </h1>

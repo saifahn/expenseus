@@ -8,6 +8,7 @@ import { calculatePersonalTotal } from 'utils/analysis';
 import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
 import { formatDateForTxnCard } from 'utils/dates';
 import Link from 'next/link';
+import Head from 'next/head';
 
 export type AllTxnsResponse = {
   transactions: Transaction[];
@@ -49,6 +50,9 @@ export default function Home() {
 
   return (
     <>
+      <Head>
+        <title>home - expenseus</title>
+      </Head>
       <nav className="mt-4">
         <ul className="flex">
           <li className="mr-4 flex flex-1">

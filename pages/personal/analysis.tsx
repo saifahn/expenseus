@@ -4,6 +4,7 @@ import PersonalLayout from 'components/LayoutPersonal';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { subcategories, mainCategories } from 'data/categories';
+import Head from 'next/head';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
 import { Transaction } from 'types/Transaction';
@@ -49,6 +50,9 @@ export default function PersonalAnalysis() {
 
   return (
     <PersonalLayout>
+      <Head>
+        <title>analyze personal transactions - expenseus</title>
+      </Head>
       <AnalysisFormBase
         register={register}
         onSubmit={handleSubmit(submitCallback)}

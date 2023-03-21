@@ -13,6 +13,8 @@ import { plainDateStringToEpochSec, presets } from 'utils/dates';
 import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
 import AnalysisFormBase from 'components/AnalysisFormBase';
+import Head from 'next/head';
+import { jpyFormatter } from 'utils/jpyFormatter';
 
 type Inputs = {
   from: string;
@@ -50,6 +52,9 @@ export default function TrackerAnalysis() {
 
   return (
     <TrackerLayout>
+      <Head>
+        <title>analyze shared transactions - expenseus</title>
+      </Head>
       <AnalysisFormBase
         register={register}
         onSubmit={handleSubmit(submitCallback)}
@@ -70,13 +75,16 @@ export default function TrackerAnalysis() {
                   {txns.length} transactions
                 </span>
                 , with a total cost of{' '}
-                <span className="font-semibold">{calculateTotal(txns)}</span>.
+                <span className="font-semibold">
+                  {jpyFormatter.format(calculateTotal(txns))}
+                </span>
+                .
               </p>
               <p className="mt-4 text-lg font-medium">Main categories:</p>
               <ul className="list-inside list-disc">
                 {totalsByMainCategory(txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {mainCategories[total.category].en_US}
                   </li>
                 ))}
@@ -85,7 +93,7 @@ export default function TrackerAnalysis() {
               <ul className="list-inside list-disc">
                 {totalsBySubCategory(txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {subcategories[total.category].en_US}
                   </li>
                 ))}

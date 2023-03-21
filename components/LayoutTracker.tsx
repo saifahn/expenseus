@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Tracker } from 'pages/shared/trackers';
+import { Tracker } from 'ddb/trackers';
 import { PropsWithChildren } from 'react';
 import useSWR from 'swr';
 import SharedLayout from './LayoutShared';
@@ -25,30 +25,6 @@ export default function TrackerLayout({ children }: PropsWithChildren<{}>) {
               </h2>
             </a>
           </Link>
-          {/* <div className="mt-2">
-            {tracker.users.map((user) => (
-              <p key={user}>{user}</p>
-            ))}
-          </div> */}
-          {/* <nav className="mt-4">
-            <ul className="flex">
-              <li className="flex">
-                <Link href={`/shared/trackers/${trackerId}`}>
-                  <a className="border-2 p-2">Transactions</a>
-                </Link>
-              </li>
-              <li className="flex">
-                <Link href={`/shared/trackers/${trackerId}/unsettled-txns`}>
-                  <a className="ml-4 border-2 p-2">Unsettled</a>
-                </Link>
-              </li>
-              <li className="flex">
-                <Link href={`/shared/trackers/${trackerId}/analysis`}>
-                  <a className="ml-4 border-2 p-2">Analysis</a>
-                </Link>
-              </li>
-            </ul>
-          </nav> */}
           {children}
         </>
       )}

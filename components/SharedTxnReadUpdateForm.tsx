@@ -1,4 +1,4 @@
-import { Tracker } from 'pages/shared/trackers';
+import { Tracker } from 'ddb/trackers';
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';

@@ -16,6 +16,12 @@ const trackerKeyPrefix = 'tracker',
 
 export const makeTrackerIdKey = (id: string) => `${trackerKeyPrefix}#${id}`;
 
+export type Tracker = {
+  id: string;
+  name: string;
+  users: string[];
+};
+
 export type TrackerItem = {
   [tablePartitionKey]: string;
   [tableSortKey]: string;

@@ -10,7 +10,8 @@ import { useRouter } from 'next/router';
 import { formatDateForTxnCard } from 'utils/dates';
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Tracker } from '..';
+import { Tracker } from 'ddb/trackers';
+import Head from 'next/head';
 
 export type SharedTxn = {
   id: string;
@@ -59,7 +60,7 @@ export function SharedTxnOne({ txn, onTxnClick }: SharedTxnOneProps) {
           {emoji}
         </div>
         <div className="flex flex-grow">
-          <div className="flex flex-grow flex-col">
+          <div className="flex flex-grow flex-col pr-2">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>
             <p className="mt-1 text-sm text-slate-500">{date}</p>
             <p className="mt-1 lowercase">
@@ -93,6 +94,14 @@ export default function TrackerPage() {
 
   return (
     <TrackerLayout>
+      <Head>
+        {
+          <title>
+            {`${selectedTxn ? 'update shared transaction' : tracker?.name} - `}
+            expenseus
+          </title>
+        }
+      </Head>
       <div className="relative pb-5">
         {!selectedTxn && (
           <>

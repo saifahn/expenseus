@@ -6,7 +6,7 @@ import {
   categoryNameFromKeyEN,
 } from 'data/categories';
 import { CreateSharedTxnPayload } from 'pages/api/v1/trackers/[trackerId]/transactions';
-import { Tracker } from 'pages/shared/trackers';
+import { Tracker } from 'ddb/trackers';
 import React, { useState } from 'react';
 import { UseFormRegister } from 'react-hook-form';
 import { plainDateStringToEpochSec } from 'utils/dates';

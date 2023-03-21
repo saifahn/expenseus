@@ -2,7 +2,8 @@ import TrackerLayout from 'components/LayoutTracker';
 import SharedTxnCreateForm from 'components/SharedTxnCreateForm';
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
-import { Tracker } from '..';
+import { Tracker } from 'ddb/trackers';
+import Head from 'next/head';
 
 export default function CreateSharedTransaction() {
   const router = useRouter();
@@ -12,6 +13,9 @@ export default function CreateSharedTransaction() {
   );
   return (
     <TrackerLayout>
+      <Head>
+        <title>create shared transaction - expenseus</title>
+      </Head>
       {error && <div>Failed to load: {error}</div>}
       {tracker === null && <div>Loading...</div>}
       {tracker && (

@@ -8,6 +8,8 @@ import { calculatePersonalTotal } from 'utils/analysis';
 import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
 import { formatDateForTxnCard } from 'utils/dates';
 import Link from 'next/link';
+import Head from 'next/head';
+import { jpyFormatter } from 'utils/jpyFormatter';
 
 export type AllTxnsResponse = {
   transactions: Transaction[];
@@ -49,6 +51,9 @@ export default function Home() {
 
   return (
     <>
+      <Head>
+        <title>home - expenseus</title>
+      </Head>
       <nav className="mt-4">
         <ul className="flex">
           <li className="mr-4 flex flex-1">
@@ -69,8 +74,9 @@ export default function Home() {
         {txns.length > 0 && (
           <p className="mt-2">
             In the last 90 days, you have spent a total of{' '}
-            <span className="font-semibold">{total}</span> over{' '}
-            <span className="font-semibold">{txns.length}</span> transactions.
+            <span className="font-semibold">{jpyFormatter.format(total!)}</span>{' '}
+            over <span className="font-semibold">{txns.length}</span>{' '}
+            transactions.
           </p>
         )}
         {txns && <div className="my-4">{txns.map(transactionCard)}</div>}
@@ -93,7 +99,7 @@ function transactionCard(txn: Transaction | SharedTxn) {
           {emoji}
         </div>
         <div className="flex flex-grow">
-          <div className="flex flex-grow flex-col">
+          <div className="flex flex-grow flex-col pr-2">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>
             <p className="mt-1 text-sm text-slate-500">{date}</p>
             <p className="mt-1 lowercase">

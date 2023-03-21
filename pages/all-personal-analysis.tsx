@@ -3,6 +3,7 @@ import { BarChart } from 'components/BarChart';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { mainCategories, subcategories } from 'data/categories';
+import Head from 'next/head';
 import { AllTxnsResponse } from 'pages';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { mutate } from 'swr';
@@ -13,6 +14,7 @@ import {
   personalTotalsBySubcategory,
 } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
+import { jpyFormatter } from 'utils/jpyFormatter';
 import { SharedTxn } from './shared/trackers/[trackerId]';
 
 type Inputs = {
@@ -60,6 +62,9 @@ export default function AllAnalysis() {
 
   return (
     <>
+      <Head>
+        <title>all personal analysis - expenseus</title>
+      </Head>
       <h1 className="mb-2 text-xl font-semibold lowercase">
         All personal spending analysis
       </h1>
@@ -84,7 +89,7 @@ export default function AllAnalysis() {
                 </span>
                 , with a total cost of{' '}
                 <span className="font-semibold">
-                  {calculatePersonalTotal(user.id, txns)}
+                  {jpyFormatter.format(calculatePersonalTotal(user.id, txns))}
                 </span>
                 .
               </p>
@@ -92,7 +97,7 @@ export default function AllAnalysis() {
               <ul className="list-inside list-disc">
                 {personalTotalsByMainCategory(user.id, txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {mainCategories[total.category].en_US}
                   </li>
                 ))}
@@ -101,7 +106,7 @@ export default function AllAnalysis() {
               <ul className="list-inside list-disc">
                 {personalTotalsBySubcategory(user.id, txns).map((total) => (
                   <li key={total.category}>
-                    You spent {total.total} on{' '}
+                    You spent {jpyFormatter.format(total.total)} on{' '}
                     {subcategories[total.category].en_US}
                   </li>
                 ))}

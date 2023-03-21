@@ -53,6 +53,10 @@ export function BarChart(txns: (Transaction | SharedTxn)[]) {
         legendPosition: 'middle',
         legendOffset: 40,
       }}
+      axisLeft={{
+        format: (value: number) => value.toLocaleString(),
+      }}
+      valueFormat={(value) => value.toLocaleString()}
     />
   );
 }

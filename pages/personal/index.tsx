@@ -6,6 +6,7 @@ import { Transaction } from 'types/Transaction';
 import PersonalLayout from 'components/LayoutPersonal';
 import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
 import { formatDateForTxnCard } from 'utils/dates';
+import Head from 'next/head';
 
 type TxnOneProps = {
   txn: Transaction;
@@ -27,7 +28,7 @@ function TxnOne({ txn, onTxnClick }: TxnOneProps) {
           {emoji}
         </div>
         <div className="flex flex-grow">
-          <div className="flex flex-grow flex-col">
+          <div className=" flex flex-grow flex-col pr-2">
             <p className="text-lg font-semibold leading-5">{txn.location}</p>
             <p className="mt-1 text-sm text-slate-500">{date}</p>
             <p className="mt-1 lowercase">
@@ -55,40 +56,41 @@ export default function Personal() {
   );
 
   return (
-    <>
-      <PersonalLayout>
-        <div className="relative pb-5">
-          {!selectedTxn && (
-            <div>
-              {error && <div>Failed to load transactions</div>}
-              {transactions === null && (
-                <div>Loading list of transactions...</div>
-              )}
-              {transactions && transactions.length === 0 && (
-                <div>No transactions to show</div>
-              )}
-              {transactions &&
-                transactions.map((txn) => (
-                  <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
-                ))}
-            </div>
-          )}
-          <div
-            className={[
-              'absolute top-0 w-full transition-all',
-              selectedTxn ? 'opacity-100' : 'opacity-0',
-            ].join(' ')}
-          >
-            {selectedTxn && (
-              <TxnReadUpdateForm
-                txn={selectedTxn}
-                onApply={() => setSelectedTxn(null)}
-                onCancel={() => setSelectedTxn(null)}
-              />
+    <PersonalLayout>
+      <Head>
+        <title>personal transactions - expenseus</title>
+      </Head>
+      <div className="relative pb-5">
+        {!selectedTxn && (
+          <div>
+            {error && <div>Failed to load transactions</div>}
+            {transactions === null && (
+              <div>Loading list of transactions...</div>
             )}
+            {transactions && transactions.length === 0 && (
+              <div>No transactions to show</div>
+            )}
+            {transactions &&
+              transactions.map((txn) => (
+                <TxnOne txn={txn} onTxnClick={setSelectedTxn} key={txn.id} />
+              ))}
           </div>
+        )}
+        <div
+          className={[
+            'absolute top-0 w-full transition-all',
+            selectedTxn ? 'opacity-100' : 'opacity-0',
+          ].join(' ')}
+        >
+          {selectedTxn && (
+            <TxnReadUpdateForm
+              txn={selectedTxn}
+              onApply={() => setSelectedTxn(null)}
+              onCancel={() => setSelectedTxn(null)}
+            />
+          )}
         </div>
-      </PersonalLayout>
-    </>
+      </div>
+    </PersonalLayout>
   );
 }

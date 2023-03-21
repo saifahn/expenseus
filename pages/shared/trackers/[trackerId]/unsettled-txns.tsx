@@ -1,4 +1,5 @@
 import TrackerLayout from 'components/LayoutTracker';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import useSWR, { mutate } from 'swr';
 import { SharedTxn, SharedTxnOne } from '.';
@@ -41,6 +42,9 @@ export default function UnsettledTxnPage() {
 
   return (
     <TrackerLayout>
+      <Head>
+        <title>unsettled transactions - expenseus</title>
+      </Head>
       {error && <div>Error loading unsettled transactions</div>}
       {response === null && <div>Loading unsettled transactions</div>}
       {response?.transactions.length === 0 && (

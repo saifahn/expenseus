@@ -11,6 +11,7 @@ import { formatDateForTxnCard } from 'utils/dates';
 import { useState } from 'react';
 import useSWR from 'swr';
 import { Tracker } from 'ddb/trackers';
+import Head from 'next/head';
 
 export type SharedTxn = {
   id: string;
@@ -93,6 +94,14 @@ export default function TrackerPage() {
 
   return (
     <TrackerLayout>
+      <Head>
+        {
+          <title>
+            {`${selectedTxn ? 'update shared transaction' : tracker?.name} - `}
+            expenseus
+          </title>
+        }
+      </Head>
       <div className="relative pb-5">
         {!selectedTxn && (
           <>

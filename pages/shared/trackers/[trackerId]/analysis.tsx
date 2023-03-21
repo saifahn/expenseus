@@ -13,6 +13,7 @@ import { plainDateStringToEpochSec, presets } from 'utils/dates';
 import { BarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
 import AnalysisFormBase from 'components/AnalysisFormBase';
+import Head from 'next/head';
 
 type Inputs = {
   from: string;
@@ -50,6 +51,9 @@ export default function TrackerAnalysis() {
 
   return (
     <TrackerLayout>
+      <Head>
+        <title>analyze shared transactions - expenseus</title>
+      </Head>
       <AnalysisFormBase
         register={register}
         onSubmit={handleSubmit(submitCallback)}

@@ -1,6 +1,6 @@
 import { useUserContext } from 'context/user';
 import Link from 'next/link';
-import { Tracker } from 'pages/shared/trackers';
+import { Tracker } from 'ddb/trackers';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSWRConfig } from 'swr';
 import { plainDateISONowString } from 'utils/dates';

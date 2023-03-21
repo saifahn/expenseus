@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Tracker } from 'pages/shared/trackers';
+import { Tracker } from 'ddb/trackers';
 import { PropsWithChildren } from 'react';
 import useSWR from 'swr';
 import SharedLayout from './LayoutShared';

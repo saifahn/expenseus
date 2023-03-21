@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 import { formatDateForTxnCard } from 'utils/dates';
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Tracker } from '..';
+import { Tracker } from 'ddb/trackers';
 
 export type SharedTxn = {
   id: string;

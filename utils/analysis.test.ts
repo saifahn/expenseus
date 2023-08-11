@@ -3,10 +3,87 @@ import { Transaction } from 'types/Transaction';
 import {
   personalTotalsByMainCategory,
   personalTotalsBySubcategory,
+  totalsByCategory,
 } from './analysis';
 
+describe('totalsByCategory', () => {
+  test('it returns the expected results based on txns', () => {
+    const testTxns: Transaction[] = [
+      {
+        id: 'test-txn',
+        date: 123456,
+        amount: 9000,
+        location: 'clothes',
+        category: 'clothing.clothing',
+        details: '',
+        userId: 'test-user-1',
+      },
+      {
+        id: 'some-shoes',
+        date: 234567,
+        amount: 12300,
+        location: 'allbirds',
+        category: 'clothing.footwear',
+        details: '',
+        userId: 'test-user-1',
+      },
+      {
+        id: 'groceries',
+        date: 123456,
+        amount: 3281,
+        location: 'mybasket',
+        category: 'food.groceries',
+        userId: 'test-user-1',
+        details: '',
+      },
+      {
+        id: 'fancy-restaurant',
+        date: 329142,
+        amount: 55280,
+        location: 'jiro sushi',
+        category: 'food.eating-out',
+        userId: 'test-user-1',
+        details: '',
+      },
+      {
+        id: 'conbini drink',
+        date: 123456,
+        amount: 230,
+        location: 'seven eleven',
+        category: 'food.food',
+        userId: 'test-user-1',
+        details: '',
+      },
+    ];
+    const totals = totalsByCategory(testTxns);
+    expect(totals).toContainEqual({
+      mainCategory: 'clothing',
+      total: 21_300,
+      subcategories: expect.arrayContaining([
+        {
+          category: 'clothing.footwear',
+          total: 12_300,
+        },
+        { category: 'clothing.clothing', total: 9000 },
+      ]),
+    });
+    expect(totals).toContainEqual({
+      mainCategory: 'food',
+      total: 58_791,
+      subcategories: expect.arrayContaining([
+        {
+          category: 'food.food',
+          total: 230,
+        },
+        { category: 'food.eating-out', total: 55_280 },
+        { category: 'food.groceries', total: 3281 },
+      ]),
+    });
+  });
+});
+
 describe('personalTotalsByMainCategory', () => {
-  test('it returns the an empty object when given no transactions', () => {
+  test('it returns an empty array when given no transactions', () => {
     const totals = personalTotalsByMainCategory('test-user', []);
     expect(totals).toEqual([]);
   });

@@ -28,7 +28,7 @@ export const mainCategories = {
   },
   entertainment: {
     en_US: 'Entertainment',
-    emoji: '🎥',
+    emoji: '🎶',
     colour: '#fda4af', // rose 300
   },
   clothing: {
@@ -48,7 +48,7 @@ export const mainCategories = {
   },
   home: {
     en_US: 'Home',
-    emoji: '🍴',
+    emoji: '🪑',
     colour: '#10b981', // emerald 500
   },
   medical: {
@@ -83,7 +83,7 @@ export const mainCategories = {
   },
   other: {
     en_US: 'Other',
-    emoji: '🔸',
+    emoji: '🔷',
     colour: '#6d28d9', // violet 700
   },
 };

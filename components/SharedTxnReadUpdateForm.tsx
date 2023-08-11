@@ -113,6 +113,7 @@ export default function SharedTxnReadUpdateForm({
           <button
             className="rounded bg-red-500 py-2 px-4 font-medium lowercase text-white hover:bg-red-700 focus:outline-none focus:ring active:bg-red-300"
             onClick={handleDelete}
+            type="button"
           >
             Delete
           </button>

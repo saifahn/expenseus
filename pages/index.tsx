@@ -9,7 +9,7 @@ import { categoryNameFromKeyEN, getEmojiForTxnCard } from 'data/categories';
 import { formatDateForTxnCard } from 'utils/dates';
 import Link from 'next/link';
 import Head from 'next/head';
-import { jpyFormatter } from 'utils/jpyFormatter';
+import { jpyFormatter, numberFormatter } from 'utils/jpyFormatter';
 
 export type AllTxnsResponse = {
   transactions: Transaction[];
@@ -107,10 +107,14 @@ function transactionCard(txn: Transaction | SharedTxn) {
             </p>
             {txn.details && <p>{txn.details}</p>}
           </div>
-          <p className="flex-shrink-0 text-lg font-medium text-slate-600">
-            {txn.amount}
-            <span className="ml-1 text-xs">円</span>
-          </p>
+          <div className="flex flex-col items-end justify-between">
+            <p className="flex-shrink-0 text-lg font-medium text-slate-600">
+              {numberFormatter.format(txn.amount)}
+              <span className="ml-1 text-xs">円</span>
+            </p>
+            {/* shared tracker has this icon */}
+            {'tracker' in txn && <p>👥</p>}
+          </div>
         </div>
       </div>
     </article>

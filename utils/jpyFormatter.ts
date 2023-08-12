@@ -3,3 +3,5 @@ export const jpyFormatter = new Intl.NumberFormat('ja-JP', {
   currency: 'JPY',
   currencyDisplay: 'name',
 });
+
+export const numberFormatter = new Intl.NumberFormat('ja-JP');

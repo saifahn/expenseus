@@ -40,6 +40,10 @@ export default function UnsettledTxnPage() {
     );
   }
 
+  if (response?.transactions.length) {
+    response.transactions.sort((a, b) => b.date - a.date);
+  }
+
   return (
     <TrackerLayout>
       <Head>

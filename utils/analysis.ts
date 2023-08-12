@@ -14,31 +14,6 @@ export function calculateTotal(txns: (Transaction | SharedTxn)[]) {
   return total;
 }
 
-export function totalsByMainCategory(txns: (Transaction | SharedTxn)[]) {
-  const totals = {} as Record<MainCategoryKey, number>;
-  for (const txn of txns) {
-    const mainCategory = subcategories[txn.category].mainCategory;
-    if (!totals[mainCategory]) totals[mainCategory] = 0;
-    totals[mainCategory] += txn.amount;
-  }
-  return Object.entries(totals).map(([category, total]) => ({
-    category,
-    total,
-  })) as { category: MainCategoryKey; total: number }[];
-}
-
-export function totalsBySubCategory(txns: (Transaction | SharedTxn)[]) {
-  const totals = {} as Record<SubcategoryKey, number>;
-  for (const txn of txns) {
-    if (!totals[txn.category]) totals[txn.category] = 0;
-    totals[txn.category] += txn.amount;
-  }
-  return Object.entries(totals).map(([category, total]) => ({
-    category,
-    total,
-  })) as { category: SubcategoryKey; total: number }[];
-}
-
 type TotalsGroupedByCategoryDict = {
   [k in MainCategoryKey]: {
     [x in SubcategoryKey]: number;
@@ -54,6 +29,11 @@ type TotalByCategory = {
   }>;
 };
 
+/**
+ * Converts a list of transactions or shared transactions into a data structure
+ * to make it easier to display values grouped by main category on the analysis
+ * pages
+ */
 export function totalsByCategory(txns: Transaction[] | SharedTxn[]) {
   // create a dictionary first as it is easier to manage the unknown categories
   const totalsDict = {} as TotalsGroupedByCategoryDict;

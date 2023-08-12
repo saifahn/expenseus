@@ -144,43 +144,6 @@ export function personalTotalsByCategory(
   return totals;
 }
 
-export function personalTotalsByMainCategory(
-  user: string,
-  txns: (Transaction | SharedTxn)[],
-) {
-  const totals = {} as Record<MainCategoryKey, number>;
-
-  for (const txn of txns) {
-    const mainCategory = subcategories[txn.category].mainCategory;
-    if (!totals[mainCategory]) totals[mainCategory] = 0;
-    const amount = calculateAmountOwedByUser(txn, user);
-    totals[mainCategory] += amount;
-  }
-
-  return Object.entries(totals).map(([category, total]) => ({
-    category,
-    total,
-  })) as { category: MainCategoryKey; total: number }[];
-}
-
-export function personalTotalsBySubcategory(
-  user: string,
-  txns: (Transaction | SharedTxn)[],
-) {
-  const totals = {} as Record<SubcategoryKey, number>;
-
-  for (const txn of txns) {
-    if (!totals[txn.category]) totals[txn.category] = 0;
-    const amount = calculateAmountOwedByUser(txn, user);
-    totals[txn.category] += amount;
-  }
-
-  return Object.entries(totals).map(([category, total]) => ({
-    category,
-    total,
-  })) as { category: SubcategoryKey; total: number }[];
-}
-
 /**
  * Helper function that takes a user and a txn and returns the amount
  * that user is responsible for for that txn.

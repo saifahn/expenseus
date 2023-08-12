@@ -1,5 +1,5 @@
 import AnalysisFormBase from 'components/AnalysisFormBase';
-import { BarChart } from 'components/BarChart';
+import { BarChart, personalTotalsForBarChart } from 'components/BarChart';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { mainCategories, subcategories } from 'data/categories';
@@ -10,8 +10,7 @@ import useSWR, { mutate } from 'swr';
 import { Transaction } from 'types/Transaction';
 import {
   calculatePersonalTotal,
-  personalTotalsByMainCategory,
-  personalTotalsBySubcategory,
+  personalTotalsByCategory,
 } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
 import { jpyFormatter } from 'utils/jpyFormatter';
@@ -79,7 +78,9 @@ export default function AllAnalysis() {
         {txns?.length === 0 && <div>No transactions for that time period</div>}
         {user && txns?.length > 0 && (
           <div>
-            <div className="h-screen">{BarChart(txns)}</div>
+            <div className="h-screen">
+              {BarChart(personalTotalsForBarChart(txns, user.id))}
+            </div>
             <div className="mt-4">
               <p>
                 In the period between {getValues().from} and {getValues().to},
@@ -94,23 +95,26 @@ export default function AllAnalysis() {
                 .
               </p>
               <p className="mt-4 text-lg font-medium">Main categories:</p>
-              <ul className="list-inside list-disc">
-                {personalTotalsByMainCategory(user.id, txns).map((total) => (
-                  <li key={total.category}>
-                    You spent {jpyFormatter.format(total.total)} on{' '}
-                    {mainCategories[total.category].en_US}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 text-lg font-medium">Subcategories:</p>
-              <ul className="list-inside list-disc">
-                {personalTotalsBySubcategory(user.id, txns).map((total) => (
-                  <li key={total.category}>
-                    You spent {jpyFormatter.format(total.total)} on{' '}
-                    {subcategories[total.category].en_US}
-                  </li>
-                ))}
-              </ul>
+              {personalTotalsByCategory(user.id, txns).map((cat) => (
+                <div key={cat.mainCategory}>
+                  <p className="mt-3 text-lg font-medium">
+                    {mainCategories[cat.mainCategory].emoji}
+                    &nbsp;
+                    {mainCategories[cat.mainCategory].en_US}
+                    {' - '}
+                    {jpyFormatter.format(cat.total)}
+                  </p>
+                  <ul className="mt-1">
+                    {cat.subcategories.map((subcat) => (
+                      <li key={subcat.category}>
+                        {subcategories[subcat.category].en_US}
+                        {' - '}
+                        {jpyFormatter.format(subcat.total)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         )}

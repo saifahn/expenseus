@@ -1,6 +1,7 @@
 import { SharedTxn } from 'pages/shared/trackers/[trackerId]';
 import { Transaction } from 'types/Transaction';
 import {
+  personalTotalsByCategory,
   personalTotalsByMainCategory,
   personalTotalsBySubcategory,
   totalsByCategory,
@@ -79,6 +80,98 @@ describe('totalsByCategory', () => {
         { category: 'food.groceries', total: 3281 },
       ]),
     });
+  });
+});
+
+describe('personalTotalsByCategory', () => {
+  test('it returns an empty array when given no transactions', () => {
+    const totals = personalTotalsByCategory('test-user', []);
+    expect(totals).toEqual([]);
+  });
+
+  test('it returns the expected results based on txns with splits', () => {
+    const testTxns: (SharedTxn | Transaction)[] = [
+      {
+        id: 'test-txn',
+        date: 123456,
+        amount: 9000,
+        location: 'clothes',
+        tracker: 'test-tracker',
+        category: 'clothing.clothing',
+        participants: ['test-user', 'test-user-2'],
+        details: '',
+        payer: 'test-user',
+        split: {
+          'test-user': 0.6,
+          'test-user-2': 0.4,
+        },
+      },
+    ];
+    const totals = personalTotalsByCategory('test-user', testTxns);
+    expect(totals).toContainEqual(
+      expect.objectContaining({
+        mainCategory: 'clothing',
+        total: 5400,
+        subcategories: expect.arrayContaining([
+          {
+            category: 'clothing.clothing',
+            total: 5400,
+          },
+        ]),
+      }),
+    );
+  });
+
+  test('it returns the expected results based on both txns and shared txns', () => {
+    const testTxns: (SharedTxn | Transaction)[] = [
+      {
+        id: 'test-shared-txn',
+        date: 123456,
+        amount: 9000,
+        location: 'shoes',
+        tracker: 'test-tracker',
+        category: 'clothing.footwear',
+        participants: ['test-user', 'test-user-2'],
+        details: '',
+        payer: 'test-user',
+        split: {
+          'test-user': 0.6,
+          'test-user-2': 0.4,
+        },
+      },
+      {
+        id: 'test-txn',
+        userId: 'test-user',
+        location: 'burger king',
+        amount: 980,
+        date: 123456,
+        category: 'food.eating-out',
+        details: '',
+      },
+      {
+        id: 'test-clothing-txn',
+        userId: 'test-user',
+        location: 'BEAMS',
+        amount: 5000,
+        date: 234567,
+        category: 'clothing.clothing',
+        details: '',
+      },
+    ];
+    const totals = personalTotalsByCategory('test-user', testTxns);
+    expect(totals).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          mainCategory: 'clothing',
+          total: 10400,
+          subcategories: expect.arrayContaining([
+            { category: 'clothing.footwear', total: 5400 },
+            { category: 'clothing.clothing', total: 5000 },
+          ]),
+        }),
+        expect.objectContaining({ mainCategory: 'food', total: 980 }),
+      ]),
+    );
   });
 });
 

@@ -94,6 +94,56 @@ export function calculatePersonalTotal(
   return total;
 }
 
+export function personalTotalsByCategory(
+  user: string,
+  txns: (Transaction | SharedTxn)[],
+): TotalByCategory[] {
+  // create a dictionary first as it is easier to manage the unknown categories
+  const totalsDict = {} as TotalsGroupedByCategoryDict;
+  for (const txn of txns) {
+    const mainCategory = subcategories[txn.category].mainCategory;
+    if (!totalsDict[mainCategory]) {
+      totalsDict[mainCategory] =
+        {} as TotalsGroupedByCategoryDict[MainCategoryKey];
+    }
+    if (!totalsDict[mainCategory][txn.category]) {
+      totalsDict[mainCategory][txn.category] = 0;
+    }
+    const amount = calculateAmountOwedByUser(txn, user);
+    totalsDict[mainCategory][txn.category] += amount;
+  }
+
+  // convert to an array because it will be easier to use on the FE
+  const totals = (Object.keys(totalsDict) as MainCategoryKey[]).map(
+    (mainCatKey) => {
+      // for each main category, we will create a total for that category
+      // and its subcategories
+      const subcatKeys = Object.keys(
+        totalsDict[mainCatKey],
+      ) as SubcategoryKey[];
+
+      const categoryTotal: TotalByCategory = {
+        mainCategory: mainCatKey,
+        total: 0,
+        subcategories: [],
+      };
+
+      for (const subcatKey of subcatKeys) {
+        const subcategoryTotal = totalsDict[mainCatKey][subcatKey];
+        categoryTotal.subcategories.push({
+          category: subcatKey,
+          total: subcategoryTotal,
+        });
+        categoryTotal.total += subcategoryTotal;
+      }
+
+      return categoryTotal;
+    },
+  );
+
+  return totals;
+}
+
 export function personalTotalsByMainCategory(
   user: string,
   txns: (Transaction | SharedTxn)[],

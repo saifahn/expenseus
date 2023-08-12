@@ -148,7 +148,10 @@ export function personalTotalsByCategory(
  * Helper function that takes a user and a txn and returns the amount
  * that user is responsible for for that txn.
  */
-function calculateAmountOwedByUser(txn: SharedTxn | Transaction, user: string) {
+export function calculateAmountOwedByUser(
+  txn: SharedTxn | Transaction,
+  user: string,
+) {
   // if sharedTxn
   if ('split' in txn) {
     const split = txn.split?.[user];

@@ -8,16 +8,19 @@ import {
   subcategories,
 } from 'data/categories';
 import { epochSecToUTCMonthEN, MonthEN } from 'utils/dates';
+import { calculateAmountOwedByUser } from 'utils/analysis';
+
+type TotalsForBarChart = Record<
+  MonthEN,
+  Partial<Record<MainCategoryKey, number>>
+>;
 
 /**
  * Takes a list of transactions and returns totals by month and main category
  * for use in data visualization.
  */
 export function totalsForBarChart(txns: (Transaction | SharedTxn)[]) {
-  const totals = {} as Record<
-    MonthEN,
-    Partial<Record<MainCategoryKey, number>>
-  >;
+  const totals = {} as TotalsForBarChart;
   for (const txn of txns) {
     const month = epochSecToUTCMonthEN(txn.date);
     const mainCategory = subcategories[txn.category].mainCategory;
@@ -28,8 +31,23 @@ export function totalsForBarChart(txns: (Transaction | SharedTxn)[]) {
   return totals;
 }
 
-export function BarChart(txns: (Transaction | SharedTxn)[]) {
-  const totals = totalsForBarChart(txns);
+export function personalTotalsForBarChart(
+  txns: (Transaction | SharedTxn)[],
+  user: string,
+) {
+  const totals = {} as TotalsForBarChart;
+  for (const txn of txns) {
+    const month = epochSecToUTCMonthEN(txn.date);
+    const mainCategory = subcategories[txn.category].mainCategory;
+    if (!totals[month]) totals[month] = {};
+    if (!totals[month][mainCategory]) totals[month][mainCategory] = 0;
+    const amount = calculateAmountOwedByUser(txn, user);
+    totals[month][mainCategory]! += amount;
+  }
+  return totals;
+}
+
+export function BarChart(totals: TotalsForBarChart) {
   const entries = Object.entries(totals);
   const data = entries.map(([month, values]) => ({
     month,

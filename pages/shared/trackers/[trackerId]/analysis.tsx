@@ -6,7 +6,7 @@ import { SubmitHandler, useForm } from 'react-hook-form';
 import useSWR, { useSWRConfig } from 'swr';
 import { calculateTotal, totalsByCategory } from 'utils/analysis';
 import { plainDateStringToEpochSec, presets } from 'utils/dates';
-import { BarChart } from 'components/BarChart';
+import { BarChart, totalsForBarChart } from 'components/BarChart';
 import { SharedTxn } from '.';
 import AnalysisFormBase from 'components/AnalysisFormBase';
 import Head from 'next/head';
@@ -62,7 +62,7 @@ export default function TrackerAnalysis() {
         {txns?.length === 0 && <div>No transactions for that time period</div>}
         {txns && txns.length > 0 && (
           <div>
-            <div className="h-screen">{BarChart(txns)}</div>
+            <div className="h-screen">{BarChart(totalsForBarChart(txns))}</div>
             <div className="mt-4">
               <p>
                 In the period between {getValues().from} and {getValues().to},

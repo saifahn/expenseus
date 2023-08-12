@@ -1,5 +1,5 @@
 import AnalysisFormBase from 'components/AnalysisFormBase';
-import { BarChart } from 'components/BarChart';
+import { BarChart, personalTotalsForBarChart } from 'components/BarChart';
 import { fetcher } from 'config/fetcher';
 import { useUserContext } from 'context/user';
 import { mainCategories, subcategories } from 'data/categories';
@@ -78,7 +78,9 @@ export default function AllAnalysis() {
         {txns?.length === 0 && <div>No transactions for that time period</div>}
         {user && txns?.length > 0 && (
           <div>
-            <div className="h-screen">{BarChart(txns)}</div>
+            <div className="h-screen">
+              {BarChart(personalTotalsForBarChart(txns, user.id))}
+            </div>
             <div className="mt-4">
               <p>
                 In the period between {getValues().from} and {getValues().to},

@@ -40,6 +40,10 @@ export default function UnsettledTxnPage() {
     );
   }
 
+  if (response?.transactions.length) {
+    response.transactions.sort((a, b) => b.date - a.date);
+  }
+
   return (
     <TrackerLayout>
       <Head>
@@ -48,7 +52,7 @@ export default function UnsettledTxnPage() {
       {error && <div>Error loading unsettled transactions</div>}
       {response === null && <div>Loading unsettled transactions</div>}
       {response?.transactions.length === 0 && (
-        <p className="mt-4">You currently have no unsettled transactions!</p>
+        <p className="my-4">You currently have no unsettled transactions!</p>
       )}
       {response && response.transactions?.length > 0 && (
         <>
@@ -60,7 +64,7 @@ export default function UnsettledTxnPage() {
             <SharedTxnOne txn={txn} key={txn.id} />
           ))}
           <button
-            className="mt-4 rounded bg-violet-100 py-2 px-4 font-medium lowercase hover:bg-violet-200 focus:outline-none focus:ring active:bg-violet-300"
+            className="my-4 rounded bg-violet-100 py-2 px-4 font-medium lowercase hover:bg-violet-200 focus:outline-none focus:ring active:bg-violet-300"
             onClick={handleSettleUp}
           >
             Settle up

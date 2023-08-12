@@ -19,7 +19,7 @@ export default function SharedIndex() {
         <title>trackers - expenseus</title>
       </Head>
       <Link href="/shared/trackers/create">
-        <a className="mt-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
+        <a className="my-4 block rounded-lg bg-violet-50 p-3 font-medium lowercase text-black hover:bg-violet-100 active:bg-violet-200">
           ➕ Create new tracker
         </a>
       </Link>
